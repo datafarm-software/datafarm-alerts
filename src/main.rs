@@ -13,10 +13,12 @@ fn main() {
 
 fn handle_connection(stream: &TcpStream) {
     let buf_reader = BufReader::new(stream);
-    let http_request: Vec<_> = buf_reader
-        .lines()
-        .map(|result| result.unwrap())
-        .take_while(|line| !line.is_empty())
-        .collect();
-    println!("Request: {http_request:#?}");
+    let request_line = buf_reader.lines().next().unwrap().unwrap();
+    let parts: Vec<&str> = request_line.split_whitespace().collect();
+    assert!(
+        (parts.len() == 3),
+        "first request line had more than 3 spaces"
+    );
+    let (_, route, _) = (parts[0], parts[1], parts[2]);
+    println!("Request route: {route}");
 }
