@@ -20,6 +20,10 @@ fn handle_connection(mut stream: &TcpStream) {
         .map(|result| result.unwrap())
         .take_while(|line| !line.is_empty())
         .collect();
+    if http_request.is_empty() {
+        println!("received empty http request");
+        return;
+    }
     let request_line = &http_request[0];
     let parts: Vec<&str> = request_line.split_whitespace().collect();
     assert!(
@@ -39,7 +43,7 @@ fn map_route_to_handle_func(route: &str) -> Option<HandleFunc> {
     if route == "/notify" {
         Some(notify_func)
     } else {
-        println!("Route {route} didn't match anything");
+        println!("No handler for route: {route}");
         None
     }
 }
