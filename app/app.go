@@ -43,7 +43,12 @@ func (a *App) RespondToAlert(alerter alertsource.InfluxAlert) {
 }
 func (a *App) ShouldNotifyCrit(alert *alertsource.AlertState, previous *alertsource.AlertState) bool {
 	if alert.Level == previous.Level {
-		return false
+		if alert.Level != alertsource.Crit {
+			return false
+		}
+		if alert.Time.Sub(previous.Time) > TwentyFourHours {
+			return true
+		}
 	}
 	if alert.Level != alertsource.Crit {
 		return false
