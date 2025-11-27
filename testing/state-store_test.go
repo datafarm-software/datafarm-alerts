@@ -27,6 +27,17 @@ func TestNotifyCrit(t *testing.T) {
 				Time:  time.Now().Add(-(6 * time.Hour)),
 			},
 		},
+		"still crit after 24 hours, so notify": {
+			want: true,
+			alert: &alertsource.AlertState{
+				Level: alertsource.Crit,
+				Time:  time.Now(),
+			},
+			previous: &alertsource.AlertState{
+				Level: alertsource.Crit,
+				Time:  time.Now().Add(-(25 * time.Hour)),
+			},
+		},
 		"change to crit, so notify": {
 			want: true,
 			alert: &alertsource.AlertState{
