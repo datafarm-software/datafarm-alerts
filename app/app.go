@@ -2,13 +2,10 @@ package app
 
 import (
 	"log"
-	"time"
 
 	"github.com/geraud22/sensordata-alerts/alertsource"
 	"github.com/geraud22/sensordata-alerts/alertstore"
 )
-
-const TwentyFourHours = time.Duration(24 * time.Hour)
 
 type Notifier interface {
 	Notify(users []string, message string) error
@@ -46,7 +43,7 @@ func (a *App) ShouldNotifyCrit(alert *alertsource.AlertState, previous *alertsou
 		if alert.Level != alertsource.Crit {
 			return false
 		}
-		if alert.Time.Sub(previous.Time) > TwentyFourHours {
+		if alert.Time.Sub(previous.Time) > alert.Duration {
 			return true
 		}
 	}
@@ -56,7 +53,7 @@ func (a *App) ShouldNotifyCrit(alert *alertsource.AlertState, previous *alertsou
 	if alert.Level > previous.Level {
 		return true
 	}
-	if alert.Time.Sub(previous.Time) > TwentyFourHours {
+	if alert.Time.Sub(previous.Time) > alert.Duration {
 		return true
 	}
 	return false

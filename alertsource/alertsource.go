@@ -13,6 +13,7 @@ const (
 
 type AlertState struct {
 	Time       time.Time
+	Duration   time.Duration
 	DeviceId   string
 	Message    string
 	QueryField string

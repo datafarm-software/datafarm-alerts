@@ -16,26 +16,30 @@ func TestNotifyCrit(t *testing.T) {
 		want            bool
 		alert, previous *alertsource.AlertState
 	}{
-		"no change, within 24 hours, so do nothing": {
+		"no change, within duration, so do nothing": {
 			want: false,
 			alert: &alertsource.AlertState{
-				Level: alertsource.Crit,
-				Time:  time.Now(),
+				Level:    alertsource.Crit,
+				Time:     time.Now(),
+				Duration: time.Duration(24 * time.Hour),
 			},
 			previous: &alertsource.AlertState{
-				Level: alertsource.Crit,
-				Time:  time.Now().Add(-(6 * time.Hour)),
+				Level:    alertsource.Crit,
+				Time:     time.Now().Add(-(6 * time.Hour)),
+				Duration: time.Duration(24 * time.Hour),
 			},
 		},
-		"still crit after 24 hours, so notify": {
+		"still crit after duration, so notify": {
 			want: true,
 			alert: &alertsource.AlertState{
-				Level: alertsource.Crit,
-				Time:  time.Now(),
+				Level:    alertsource.Crit,
+				Time:     time.Now(),
+				Duration: time.Duration(24 * time.Hour),
 			},
 			previous: &alertsource.AlertState{
-				Level: alertsource.Crit,
-				Time:  time.Now().Add(-(25 * time.Hour)),
+				Level:    alertsource.Crit,
+				Time:     time.Now().Add(-(25 * time.Hour)),
+				Duration: time.Duration(24 * time.Hour),
 			},
 		},
 		"change to crit, so notify": {
