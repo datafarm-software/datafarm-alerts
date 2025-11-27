@@ -10,8 +10,13 @@ import (
 
 const TwentyFourHours = time.Duration(24 * time.Hour)
 
+type Notifier interface {
+	Notify(users []string, message string) error
+}
+
 type App struct {
 	alertstore alertstore.AlertStore
+	notifier   Notifier
 }
 
 func (a *App) RespondToAlert(alerter alertsource.InfluxAlert) {
@@ -22,11 +27,17 @@ func (a *App) RespondToAlert(alerter alertsource.InfluxAlert) {
 			"getting previous alert for %s: %s, error: %v",
 			alert.DeviceId, alert.QueryField, err,
 		)
+		return
 	}
 	if a.ShouldNotifyCrit(alert, previous) {
-		users := a.alertstore.GetAlertRecipients(alert)
+		users, err := a.alertstore.GetAlertRecipients(alert)
+		if err != nil {
+			log.Printf("GetAlertRecipients: %v", err)
+			return
+		}
 		if err = a.notifier.Notify(users, alert.Message); err != nil {
-			log.Println("notifying users: %v", err)
+			log.Printf("notifying users: %v", err)
+			return
 		}
 	}
 }

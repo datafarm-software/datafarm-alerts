@@ -45,7 +45,7 @@ func (i *InfluxAlert) GetAlert() *AlertState {
 		DeviceId:   i.DeviceId,
 		Level:      i.GetLevel(),
 		QueryField: i.QueryField,
-		LastAlert:  i.Time,
+		Time:       i.Time,
 		Message:    i.Message,
 	}
 }
