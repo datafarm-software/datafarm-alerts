@@ -40,11 +40,12 @@ func (i *InfluxAlert) GetLevel() AlertLevel {
 	return al
 }
 
-func (i *InfluxAlert) GetState() AlertState {
-	return AlertState{
+func (i *InfluxAlert) GetAlert() *AlertState {
+	return &AlertState{
 		DeviceId:   i.DeviceId,
 		Level:      i.GetLevel(),
 		QueryField: i.QueryField,
 		LastAlert:  i.Time,
+		Message:    i.Message,
 	}
 }

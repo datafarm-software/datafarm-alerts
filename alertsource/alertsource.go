@@ -12,8 +12,9 @@ const (
 )
 
 type AlertState struct {
-	DeviceId   string
-	Level      AlertLevel
-	QueryField string
 	LastAlert  time.Time
+	DeviceId   string
+	Message    string
+	QueryField string
+	Level      AlertLevel
 }
