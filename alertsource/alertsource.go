@@ -12,7 +12,7 @@ const (
 )
 
 type AlertState struct {
-	LastAlert  time.Time
+	Time       time.Time
 	DeviceId   string
 	Message    string
 	QueryField string
