@@ -48,6 +48,9 @@ func (a *App) ShouldNotifyCrit(alert *alertsource.AlertState, previous *alertsou
 	if alert.Level != alertsource.Crit {
 		return false
 	}
+	if alert.Level > previous.Level {
+		return true
+	}
 	if alert.Time.Sub(previous.Time) > TwentyFourHours {
 		return true
 	}

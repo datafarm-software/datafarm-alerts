@@ -2,6 +2,7 @@ package testing
 
 import (
 	"testing"
+	"time"
 
 	"github.com/geraud22/sensordata-alerts/alertsource"
 	"github.com/geraud22/sensordata-alerts/app"
@@ -15,13 +16,15 @@ func TestNotifyCrit(t *testing.T) {
 		want            bool
 		alert, previous *alertsource.AlertState
 	}{
-		"no change so do nothing": {
+		"no change, within 24 hours, so do nothing": {
 			want: false,
 			alert: &alertsource.AlertState{
 				Level: alertsource.Crit,
+				Time:  time.Now(),
 			},
 			previous: &alertsource.AlertState{
 				Level: alertsource.Crit,
+				Time:  time.Now().Add(-(6 * time.Hour)),
 			},
 		},
 		"change to crit, so notify": {
