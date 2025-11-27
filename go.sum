@@ -1,0 +1,4 @@
+github.com/apourchet/httpwrap v0.0.0-20250525231546-83f4b73180f1 h1:e0Ej2RYbGebDMnaqTVXJjpEuky+3coQMMkhfT31IK0E=
+github.com/apourchet/httpwrap v0.0.0-20250525231546-83f4b73180f1/go.mod h1:eRXonm3kcT9Ktu1Kffvo+W8MrDQadAUWFt3rO5YCP20=
+github.com/gorilla/mux v1.8.1 h1:TuBL49tXwgrFYWhqrNgrUNEY92u81SPhu7sTdzQEiWY=
+github.com/gorilla/mux v1.8.1/go.mod h1:AKf9I4AEqPTmMytcMc0KkNouC66V3BtZ4qD5fmWSiMQ=
