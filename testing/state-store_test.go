@@ -79,7 +79,7 @@ func TestRespondToAlert(t *testing.T) {
 		mockNotifierInput map[any]any
 		alert             alertsource.InfluxAlert
 	}{
-		"send crit alert because still crit after duration": {
+		"send alert because still crit after duration": {
 			mockNotifierInput: map[any]any{},
 			wantUserInboxes: map[string][]string{
 				"user1": {
