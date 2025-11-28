@@ -6,6 +6,8 @@ import (
 
 	"github.com/geraud22/sensordata-alerts/alertsource"
 	"github.com/geraud22/sensordata-alerts/app"
+	"github.com/geraud22/sensordata-alerts/notifier"
+	"github.com/google/go-cmp/cmp"
 )
 
 var a = &app.App{}
@@ -16,7 +18,7 @@ func TestNotifyCrit(t *testing.T) {
 		want            bool
 		alert, previous *alertsource.AlertState
 	}{
-		"no change, within duration, so do nothing": {
+		"no change within duration, so do nothing": {
 			want: false,
 			alert: &alertsource.AlertState{
 				Level:    alertsource.Crit,
@@ -51,7 +53,7 @@ func TestNotifyCrit(t *testing.T) {
 				Level: alertsource.Ok,
 			},
 		},
-		"change from crit to ok": {
+		"change from crit to ok, so do nothing": {
 			want: false,
 			alert: &alertsource.AlertState{
 				Level: alertsource.Ok,
@@ -66,6 +68,26 @@ func TestNotifyCrit(t *testing.T) {
 			got = a.ShouldNotifyCrit(tt.alert, tt.previous)
 			if got != tt.want {
 				t.Fatalf("tt.want = %v, got = %v", tt.want, got)
+			}
+		})
+	}
+}
+
+func TestRespondToAlert(t *testing.T) {
+	tests := map[string]struct {
+		wantErr      bool
+		wantState    map[any]any
+		mockUserList map[string][]string
+		alert        alertsource.InfluxAlert
+	}{}
+	var n notifier.Notifier
+	for name, tt := range tests {
+		t.Run(name, func(t *testing.T) {
+			n = notifier.NewMockNotifier()
+			a.Notifier = n
+			a.RespondToAlert(tt.alert)
+			if diff := cmp.Diff(tt.wantState, n.GetUserInboxes()); diff != "" {
+				t.Fatalf("mismatch (-want +got):\n%s", diff)
 			}
 		})
 	}

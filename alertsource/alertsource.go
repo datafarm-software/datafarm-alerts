@@ -17,5 +17,6 @@ type AlertState struct {
 	DeviceId   string
 	Message    string
 	QueryField string
+	Id         string
 	Level      AlertLevel
 }

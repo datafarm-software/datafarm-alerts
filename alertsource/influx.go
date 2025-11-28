@@ -47,5 +47,6 @@ func (i *InfluxAlert) GetAlert() *AlertState {
 		QueryField: i.QueryField,
 		Time:       i.Time,
 		Message:    i.Message,
+		Id:         i.Id,
 	}
 }

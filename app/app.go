@@ -5,20 +5,17 @@ import (
 
 	"github.com/geraud22/sensordata-alerts/alertsource"
 	"github.com/geraud22/sensordata-alerts/alertstore"
+	"github.com/geraud22/sensordata-alerts/notifier"
 )
 
-type Notifier interface {
-	Notify(users []string, message string) error
-}
-
 type App struct {
-	alertstore alertstore.AlertStore
-	notifier   Notifier
+	Alertstore alertstore.AlertStore
+	Notifier   notifier.Notifier
 }
 
 func (a *App) RespondToAlert(alerter alertsource.InfluxAlert) {
 	alert := alerter.GetAlert()
-	previous, err := a.alertstore.GetPreviousAlert(alert.DeviceId, alert.QueryField)
+	previous, err := a.Alertstore.GetPreviousAlert(alert.DeviceId, alert.QueryField)
 	if err != nil {
 		log.Printf(
 			"getting previous alert for %s: %s, error: %v",
@@ -27,12 +24,12 @@ func (a *App) RespondToAlert(alerter alertsource.InfluxAlert) {
 		return
 	}
 	if a.ShouldNotifyCrit(alert, previous) {
-		users, err := a.alertstore.GetAlertRecipients(alert)
+		users, err := a.Alertstore.GetAlertRecipients(alert.Id)
 		if err != nil {
 			log.Printf("GetAlertRecipients: %v", err)
 			return
 		}
-		if err = a.notifier.Notify(users, alert.Message); err != nil {
+		if err = a.Notifier.Notify(users, alert.Message); err != nil {
 			log.Printf("notifying users: %v", err)
 			return
 		}
