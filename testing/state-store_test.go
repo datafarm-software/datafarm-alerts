@@ -16,9 +16,11 @@ var EmptyInboxes = map[string][]string{}
 
 const UnregisteredQueryField = "humidity"
 const RegisteredQueryField = "temperature"
+const UnregisteredDeviceId = "device2"
+const RegisteredDeviceId = "device1"
 const SomeDuration = (24 * time.Hour)
 
-var AlertReceived = time.Now()
+var PreviousAlertReceived = time.Now()
 var AfterDuration = time.Now().Add(25 * time.Hour)
 var WithinDuration = time.Now().Add(6 * time.Hour)
 
@@ -37,7 +39,7 @@ func TestNotifyCrit(t *testing.T) {
 			},
 			previous: &alertsource.AlertState{
 				Level:    alertsource.Crit,
-				Time:     AlertReceived,
+				Time:     PreviousAlertReceived,
 				Duration: SomeDuration,
 			},
 		},
@@ -50,7 +52,7 @@ func TestNotifyCrit(t *testing.T) {
 			},
 			previous: &alertsource.AlertState{
 				Level:    alertsource.Crit,
-				Time:     AlertReceived,
+				Time:     PreviousAlertReceived,
 				Duration: SomeDuration,
 			},
 		},
@@ -101,11 +103,11 @@ func TestRespondToAlert(t *testing.T) {
 					"alert1": {"user1"},
 				},
 				"alertStore": map[string]map[string]alertsource.AlertState{
-					"device1": {
+					RegisteredDeviceId: {
 						RegisteredQueryField: alertsource.AlertState{
-							Time:       time.Now(),
+							Time:       PreviousAlertReceived,
 							Duration:   SomeDuration,
-							DeviceId:   "device1",
+							DeviceId:   RegisteredDeviceId,
 							Message:    "Already crit.",
 							QueryField: RegisteredQueryField,
 							Id:         "alert1",
@@ -119,7 +121,7 @@ func TestRespondToAlert(t *testing.T) {
 				Level:      "crit",
 				Message:    "Alert message stating crit level.",
 				Time:       AfterDuration,
-				DeviceId:   "device1",
+				DeviceId:   RegisteredDeviceId,
 				QueryField: RegisteredQueryField,
 			},
 		},
@@ -130,11 +132,11 @@ func TestRespondToAlert(t *testing.T) {
 					"alert1": {"user1"},
 				},
 				"alertStore": map[string]map[string]alertsource.AlertState{
-					"device1": {
+					RegisteredDeviceId: {
 						RegisteredQueryField: alertsource.AlertState{
-							Time:       time.Now(),
+							Time:       PreviousAlertReceived,
 							Duration:   SomeDuration,
-							DeviceId:   "device1",
+							DeviceId:   RegisteredDeviceId,
 							Message:    "Already crit.",
 							QueryField: RegisteredQueryField,
 							Id:         "alert1",
@@ -148,7 +150,7 @@ func TestRespondToAlert(t *testing.T) {
 				Level:      "crit",
 				Message:    "Alert message stating crit level.",
 				Time:       WithinDuration,
-				DeviceId:   "device1",
+				DeviceId:   RegisteredDeviceId,
 				QueryField: RegisteredQueryField,
 			},
 		},
@@ -163,12 +165,10 @@ func TestRespondToAlert(t *testing.T) {
 					"alert1": {"user1"},
 				},
 				"alertStore": map[string]map[string]alertsource.AlertState{
-					"device1": {
+					RegisteredDeviceId: {
 						RegisteredQueryField: alertsource.AlertState{
-							Time:       time.Now(),
-							Duration:   SomeDuration,
-							DeviceId:   "device1",
-							Message:    "Alert level Ok.",
+							Time:       PreviousAlertReceived,
+							DeviceId:   RegisteredDeviceId,
 							QueryField: RegisteredQueryField,
 							Id:         "alert1",
 							Level:      alertsource.Ok,
@@ -180,8 +180,7 @@ func TestRespondToAlert(t *testing.T) {
 				Id:         "alert1",
 				Level:      "crit",
 				Message:    "Alert message stating crit level.",
-				Time:       WithinDuration,
-				DeviceId:   "device1",
+				DeviceId:   RegisteredDeviceId,
 				QueryField: RegisteredQueryField,
 			},
 		},
@@ -192,7 +191,7 @@ func TestRespondToAlert(t *testing.T) {
 					"alert1": {"user1"},
 				},
 				"alertStore": map[string]map[string]alertsource.AlertState{
-					"device1": {
+					RegisteredDeviceId: {
 						RegisteredQueryField: alertsource.AlertState{},
 					},
 				},
@@ -201,9 +200,27 @@ func TestRespondToAlert(t *testing.T) {
 				Id:         "alert1",
 				Level:      "crit",
 				Message:    "Alert message stating crit level.",
-				Time:       WithinDuration,
-				DeviceId:   "device1",
+				DeviceId:   RegisteredDeviceId,
 				QueryField: UnregisteredQueryField,
+			},
+		},
+		"no notification because alert on unregistered deviceId": {
+			wantUserInboxes: EmptyInboxes,
+			mockAlertStore: map[any]any{
+				"alertRecipients": map[string][]string{
+					"alert1": {"user1"},
+				},
+				"alertStore": map[string]map[string]alertsource.AlertState{
+					RegisteredDeviceId: {
+						RegisteredQueryField: alertsource.AlertState{},
+					},
+				},
+			},
+			alert: alertsource.InfluxAlert{
+				Id:       "alert1",
+				Level:    "crit",
+				Message:  "Alert message stating crit level.",
+				DeviceId: UnregisteredDeviceId,
 			},
 		},
 	}
