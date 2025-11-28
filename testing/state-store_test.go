@@ -14,12 +14,13 @@ import (
 var a = &app.App{}
 var EmptyInboxes = map[string][]string{}
 
-const SomeDuration = (24 * time.Hour)
 const UnregisteredQueryField = "humidity"
 const RegisteredQueryField = "temperature"
+const SomeDuration = (24 * time.Hour)
 
-var GreaterThanDuration = time.Now().Add(25 * time.Hour)
-var LessThanDuration = time.Now().Add(6 * time.Hour)
+var AlertReceived = time.Now()
+var AfterDuration = time.Now().Add(25 * time.Hour)
+var WithinDuration = time.Now().Add(6 * time.Hour)
 
 func TestNotifyCrit(t *testing.T) {
 	var got bool
@@ -31,26 +32,26 @@ func TestNotifyCrit(t *testing.T) {
 			want: false,
 			alert: &alertsource.AlertState{
 				Level:    alertsource.Crit,
-				Time:     time.Now(),
-				Duration: time.Duration(24 * time.Hour),
+				Time:     WithinDuration,
+				Duration: SomeDuration,
 			},
 			previous: &alertsource.AlertState{
 				Level:    alertsource.Crit,
-				Time:     time.Now().Add(-(6 * time.Hour)),
-				Duration: time.Duration(24 * time.Hour),
+				Time:     AlertReceived,
+				Duration: SomeDuration,
 			},
 		},
 		"still crit after duration, so notify": {
 			want: true,
 			alert: &alertsource.AlertState{
 				Level:    alertsource.Crit,
-				Time:     time.Now(),
-				Duration: time.Duration(24 * time.Hour),
+				Time:     AfterDuration,
+				Duration: SomeDuration,
 			},
 			previous: &alertsource.AlertState{
 				Level:    alertsource.Crit,
-				Time:     time.Now().Add(-(25 * time.Hour)),
-				Duration: time.Duration(24 * time.Hour),
+				Time:     AlertReceived,
+				Duration: SomeDuration,
 			},
 		},
 		"change to crit, so notify": {
@@ -117,7 +118,7 @@ func TestRespondToAlert(t *testing.T) {
 				Id:         "alert1",
 				Level:      "crit",
 				Message:    "Alert message stating crit level.",
-				Time:       GreaterThanDuration,
+				Time:       AfterDuration,
 				DeviceId:   "device1",
 				QueryField: RegisteredQueryField,
 			},
@@ -146,7 +147,7 @@ func TestRespondToAlert(t *testing.T) {
 				Id:         "alert1",
 				Level:      "crit",
 				Message:    "Alert message stating crit level.",
-				Time:       LessThanDuration,
+				Time:       WithinDuration,
 				DeviceId:   "device1",
 				QueryField: RegisteredQueryField,
 			},
@@ -179,7 +180,7 @@ func TestRespondToAlert(t *testing.T) {
 				Id:         "alert1",
 				Level:      "crit",
 				Message:    "Alert message stating crit level.",
-				Time:       LessThanDuration,
+				Time:       WithinDuration,
 				DeviceId:   "device1",
 				QueryField: RegisteredQueryField,
 			},
@@ -200,7 +201,7 @@ func TestRespondToAlert(t *testing.T) {
 				Id:         "alert1",
 				Level:      "crit",
 				Message:    "Alert message stating crit level.",
-				Time:       LessThanDuration,
+				Time:       WithinDuration,
 				DeviceId:   "device1",
 				QueryField: UnregisteredQueryField,
 			},
