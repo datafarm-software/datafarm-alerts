@@ -12,6 +12,14 @@ import (
 )
 
 var a = &app.App{}
+var EmptyInboxes = map[string][]string{}
+
+const SomeDuration = (24 * time.Hour)
+const UnregisteredQueryField = "humidity"
+const RegisteredQueryField = "temperature"
+
+var GreaterThanDuration = time.Now().Add(25 * time.Hour)
+var LessThanDuration = time.Now().Add(6 * time.Hour)
 
 func TestNotifyCrit(t *testing.T) {
 	var got bool
@@ -76,50 +84,133 @@ func TestNotifyCrit(t *testing.T) {
 
 func TestRespondToAlert(t *testing.T) {
 	tests := map[string]struct {
-		wantUserInboxes     map[string][]string
-		mockNotifierInput   map[any]any
-		mockAlertStoreInput map[any]any
-		alert               alertsource.InfluxAlert
+		wantUserInboxes   map[string][]string
+		mockNotifierStore map[any]any
+		mockAlertStore    map[any]any
+		alert             alertsource.InfluxAlert
 	}{
 		"send alert because still crit after duration": {
-			mockAlertStoreInput: map[any]any{
+			wantUserInboxes: map[string][]string{
+				"user1": {
+					"Alert message stating crit level.",
+				},
+			},
+			mockAlertStore: map[any]any{
 				"alertRecipients": map[string][]string{
 					"alert1": {"user1"},
 				},
 				"alertStore": map[string]map[string]alertsource.AlertState{
 					"device1": {
-						"temperature": alertsource.AlertState{
+						RegisteredQueryField: alertsource.AlertState{
 							Time:       time.Now(),
-							Duration:   (24 * time.Hour),
+							Duration:   SomeDuration,
 							DeviceId:   "device1",
 							Message:    "Already crit.",
-							QueryField: "temperature",
+							QueryField: RegisteredQueryField,
 							Id:         "alert1",
 							Level:      alertsource.Crit,
 						},
 					},
 				},
 			},
-			wantUserInboxes: map[string][]string{
-				"user1": {
-					"Alert message stating crit level.",
+			alert: alertsource.InfluxAlert{
+				Id:         "alert1",
+				Level:      "crit",
+				Message:    "Alert message stating crit level.",
+				Time:       GreaterThanDuration,
+				DeviceId:   "device1",
+				QueryField: RegisteredQueryField,
+			},
+		},
+		"no notification because duration has not elapsed": {
+			wantUserInboxes: EmptyInboxes,
+			mockAlertStore: map[any]any{
+				"alertRecipients": map[string][]string{
+					"alert1": {"user1"},
+				},
+				"alertStore": map[string]map[string]alertsource.AlertState{
+					"device1": {
+						RegisteredQueryField: alertsource.AlertState{
+							Time:       time.Now(),
+							Duration:   SomeDuration,
+							DeviceId:   "device1",
+							Message:    "Already crit.",
+							QueryField: RegisteredQueryField,
+							Id:         "alert1",
+							Level:      alertsource.Crit,
+						},
+					},
 				},
 			},
 			alert: alertsource.InfluxAlert{
 				Id:         "alert1",
 				Level:      "crit",
 				Message:    "Alert message stating crit level.",
-				Time:       time.Now().Add(25 * time.Hour),
+				Time:       LessThanDuration,
 				DeviceId:   "device1",
-				QueryField: "temperature",
+				QueryField: RegisteredQueryField,
+			},
+		},
+		"send notification because alert level changing from ok to crit": {
+			wantUserInboxes: map[string][]string{
+				"user1": {
+					"Alert message stating crit level.",
+				},
+			},
+			mockAlertStore: map[any]any{
+				"alertRecipients": map[string][]string{
+					"alert1": {"user1"},
+				},
+				"alertStore": map[string]map[string]alertsource.AlertState{
+					"device1": {
+						RegisteredQueryField: alertsource.AlertState{
+							Time:       time.Now(),
+							Duration:   SomeDuration,
+							DeviceId:   "device1",
+							Message:    "Alert level Ok.",
+							QueryField: RegisteredQueryField,
+							Id:         "alert1",
+							Level:      alertsource.Ok,
+						},
+					},
+				},
+			},
+			alert: alertsource.InfluxAlert{
+				Id:         "alert1",
+				Level:      "crit",
+				Message:    "Alert message stating crit level.",
+				Time:       LessThanDuration,
+				DeviceId:   "device1",
+				QueryField: RegisteredQueryField,
+			},
+		},
+		"no notification because alert on unregistered queryField": {
+			wantUserInboxes: EmptyInboxes,
+			mockAlertStore: map[any]any{
+				"alertRecipients": map[string][]string{
+					"alert1": {"user1"},
+				},
+				"alertStore": map[string]map[string]alertsource.AlertState{
+					"device1": {
+						RegisteredQueryField: alertsource.AlertState{},
+					},
+				},
+			},
+			alert: alertsource.InfluxAlert{
+				Id:         "alert1",
+				Level:      "crit",
+				Message:    "Alert message stating crit level.",
+				Time:       LessThanDuration,
+				DeviceId:   "device1",
+				QueryField: UnregisteredQueryField,
 			},
 		},
 	}
 	var n *notifier.MockNotifier
 	for name, tt := range tests {
 		t.Run(name, func(t *testing.T) {
-			n = notifier.NewMockNotifier(tt.mockNotifierInput)
-			a.Alertstore = alertstore.NewMockAlertStore(tt.mockAlertStoreInput)
+			n = notifier.NewMockNotifier(tt.mockNotifierStore)
+			a.Alertstore = alertstore.NewMockAlertStore(tt.mockAlertStore)
 			a.Notifier = n
 			a.RespondToAlert(tt.alert)
 			if diff := cmp.Diff(tt.wantUserInboxes, n.GetUserInboxes()); diff != "" {
