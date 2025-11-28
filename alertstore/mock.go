@@ -14,6 +14,12 @@ func NewMockAlertStore(values map[any]any) *MockAlertStore {
 	if values == nil {
 		values = make(map[any]any)
 	}
+	if _, ok := values["alertRecipients"].(map[string][]string); !ok {
+		values["alertRecipients"] = make(map[string][]string)
+	}
+	if _, ok := values["alertStore"].(map[string]map[string]alertsource.AlertState); !ok {
+		values["alertStore"] = make(map[string]map[string]alertsource.AlertState)
+	}
 	return &MockAlertStore{
 		values: values,
 	}
@@ -21,7 +27,7 @@ func NewMockAlertStore(values map[any]any) *MockAlertStore {
 
 func (m *MockAlertStore) GetPreviousAlert(deviceId, queryField string) (
 	*alertsource.AlertState, error) {
-	alerts, ok := m.values["alerts"].(map[string]map[string]alertsource.AlertState)
+	alerts, ok := m.values["alertStore"].(map[string]map[string]alertsource.AlertState)
 	if !ok {
 		return nil, fmt.Errorf("no alertstore found")
 	}

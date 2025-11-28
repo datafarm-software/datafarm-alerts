@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/geraud22/sensordata-alerts/alertsource"
+	"github.com/geraud22/sensordata-alerts/alertstore"
 	"github.com/geraud22/sensordata-alerts/app"
 	"github.com/geraud22/sensordata-alerts/notifier"
 	"github.com/google/go-cmp/cmp"
@@ -75,22 +76,42 @@ func TestNotifyCrit(t *testing.T) {
 
 func TestRespondToAlert(t *testing.T) {
 	tests := map[string]struct {
-		wantUserInboxes   map[string][]string
-		mockNotifierInput map[any]any
-		alert             alertsource.InfluxAlert
+		wantUserInboxes     map[string][]string
+		mockNotifierInput   map[any]any
+		mockAlertStoreInput map[any]any
+		alert               alertsource.InfluxAlert
 	}{
 		"send alert because still crit after duration": {
-			mockNotifierInput: map[any]any{},
+			mockAlertStoreInput: map[any]any{
+				"alertRecipients": map[string][]string{
+					"alert1": {"user1"},
+				},
+				"alertStore": map[string]map[string]alertsource.AlertState{
+					"device1": {
+						"temperature": alertsource.AlertState{
+							Time:       time.Now(),
+							Duration:   (24 * time.Hour),
+							DeviceId:   "device1",
+							Message:    "Already crit.",
+							QueryField: "temperature",
+							Id:         "alert1",
+							Level:      alertsource.Crit,
+						},
+					},
+				},
+			},
 			wantUserInboxes: map[string][]string{
 				"user1": {
 					"Alert message stating crit level.",
 				},
 			},
 			alert: alertsource.InfluxAlert{
-				Id:      "alert1",
-				Level:   "crit",
-				Message: "Alert message stating crit level.",
-				Time:    time.Now().Add(24 * time.Hour),
+				Id:         "alert1",
+				Level:      "crit",
+				Message:    "Alert message stating crit level.",
+				Time:       time.Now().Add(25 * time.Hour),
+				DeviceId:   "device1",
+				QueryField: "temperature",
 			},
 		},
 	}
@@ -98,6 +119,7 @@ func TestRespondToAlert(t *testing.T) {
 	for name, tt := range tests {
 		t.Run(name, func(t *testing.T) {
 			n = notifier.NewMockNotifier(tt.mockNotifierInput)
+			a.Alertstore = alertstore.NewMockAlertStore(tt.mockAlertStoreInput)
 			a.Notifier = n
 			a.RespondToAlert(tt.alert)
 			if diff := cmp.Diff(tt.wantUserInboxes, n.GetUserInboxes()); diff != "" {
