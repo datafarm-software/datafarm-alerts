@@ -75,18 +75,32 @@ func TestNotifyCrit(t *testing.T) {
 
 func TestRespondToAlert(t *testing.T) {
 	tests := map[string]struct {
-		wantErr           bool
-		wantState         map[any]any
+		wantUserInboxes   map[string][]string
 		mockNotifierInput map[any]any
 		alert             alertsource.InfluxAlert
-	}{}
-	var n notifier.Notifier
+	}{
+		"send crit alert because still crit after duration": {
+			mockNotifierInput: map[any]any{},
+			wantUserInboxes: map[string][]string{
+				"user1": {
+					"Alert message stating crit level.",
+				},
+			},
+			alert: alertsource.InfluxAlert{
+				Id:      "alert1",
+				Level:   "crit",
+				Message: "Alert message stating crit level.",
+				Time:    time.Now().Add(24 * time.Hour),
+			},
+		},
+	}
+	var n *notifier.MockNotifier
 	for name, tt := range tests {
 		t.Run(name, func(t *testing.T) {
 			n = notifier.NewMockNotifier(tt.mockNotifierInput)
 			a.Notifier = n
 			a.RespondToAlert(tt.alert)
-			if diff := cmp.Diff(tt.wantState, n.GetUserInboxes()); diff != "" {
+			if diff := cmp.Diff(tt.wantUserInboxes, n.GetUserInboxes()); diff != "" {
 				t.Fatalf("mismatch (-want +got):\n%s", diff)
 			}
 		})

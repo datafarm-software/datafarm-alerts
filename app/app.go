@@ -23,6 +23,7 @@ func (a *App) RespondToAlert(alerter alertsource.InfluxAlert) {
 		)
 		return
 	}
+	alert.Duration = previous.Duration
 	if a.ShouldNotifyCrit(alert, previous) {
 		users, err := a.Alertstore.GetAlertRecipients(alert.Id)
 		if err != nil {

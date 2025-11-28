@@ -28,3 +28,8 @@ func (m *MockNotifier) Notify(users []string, message string) error {
 	}
 	return nil
 }
+
+func (m *MockNotifier) GetUserInboxes() map[string][]string {
+	userInboxes, _ := m.values["userInboxes"].(map[string][]string)
+	return userInboxes
+}
