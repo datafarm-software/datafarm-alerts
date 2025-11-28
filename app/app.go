@@ -2,15 +2,30 @@ package app
 
 import (
 	"log"
+	"net/http"
 
 	"github.com/geraud22/sensordata-alerts/alertsource"
 	"github.com/geraud22/sensordata-alerts/alertstore"
 	"github.com/geraud22/sensordata-alerts/notifier"
 )
 
+type HttpOpts struct {
+	Address string `mapstructure:"address"`
+	Port    string `mapstructure:"port" validate:"required"`
+}
+
+type Opts struct {
+	http HttpOpts `mapstructure:"http" validate:"required"`
+}
+
 type App struct {
 	Alertstore alertstore.AlertStore
 	Notifier   notifier.Notifier
+	server     *http.Server
+}
+
+func New(opts Opts) (*App, error) {
+	return &App{}, nil
 }
 
 func (a *App) RespondToAlert(alerter alertsource.InfluxAlert) {
