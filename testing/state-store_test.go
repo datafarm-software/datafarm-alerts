@@ -75,15 +75,15 @@ func TestNotifyCrit(t *testing.T) {
 
 func TestRespondToAlert(t *testing.T) {
 	tests := map[string]struct {
-		wantErr      bool
-		wantState    map[any]any
-		mockUserList map[string][]string
-		alert        alertsource.InfluxAlert
+		wantErr           bool
+		wantState         map[any]any
+		mockNotifierInput map[any]any
+		alert             alertsource.InfluxAlert
 	}{}
 	var n notifier.Notifier
 	for name, tt := range tests {
 		t.Run(name, func(t *testing.T) {
-			n = notifier.NewMockNotifier()
+			n = notifier.NewMockNotifier(tt.mockNotifierInput)
 			a.Notifier = n
 			a.RespondToAlert(tt.alert)
 			if diff := cmp.Diff(tt.wantState, n.GetUserInboxes()); diff != "" {
