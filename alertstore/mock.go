@@ -38,4 +38,13 @@ func (m *MockAlertStore) GetPreviousAlert(deviceId, queryField string) (
 }
 
 func (m *MockAlertStore) GetAlertRecipients(id string) ([]string, error) {
+	recipientStore, ok := m.values["alertRecipients"].(map[string][]string)
+	if !ok {
+		return nil, fmt.Errorf("no recipient store")
+	}
+	recipients, ok := recipientStore[id]
+	if !ok {
+		return nil, fmt.Errorf("no recipients for: %s", id)
+	}
+	return recipients, nil
 }
