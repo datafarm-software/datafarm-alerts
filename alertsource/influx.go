@@ -23,6 +23,7 @@ type InfluxAlert struct {
 	Version                  int       `json:"_version"`
 	DeviceId                 string    `json:"deviceID"`
 	QueryField               string    `json:"query_field"`
+	_                        struct{}  `json:"-" additionalProperties:"true"`
 }
 
 func (i *InfluxAlert) GetLevel() AlertLevel {

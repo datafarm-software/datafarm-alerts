@@ -1,9 +1,15 @@
 package app
 
 import (
+	"context"
+	"errors"
+	"fmt"
 	"log"
 	"net/http"
 
+	"github.com/danielgtaylor/huma/v2"
+	"github.com/danielgtaylor/huma/v2/adapters/humago"
+	"github.com/danielgtaylor/huma/v2/humacli"
 	"github.com/geraud22/sensordata-alerts/alertsource"
 	"github.com/geraud22/sensordata-alerts/alertstore"
 	"github.com/geraud22/sensordata-alerts/notifier"
@@ -11,24 +17,65 @@ import (
 
 type HttpOpts struct {
 	Address string `mapstructure:"address"`
-	Port    string `mapstructure:"port" validate:"required"`
+	Port    int    `mapstructure:"port" validate:"required"`
 }
 
 type Opts struct {
-	http HttpOpts `mapstructure:"http" validate:"required"`
+	Http HttpOpts `mapstructure:"http" validate:"required"`
 }
 
 type App struct {
 	Alertstore alertstore.AlertStore
 	Notifier   notifier.Notifier
-	server     *http.Server
 }
 
-func New(opts Opts) (*App, error) {
-	return &App{}, nil
+func Start(opts Opts) error {
+	app := &App{}
+	app.Notifier = notifier.NewMockNotifier(nil)
+	app.Alertstore = alertstore.NewMockAlertStore(nil)
+	cli := humacli.New(func(hooks humacli.Hooks, options *Opts) {
+		router := http.NewServeMux()
+		api := humago.New(router, huma.DefaultConfig("SensorData Alerts API", "1.0.0"))
+		app.RegisterHumaOperations(api)
+		server := &http.Server{
+			Addr:    fmt.Sprintf("%s:%d", opts.Http.Address, opts.Http.Port),
+			Handler: router,
+		}
+		hooks.OnStart(func() {
+			log.Println("Server started on ", server.Addr)
+			if err := server.ListenAndServe(); err != nil {
+				if !errors.Is(err, http.ErrServerClosed) {
+					log.Fatalf("HTTP server error: %v", err)
+				}
+			}
+		})
+		hooks.OnStop(func() {
+			server.Shutdown(context.Background())
+		})
+	})
+	cli.Run()
+	return nil
 }
 
-func (a *App) RespondToAlert(alerter alertsource.InfluxAlert) {
+func (a *App) RegisterHumaOperations(api huma.API) {
+	operation := huma.Operation{
+		Method:  "POST",
+		Path:    "/notify",
+		Tags:    []string{"Post Alerts"},
+		Summary: "Post an alert.",
+	}
+	huma.Register(api, operation, a.LogAlert)
+}
+
+func (a *App) LogAlert(
+	ctx context.Context, in *struct {
+		Body *alertsource.InfluxAlert
+	}) (*struct{}, error) {
+	log.Println("received: ", in.Body.GetAlert())
+	return nil, nil
+}
+
+func (a *App) RespondToAlert(ctx context.Context, alerter *alertsource.InfluxAlert) (*struct{}, error) {
 	alert := alerter.GetAlert()
 	previous, err := a.Alertstore.GetPreviousAlert(alert.DeviceId, alert.QueryField)
 	if err != nil {
@@ -36,20 +83,21 @@ func (a *App) RespondToAlert(alerter alertsource.InfluxAlert) {
 			"getting previous alert for %s: %s, error: %v",
 			alert.DeviceId, alert.QueryField, err,
 		)
-		return
+		return nil, nil
 	}
 	alert.Duration = previous.Duration
 	if a.ShouldNotifyCrit(alert, previous) {
 		users, err := a.Alertstore.GetAlertRecipients(alert.Id)
 		if err != nil {
 			log.Printf("GetAlertRecipients: %v", err)
-			return
+			return nil, nil
 		}
 		if err = a.Notifier.Notify(users, alert.Message); err != nil {
 			log.Printf("notifying users: %v", err)
-			return
+			return nil, nil
 		}
 	}
+	return nil, nil
 }
 func (a *App) ShouldNotifyCrit(alert *alertsource.AlertState, previous *alertsource.AlertState) bool {
 	if alert.Level == previous.Level {
