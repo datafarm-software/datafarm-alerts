@@ -93,7 +93,7 @@ func (a *App) RespondToAlert(
 	}
 	return nil, nil
 }
-func (a *App) ShouldNotifyCrit(alert *alertsource.AlertState, previous *alertsource.AlertState) bool {
+func (a *App) ShouldNotifyCrit(alert *alertsource.Alert, previous *alertsource.Alert) bool {
 	if alert.Level == previous.Level {
 		if alert.Level != alertsource.Crit {
 			return false

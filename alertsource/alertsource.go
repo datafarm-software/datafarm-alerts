@@ -11,7 +11,7 @@ const (
 	Invalid
 )
 
-type AlertState struct {
+type Alert struct {
 	Time       time.Time
 	Duration   time.Duration
 	DeviceId   string
