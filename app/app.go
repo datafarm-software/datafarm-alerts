@@ -69,10 +69,12 @@ func (a *App) RegisterHumaOperations(api huma.API) {
 
 func (a *App) CreateAlert(
 	ctx context.Context,
-	in *struct{ Body alertsource.Alert }) (*any, error) {
+	in *struct{ Body alertsource.CreateAlert }) (*any, error) {
 	if err := a.Alertstore.CreateAlert(in.Body); err != nil {
-		log.Printf()
+		log.Printf("creating alert: %v", err)
+		return nil, nil
 	}
+	return nil, nil
 }
 
 func (a *App) RespondToAlert(

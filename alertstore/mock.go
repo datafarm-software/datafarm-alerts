@@ -73,3 +73,7 @@ func (m *MockAlertStore) Update(alert *alertsource.Alert) error {
 	m.values["alertStore"] = alerts
 	return nil
 }
+
+func (m *MockAlertStore) CreateAlert(ca alertsource.CreateAlert) error {
+	return nil
+}
