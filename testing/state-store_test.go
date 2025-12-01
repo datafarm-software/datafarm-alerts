@@ -1,6 +1,7 @@
 package testing
 
 import (
+	"context"
 	"testing"
 	"time"
 
@@ -230,7 +231,10 @@ func TestRespondToAlert(t *testing.T) {
 			n = notifier.NewMockNotifier(tt.mockNotifierStore)
 			a.Alertstore = alertstore.NewMockAlertStore(tt.mockAlertStore)
 			a.Notifier = n
-			a.RespondToAlert(tt.alert)
+			a.RespondToAlert(
+				context.Background(),
+				&struct{ Body alertsource.InfluxAlert }{tt.alert},
+			)
 			if diff := cmp.Diff(tt.wantUserInboxes, n.GetUserInboxes()); diff != "" {
 				t.Fatalf("mismatch (-want +got):\n%s", diff)
 			}

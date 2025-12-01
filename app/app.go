@@ -64,19 +64,13 @@ func (a *App) RegisterHumaOperations(api huma.API) {
 		Tags:    []string{"Post Alerts"},
 		Summary: "Post an alert.",
 	}
-	huma.Register(api, operation, a.LogAlert)
+	huma.Register(api, operation, a.RespondToAlert)
 }
 
-func (a *App) LogAlert(
-	ctx context.Context, in *struct {
-		Body *alertsource.InfluxAlert
-	}) (*struct{}, error) {
-	log.Println("received: ", in.Body.GetAlert())
-	return nil, nil
-}
-
-func (a *App) RespondToAlert(ctx context.Context, alerter *alertsource.InfluxAlert) (*struct{}, error) {
-	alert := alerter.GetAlert()
+func (a *App) RespondToAlert(
+	ctx context.Context,
+	in *struct{ Body alertsource.InfluxAlert }) (*any, error) {
+	alert := in.Body.GetAlert()
 	previous, err := a.Alertstore.GetPreviousAlert(alert.DeviceId, alert.QueryField)
 	if err != nil {
 		log.Printf(
