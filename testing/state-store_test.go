@@ -193,7 +193,13 @@ func TestRespondToAlert(t *testing.T) {
 				},
 				"alertStore": map[string]map[string]alertsource.Alert{
 					RegisteredDeviceId: {
-						RegisteredQueryField: alertsource.Alert{},
+						RegisteredQueryField: alertsource.Alert{
+							Time:       PreviousAlertReceived,
+							DeviceId:   RegisteredDeviceId,
+							QueryField: RegisteredQueryField,
+							Id:         "alert1",
+							Level:      alertsource.Ok,
+						},
 					},
 				},
 			},
@@ -213,15 +219,22 @@ func TestRespondToAlert(t *testing.T) {
 				},
 				"alertStore": map[string]map[string]alertsource.Alert{
 					RegisteredDeviceId: {
-						RegisteredQueryField: alertsource.Alert{},
+						RegisteredQueryField: alertsource.Alert{
+							Time:       PreviousAlertReceived,
+							DeviceId:   RegisteredDeviceId,
+							QueryField: RegisteredQueryField,
+							Id:         "alert1",
+							Level:      alertsource.Ok,
+						},
 					},
 				},
 			},
 			alert: alertsource.InfluxAlert{
-				Id:       "alert1",
-				Level:    "crit",
-				Message:  "Alert message stating crit level.",
-				DeviceId: UnregisteredDeviceId,
+				Id:         "alert1",
+				Level:      "crit",
+				Message:    "Alert message stating crit level.",
+				DeviceId:   UnregisteredDeviceId,
+				QueryField: RegisteredQueryField,
 			},
 		},
 	}
