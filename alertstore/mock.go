@@ -25,6 +25,10 @@ func NewMockAlertStore(values map[any]any) *MockAlertStore {
 	}
 }
 
+func (m *MockAlertStore) GetValues() map[any]any {
+	return m.values
+}
+
 func (m *MockAlertStore) GetPreviousAlert(deviceId, queryField string) (
 	*alertsource.Alert, error) {
 	alerts, ok := m.values["alertStore"].(map[string]map[string]alertsource.Alert)
@@ -53,4 +57,19 @@ func (m *MockAlertStore) GetAlertRecipients(id string) ([]string, error) {
 		return nil, fmt.Errorf("no recipients for: %s", id)
 	}
 	return recipients, nil
+}
+
+func (m *MockAlertStore) Update(alert *alertsource.Alert) error {
+	alerts, ok := m.values["alertStore"].(map[string]map[string]alertsource.Alert)
+	if !ok {
+		return fmt.Errorf("no alertstore found")
+	}
+	deviceAlerts, ok := alerts[alert.DeviceId]
+	if !ok {
+		return fmt.Errorf("no device alerts for: %s", alert.DeviceId)
+	}
+	deviceAlerts[alert.QueryField] = *alert
+	alerts[alert.DeviceId] = deviceAlerts
+	m.values["alertStore"] = alerts
+	return nil
 }

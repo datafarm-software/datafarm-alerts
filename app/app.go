@@ -90,6 +90,10 @@ func (a *App) RespondToAlert(
 			log.Printf("notifying users: %v", err)
 			return nil, nil
 		}
+		if err = a.Alertstore.Update(alert); err != nil {
+			log.Printf("updating alertstore: %v", err)
+			return nil, nil
+		}
 	}
 	return nil, nil
 }
