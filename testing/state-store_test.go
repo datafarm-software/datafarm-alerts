@@ -21,7 +21,7 @@ const UnregisteredDeviceId = "device2"
 const RegisteredDeviceId = "device1"
 const SomeDuration = (24 * time.Hour)
 
-var PreviousAlertReceived = time.Now()
+var AlertReceived = time.Now()
 var AfterDuration = time.Now().Add(25 * time.Hour)
 var WithinDuration = time.Now().Add(6 * time.Hour)
 
@@ -321,6 +321,37 @@ func TestRespondToAlert(t *testing.T) {
 						},
 					},
 				},
+			},
+		},
+		"send notification on the first alert ever received": {
+			wantUserInboxes: map[string][]string{
+				"user1": {
+					"Alert message stating crit level.",
+				},
+			},
+			wantAlertStore: map[any]any{
+				"alertRecipients": map[string][]string{
+					"alert1": {"user1"},
+				},
+				"alertStore": map[string]map[string]alertsource.Alert{
+					RegisteredDeviceId: {
+						RegisteredQueryField: alertsource.Alert{
+							Time:       AlertReceived,
+							DeviceId:   RegisteredDeviceId,
+							QueryField: RegisteredQueryField,
+							Id:         "alert1",
+							Level:      alertsource.Crit,
+						},
+					},
+				},
+			},
+			alert: alertsource.InfluxAlert{
+				Id:         RegisteredDeviceId,
+				Level:      "crit",
+				Message:    "Alert message stating crit level.",
+				Time:       AlertReceived,
+				DeviceId:   RegisteredDeviceId,
+				QueryField: RegisteredQueryField,
 			},
 		},
 	}

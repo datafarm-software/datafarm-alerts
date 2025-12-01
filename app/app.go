@@ -67,6 +67,14 @@ func (a *App) RegisterHumaOperations(api huma.API) {
 	huma.Register(api, operation, a.RespondToAlert)
 }
 
+func (a *App) CreateAlert(
+	ctx context.Context,
+	in *struct{ Body alertsource.Alert }) (*any, error) {
+	if err := a.Alertstore.CreateAlert(in.Body); err != nil {
+		log.Printf()
+	}
+}
+
 func (a *App) RespondToAlert(
 	ctx context.Context,
 	in *struct{ Body alertsource.InfluxAlert }) (*any, error) {
@@ -77,7 +85,7 @@ func (a *App) RespondToAlert(
 			"getting previous alert for %s: %s, error: %v",
 			alert.DeviceId, alert.QueryField, err,
 		)
-		return nil, nil
+		return nil, huma.Error500InternalServerError("no alert configured")
 	}
 	alert.Duration = previous.Duration
 	if a.ShouldNotifyCrit(alert, previous) {

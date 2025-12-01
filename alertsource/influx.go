@@ -3,11 +3,11 @@ package alertsource
 import "time"
 
 type InfluxAlert struct {
-	Id                       string    `json:"_check_id"`
+	Id                       string    `json:"_check_id" required:"true"`
 	Name                     string    `json:"_check_name"`
-	Level                    string    `json:"_level"`
+	Level                    string    `json:"_level" required:"true"`
 	Measurement              string    `json:"_measurement"`
-	Message                  string    `json:"_message"`
+	Message                  string    `json:"_message" required:"true"`
 	NotificationEndpointId   string    `json:"_notification_endpoint_id"`
 	NotificationEndpointName string    `json:"_notification_endpoint_name"`
 	NotificationRuleId       string    `json:"_notification_rule_id"`
@@ -17,12 +17,12 @@ type InfluxAlert struct {
 	Start                    string    `json:"_start"`
 	Stop                     string    `json:"_stop"`
 	StatusTimestamp          int       `json:"_status_timestamp"`
-	Time                     time.Time `json:"_time"`
-	Type                     string    `json:"_type"`
+	Time                     time.Time `json:"_time" required:"true"`
+	Type                     string    `json:"_type" format:"date-time"`
 	// Value                    float64  `json:"_value"`
 	Version    int      `json:"_version"`
-	DeviceId   string   `json:"deviceID"`
-	QueryField string   `json:"query_field"`
+	DeviceId   string   `json:"deviceID" required:"true"`
+	QueryField string   `json:"query_field" required:"true"`
 	_          struct{} `json:"-" additionalProperties:"true"`
 }
 
