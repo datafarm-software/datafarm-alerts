@@ -144,6 +144,7 @@ func TestRespondToAlert(t *testing.T) {
 				},
 			},
 		},
+
 		"no notification because duration has not elapsed": {
 			wantUserInboxes: EmptyInboxes,
 			mockAlertStore: map[any]any{
@@ -191,6 +192,7 @@ func TestRespondToAlert(t *testing.T) {
 				},
 			},
 		},
+
 		"send notification because alert level changing from ok to crit": {
 			wantUserInboxes: map[string][]string{
 				"user1": {
@@ -239,6 +241,7 @@ func TestRespondToAlert(t *testing.T) {
 				},
 			},
 		},
+
 		"no notification because alert on unregistered queryField": {
 			wantUserInboxes: EmptyInboxes,
 			mockAlertStore: map[any]any{
@@ -281,6 +284,7 @@ func TestRespondToAlert(t *testing.T) {
 				},
 			},
 		},
+
 		"no notification because alert on unregistered deviceId": {
 			wantUserInboxes: EmptyInboxes,
 			mockAlertStore: map[any]any{
@@ -323,6 +327,7 @@ func TestRespondToAlert(t *testing.T) {
 				},
 			},
 		},
+
 		"send notification on the first alert ever received": {
 			wantUserInboxes: map[string][]string{
 				"user1": {
