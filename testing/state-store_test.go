@@ -403,7 +403,31 @@ func TestParseDuration(t *testing.T) {
 		wantErr bool
 		input   string
 		want    time.Duration
-	}{}
+	}{
+		"1 hour duration": {
+			wantErr: false,
+			input:   "1h",
+			want:    time.Duration(1 * time.Hour),
+		},
+		"1 day duration": {
+			wantErr: false,
+			input:   "1d",
+			want:    time.Duration(24 * time.Hour),
+		},
+		"1 month duration": {
+			wantErr: false,
+			input:   "1m",
+			want:    time.Duration((24 * 30) * time.Hour),
+		},
+		"invalid duration": {
+			wantErr: true,
+			input:   "invalid",
+		},
+		"invalid empty duration": {
+			wantErr: true,
+			input:   "",
+		},
+	}
 	var got time.Duration
 	var err error
 	for name, tt := range tests {
