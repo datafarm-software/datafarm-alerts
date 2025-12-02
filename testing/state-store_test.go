@@ -349,3 +349,49 @@ func TestRespondToAlert(t *testing.T) {
 		})
 	}
 }
+
+func TestCreateAlert(t *testing.T) {
+	tests := map[string]struct {
+		wantAlertStore map[any]any
+		mockAlertStore map[any]any
+		createAlert    alertsource.CreateAlert
+	}{
+		"successfully create a less than alert rule": {
+			wantAlertStore: map[any]any{
+				"alertRecipients": map[string][]string{
+					"alert1": {"user1"},
+				},
+				"alertStore": map[string]map[string]alertsource.Alert{
+					RegisteredDeviceId: {
+						RegisteredQueryField: alertsource.Alert{
+							DeviceId:   RegisteredDeviceId,
+							QueryField: RegisteredQueryField,
+							Id:         "alert1",
+							Level:      alertsource.Ok,
+						},
+					},
+				},
+			},
+			createAlert: alertsource.CreateAlert{
+				RangeValues: []int{5},
+				Duration:    "6h",
+				Username:    "user1",
+				DeviceId:    "device1",
+				QueryField:  "temperature",
+				AlertRange:  alertsource.LessThan,
+			},
+		},
+	}
+	var as *alertstore.MockAlertStore
+	for name, tt := range tests {
+		t.Run(name, func(t *testing.T) {
+			as = alertstore.NewMockAlertStore(tt.mockAlertStore)
+			a.Alertstore = as
+			a.CreateAlert(context.Background(),
+				&struct{ Body alertsource.CreateAlert }{tt.createAlert})
+		})
+		if diff := cmp.Diff(tt.wantAlertStore, as.GetValues()); diff != "" {
+			t.Fatalf("alertstore mismatch (-want +got):\n%s", diff)
+		}
+	}
+}

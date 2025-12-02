@@ -21,6 +21,7 @@ const (
 
 type CreateAlert struct {
 	RangeValues []int      `json:"rangeValues" maxItems:"2"`
+	Username    string     `json:"username" pattern:"^[a-zA-Z0-9_]+$"`
 	Duration    string     `json:"duration" pattern:"^[a-zA-Z0-9]+$"`
 	DeviceId    string     `json:"deviceId" pattern:"^[a-zA-Z0-9]+$"`
 	QueryField  string     `json:"queryField" pattern:"^[a-zA-Z0-9_]+$"`
