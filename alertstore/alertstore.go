@@ -14,6 +14,7 @@ type AlertStore interface {
 	GetAlertRecipients(id string) ([]string, error)
 	Update(*alertsource.Alert) error
 	StoreAlert(alertsource.CreateAlert) error
+	AddUserToNotifyList(alertId string, username string) error
 }
 
 var InvalidDuration = time.Duration(-(1 * time.Hour))

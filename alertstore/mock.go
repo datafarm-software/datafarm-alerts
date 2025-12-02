@@ -98,3 +98,15 @@ func (m *MockAlertStore) StoreAlert(ca alertsource.CreateAlert) error {
 	m.values["alertStore"] = alerts
 	return nil
 }
+
+func (m *MockAlertStore) AddUserToNotifyList(alertId, username string) error {
+	recipientStore, ok := m.values["alertRecipients"].(map[string][]string)
+	if !ok {
+		return fmt.Errorf("no recipient store")
+	}
+	recipients := recipientStore[alertId]
+	recipients = append(recipients, username)
+	recipientStore[alertId] = recipients
+	m.values["alertRecipients"] = recipientStore
+	return nil
+}

@@ -134,5 +134,11 @@ func (a *App) CreateAlert(
 		log.Printf("storing alert: %v", err)
 		return nil, nil
 	}
+	if err := a.AlertStore.AddUserToNotifyList(in.Body.Id, in.Body.Username); err != nil {
+		log.Printf(
+			"add user: %s to alert: %s notify list: %v",
+			in.Body.Username, in.Body.Id)
+		return nil, nil
+	}
 	return nil, nil
 }
