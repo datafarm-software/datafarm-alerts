@@ -7,5 +7,5 @@ type AlertStore interface {
 	GetPreviousAlert(deviceId, queryField string) (*alertsource.Alert, error)
 	GetAlertRecipients(id string) ([]string, error)
 	Update(*alertsource.Alert) error
-	CreateAlert(alertsource.CreateAlert) error
+	StoreAlert(alertsource.CreateAlert) error
 }

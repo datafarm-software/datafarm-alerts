@@ -25,14 +25,16 @@ type Opts struct {
 }
 
 type App struct {
-	Alertstore alertstore.AlertStore
-	Notifier   notifier.Notifier
+	AlertSource alertsource.AlertSource
+	AlertStore  alertstore.AlertStore
+	Notifier    notifier.Notifier
 }
 
 func Start(opts Opts) error {
 	app := &App{}
 	app.Notifier = notifier.NewMockNotifier(nil)
-	app.Alertstore = alertstore.NewMockAlertStore(nil)
+	app.AlertStore = alertstore.NewMockAlertStore(nil)
+	app.AlertSource = alertsource.NewMockAlertSource(nil)
 	cli := humacli.New(func(hooks humacli.Hooks, options *Opts) {
 		router := http.NewServeMux()
 		api := humago.New(router, huma.DefaultConfig("SensorData Alerts API", "1.0.0"))
@@ -67,21 +69,11 @@ func (a *App) RegisterHumaOperations(api huma.API) {
 	huma.Register(api, operation, a.RespondToAlert)
 }
 
-func (a *App) CreateAlert(
-	ctx context.Context,
-	in *struct{ Body alertsource.CreateAlert }) (*any, error) {
-	if err := a.Alertstore.CreateAlert(in.Body); err != nil {
-		log.Printf("creating alert: %v", err)
-		return nil, nil
-	}
-	return nil, nil
-}
-
 func (a *App) RespondToAlert(
 	ctx context.Context,
 	in *struct{ Body alertsource.InfluxAlert }) (*any, error) {
 	alert := in.Body.GetAlert()
-	previous, err := a.Alertstore.GetPreviousAlert(alert.DeviceId, alert.QueryField)
+	previous, err := a.AlertStore.GetPreviousAlert(alert.DeviceId, alert.QueryField)
 	if err != nil {
 		log.Printf(
 			"getting previous alert for %s: %s, error: %v",
@@ -90,20 +82,21 @@ func (a *App) RespondToAlert(
 		return nil, huma.Error500InternalServerError("no alert configured")
 	}
 	alert.Duration = previous.Duration
-	if a.ShouldNotifyCrit(alert, previous) {
-		users, err := a.Alertstore.GetAlertRecipients(alert.Id)
-		if err != nil {
-			log.Printf("GetAlertRecipients: %v", err)
-			return nil, nil
-		}
-		if err = a.Notifier.Notify(users, alert.Message); err != nil {
-			log.Printf("notifying users: %v", err)
-			return nil, nil
-		}
-		if err = a.Alertstore.Update(alert); err != nil {
-			log.Printf("updating alertstore: %v", err)
-			return nil, nil
-		}
+	if !a.ShouldNotifyCrit(alert, previous) {
+		return nil, nil
+	}
+	users, err := a.AlertStore.GetAlertRecipients(alert.Id)
+	if err != nil {
+		log.Printf("GetAlertRecipients: %v", err)
+		return nil, nil
+	}
+	if err = a.Notifier.Notify(users, alert.Message); err != nil {
+		log.Printf("notifying users: %v", err)
+		return nil, nil
+	}
+	if err = a.AlertStore.Update(alert); err != nil {
+		log.Printf("updating alertstore: %v", err)
+		return nil, nil
 	}
 	return nil, nil
 }
@@ -126,4 +119,18 @@ func (a *App) ShouldNotifyCrit(alert *alertsource.Alert, previous *alertsource.A
 		return true
 	}
 	return false
+}
+
+func (a *App) CreateAlert(
+	ctx context.Context,
+	in *struct{ Body alertsource.CreateAlert }) (*any, error) {
+	if err := a.AlertSource.CreateAlert(in.Body); err != nil {
+		log.Printf("registering alert: %v", err)
+		return nil, nil
+	}
+	if err := a.AlertStore.StoreAlert(in.Body); err != nil {
+		log.Printf("storing alert: %v", err)
+		return nil, nil
+	}
+	return nil, nil
 }

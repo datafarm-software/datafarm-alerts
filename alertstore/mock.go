@@ -74,6 +74,6 @@ func (m *MockAlertStore) Update(alert *alertsource.Alert) error {
 	return nil
 }
 
-func (m *MockAlertStore) CreateAlert(ca alertsource.CreateAlert) error {
+func (m *MockAlertStore) StoreAlert(ca alertsource.CreateAlert) error {
 	return nil
 }

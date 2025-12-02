@@ -37,3 +37,8 @@ type Alert struct {
 	Id         string
 	Level      AlertLevel
 }
+
+type AlertSource interface {
+	GetAlert() *Alert
+	CreateAlert(CreateAlert) error
+}
