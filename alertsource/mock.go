@@ -12,6 +12,6 @@ func (m *MockAlertSource) GetAlert() *Alert {
 	return nil
 }
 
-func (m *MockAlertSource) CreateAlert(ca CreateAlert) error {
-	return nil
+func (m *MockAlertSource) CreateAlert(ca CreateAlert) (string, error) {
+	return "alert1", nil
 }
