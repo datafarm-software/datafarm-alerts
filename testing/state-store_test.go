@@ -414,11 +414,6 @@ func TestParseDuration(t *testing.T) {
 			input:   "1d",
 			want:    time.Duration(24 * time.Hour),
 		},
-		"1 month duration": {
-			wantErr: false,
-			input:   "1m",
-			want:    time.Duration((24 * 30) * time.Hour),
-		},
 		"invalid duration": {
 			wantErr: true,
 			input:   "invalid",
@@ -436,8 +431,10 @@ func TestParseDuration(t *testing.T) {
 			if tt.wantErr != (err != nil) {
 				t.Fatalf("wantErr: %v, got: %v", tt.want, err)
 			}
-			if tt.want != got {
-				t.Fatalf("want: %v, got: %v", tt.want, got)
+			if !tt.wantErr {
+				if tt.want != got {
+					t.Fatalf("want: %v, got: %v", tt.want, got)
+				}
 			}
 		})
 	}

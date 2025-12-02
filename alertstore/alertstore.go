@@ -2,6 +2,7 @@ package alertstore
 
 import (
 	"fmt"
+	"strconv"
 	"time"
 
 	"github.com/geraud22/sensordata-alerts/alertsource"
@@ -22,21 +23,24 @@ func ParseDuration(d string) (time.Duration, error) {
 		return InvalidDuration,
 			fmt.Errorf("expected duration length 2, got: %d", len(d))
 	}
-	num := d[0]
-	numAsDuration := time.Duration(int(num))
+	num, err := strconv.Atoi(string(d[0]))
+	if err != nil {
+		return InvalidDuration, err
+	}
+	numAsDuration := time.Duration(num)
 	period := d[1]
 	var duration time.Duration
 	switch period {
 	case byte('s'):
-		duration = numAsDuration * time.Second
+		duration = time.Duration(numAsDuration * time.Second)
 	case byte('m'):
-		duration = numAsDuration * time.Minute
+		duration = time.Duration(numAsDuration * time.Minute)
 	case byte('h'):
-		duration = numAsDuration * time.Hour
+		duration = time.Duration(numAsDuration * time.Hour)
 	case byte('d'):
-		duration = numAsDuration * (24 * time.Hour)
+		duration = time.Duration(numAsDuration * (24 * time.Hour))
 	default:
-		return InvalidDuration, fmt.Errorf("unknown period selector: %s", period)
+		return InvalidDuration, fmt.Errorf("unknown period selector: %s", string(period))
 	}
 	return duration, nil
 }
