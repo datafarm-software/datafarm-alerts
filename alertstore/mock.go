@@ -2,7 +2,6 @@ package alertstore
 
 import (
 	"fmt"
-	"time"
 
 	"github.com/geraud22/sensordata-alerts/alertsource"
 )
@@ -89,7 +88,6 @@ func (m *MockAlertStore) StoreAlert(ca alertsource.CreateAlert) error {
 		return fmt.Errorf("parsing duration: %v", err)
 	}
 	deviceAlerts[ca.QueryField] = alertsource.Alert{
-		Time:       time.Now(),
 		Duration:   duration,
 		DeviceId:   ca.DeviceId,
 		QueryField: ca.QueryField,

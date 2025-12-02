@@ -352,10 +352,10 @@ func TestRespondToAlert(t *testing.T) {
 
 func TestCreateAlert(t *testing.T) {
 	tests := map[string]struct {
-		wantErr        bool
-		wantAlertStore map[any]any
-		mockAlertStore map[any]any
-		createAlert    alertsource.CreateAlert
+		wantErr                         bool
+		wantAlertStore                  map[any]any
+		mockAlertStore, mockAlertSource map[any]any
+		createAlert                     alertsource.CreateAlert
 	}{
 		"successfully create a less than alert rule": {
 			wantErr: false,
@@ -366,6 +366,7 @@ func TestCreateAlert(t *testing.T) {
 				"alertStore": map[string]map[string]alertsource.Alert{
 					RegisteredDeviceId: {
 						RegisteredQueryField: alertsource.Alert{
+							Duration:   time.Duration(6 * time.Hour),
 							DeviceId:   RegisteredDeviceId,
 							QueryField: RegisteredQueryField,
 							Id:         "alert1",
@@ -385,10 +386,13 @@ func TestCreateAlert(t *testing.T) {
 		},
 	}
 	var as *alertstore.MockAlertStore
+	var source *alertsource.MockAlertSource
 	for name, tt := range tests {
 		t.Run(name, func(t *testing.T) {
 			as = alertstore.NewMockAlertStore(tt.mockAlertStore)
 			a.AlertStore = as
+			source = alertsource.NewMockAlertSource(tt.mockAlertSource)
+			a.AlertSource = source
 			a.CreateAlert(context.Background(),
 				&struct{ Body alertsource.CreateAlert }{tt.createAlert})
 			if diff := cmp.Diff(tt.wantAlertStore, as.GetValues()); diff != "" {
@@ -404,12 +408,22 @@ func TestParseDuration(t *testing.T) {
 		input   string
 		want    time.Duration
 	}{
-		"1 hour duration": {
+		"1 second": {
+			wantErr: false,
+			input:   "1s",
+			want:    time.Duration(1 * time.Second),
+		},
+		"1 minute": {
+			wantErr: false,
+			input:   "1m",
+			want:    time.Duration(1 * time.Minute),
+		},
+		"1 hour": {
 			wantErr: false,
 			input:   "1h",
 			want:    time.Duration(1 * time.Hour),
 		},
-		"1 day duration": {
+		"1 day": {
 			wantErr: false,
 			input:   "1d",
 			want:    time.Duration(24 * time.Hour),
