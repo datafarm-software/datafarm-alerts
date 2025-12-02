@@ -263,7 +263,7 @@ func TestRespondToAlert(t *testing.T) {
 			alert: alertsource.InfluxAlert{
 				Id:         "alert1",
 				Level:      "crit",
-				Message:    "Alert message stating crit level.",
+				Message:    "Alert that should be ignored.",
 				DeviceId:   RegisteredDeviceId,
 				QueryField: UnregisteredQueryField,
 			},
@@ -325,38 +325,6 @@ func TestRespondToAlert(t *testing.T) {
 						},
 					},
 				},
-			},
-		},
-
-		"send notification on the first alert ever received": {
-			wantUserInboxes: map[string][]string{
-				"user1": {
-					"Alert message stating crit level.",
-				},
-			},
-			wantAlertStore: map[any]any{
-				"alertRecipients": map[string][]string{
-					"alert1": {"user1"},
-				},
-				"alertStore": map[string]map[string]alertsource.Alert{
-					RegisteredDeviceId: {
-						RegisteredQueryField: alertsource.Alert{
-							Time:       AlertReceived,
-							DeviceId:   RegisteredDeviceId,
-							QueryField: RegisteredQueryField,
-							Id:         "alert1",
-							Level:      alertsource.Crit,
-						},
-					},
-				},
-			},
-			alert: alertsource.InfluxAlert{
-				Id:         RegisteredDeviceId,
-				Level:      "crit",
-				Message:    "Alert message stating crit level.",
-				Time:       AlertReceived,
-				DeviceId:   RegisteredDeviceId,
-				QueryField: RegisteredQueryField,
 			},
 		},
 	}

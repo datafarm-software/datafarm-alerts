@@ -81,37 +81,29 @@ func (a *App) RespondToAlert(
 	ctx context.Context,
 	in *struct{ Body alertsource.InfluxAlert }) (*any, error) {
 	alert := in.Body.GetAlert()
-	var shouldNotifyCrit bool
 	previous, err := a.Alertstore.GetPreviousAlert(alert.DeviceId, alert.QueryField)
-	if err == nil {
-		alert.Duration = previous.Duration
-		shouldNotifyCrit = a.ShouldNotifyCrit(alert, previous)
-	} else {
-		if errors.Is(err, alertsource.FirstAlert) {
-			shouldNotifyCrit = true
-		} else {
-			log.Printf(
-				"getting previous alert for %s: %s, error: %v",
-				alert.DeviceId, alert.QueryField, err,
-			)
-			return nil, huma.Error500InternalServerError("no alert configured")
-		}
-	}
-	if !shouldNotifyCrit {
-		return nil, nil
-	}
-	users, err := a.Alertstore.GetAlertRecipients(alert.Id)
 	if err != nil {
-		log.Printf("GetAlertRecipients: %v", err)
-		return nil, nil
+		log.Printf(
+			"getting previous alert for %s: %s, error: %v",
+			alert.DeviceId, alert.QueryField, err,
+		)
+		return nil, huma.Error500InternalServerError("no alert configured")
 	}
-	if err = a.Notifier.Notify(users, alert.Message); err != nil {
-		log.Printf("notifying users: %v", err)
-		return nil, nil
-	}
-	if err = a.Alertstore.Update(alert); err != nil {
-		log.Printf("updating alertstore: %v", err)
-		return nil, nil
+	alert.Duration = previous.Duration
+	if a.ShouldNotifyCrit(alert, previous) {
+		users, err := a.Alertstore.GetAlertRecipients(alert.Id)
+		if err != nil {
+			log.Printf("GetAlertRecipients: %v", err)
+			return nil, nil
+		}
+		if err = a.Notifier.Notify(users, alert.Message); err != nil {
+			log.Printf("notifying users: %v", err)
+			return nil, nil
+		}
+		if err = a.Alertstore.Update(alert); err != nil {
+			log.Printf("updating alertstore: %v", err)
+			return nil, nil
+		}
 	}
 	return nil, nil
 }
