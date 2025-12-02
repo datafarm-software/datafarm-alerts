@@ -86,7 +86,7 @@ func (m *MockAlertStore) StoreAlert(ca alertsource.CreateAlert) error {
 	}
 	deviceAlerts[ca.QueryField] = alertsource.Alert{
 		Time:       time.Now(),
-		Duration:   m.parseDuration(ca.Duration),
+		Duration:   ParseDuration(ca.Duration),
 		DeviceId:   ca.DeviceId,
 		QueryField: ca.QueryField,
 		Id:         ca.Id,

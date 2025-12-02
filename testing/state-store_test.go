@@ -397,3 +397,24 @@ func TestCreateAlert(t *testing.T) {
 		})
 	}
 }
+
+func TestParseDuration(t *testing.T) {
+	tests := map[string]struct {
+		wantErr bool
+		input   string
+		want    time.Duration
+	}{}
+	var got time.Duration
+	var err error
+	for name, tt := range tests {
+		t.Run(name, func(t *testing.T) {
+			got, err = alertstore.ParseDuration(tt.input)
+			if tt.wantErr != (err != nil) {
+				t.Fatalf("wantErr: %v, got: %v", tt.want, err)
+			}
+			if tt.want != got {
+				t.Fatalf("want: %v, got: %v", tt.want, got)
+			}
+		})
+	}
+}
