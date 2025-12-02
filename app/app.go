@@ -124,10 +124,12 @@ func (a *App) ShouldNotifyCrit(alert *alertsource.Alert, previous *alertsource.A
 func (a *App) CreateAlert(
 	ctx context.Context,
 	in *struct{ Body alertsource.CreateAlert }) (*any, error) {
-	if err := a.AlertSource.CreateAlert(in.Body); err != nil {
+	alertId, err := a.AlertSource.CreateAlert(in.Body)
+	if err != nil {
 		log.Printf("registering alert: %v", err)
 		return nil, nil
 	}
+	in.Body.Id = alertId
 	if err := a.AlertStore.StoreAlert(in.Body); err != nil {
 		log.Printf("storing alert: %v", err)
 		return nil, nil

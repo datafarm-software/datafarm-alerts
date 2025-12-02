@@ -21,6 +21,7 @@ const (
 
 type CreateAlert struct {
 	RangeValues []int      `json:"rangeValues" maxItems:"2"`
+	Id          string     `json:"-"`
 	Username    string     `json:"username" pattern:"^[a-zA-Z0-9_]+$"`
 	Duration    string     `json:"duration" pattern:"^[a-zA-Z0-9]+$"`
 	DeviceId    string     `json:"deviceId" pattern:"^[a-zA-Z0-9]+$"`
@@ -40,5 +41,5 @@ type Alert struct {
 
 type AlertSource interface {
 	GetAlert() *Alert
-	CreateAlert(CreateAlert) error
+	CreateAlert(CreateAlert) (string, error)
 }

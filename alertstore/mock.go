@@ -2,6 +2,7 @@ package alertstore
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/geraud22/sensordata-alerts/alertsource"
 )
@@ -75,5 +76,23 @@ func (m *MockAlertStore) Update(alert *alertsource.Alert) error {
 }
 
 func (m *MockAlertStore) StoreAlert(ca alertsource.CreateAlert) error {
+	alerts, ok := m.values["alertStore"].(map[string]map[string]alertsource.Alert)
+	if !ok {
+		return fmt.Errorf("no alertstore found")
+	}
+	deviceAlerts, ok := alerts[ca.DeviceId]
+	if !ok {
+		deviceAlerts = make(map[string]alertsource.Alert)
+	}
+	deviceAlerts[ca.QueryField] = alertsource.Alert{
+		Time:       time.Now(),
+		Duration:   m.parseDuration(ca.Duration),
+		DeviceId:   ca.DeviceId,
+		QueryField: ca.QueryField,
+		Id:         ca.Id,
+		Level:      alertsource.Ok,
+	}
+	alerts[ca.DeviceId] = deviceAlerts
+	m.values["alertStore"] = alerts
 	return nil
 }
