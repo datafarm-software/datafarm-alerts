@@ -3,9 +3,9 @@ module github.com/geraud22/sensordata-alerts
 go 1.24.10
 
 require (
-	github.com/apourchet/httpwrap v0.0.0-20250525231546-83f4b73180f1
 	github.com/danielgtaylor/huma/v2 v2.34.1
 	github.com/geraud22/config-from-yaml v1.1.1
+	github.com/go-chi/chi/v5 v5.2.2
 	github.com/google/go-cmp v0.7.0
 )
 
@@ -14,7 +14,6 @@ require (
 	github.com/go-playground/locales v0.14.1 // indirect
 	github.com/go-playground/universal-translator v0.18.1 // indirect
 	github.com/go-playground/validator v9.31.0+incompatible // indirect
-	github.com/gorilla/mux v1.8.1 // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/leodido/go-urn v1.4.0 // indirect

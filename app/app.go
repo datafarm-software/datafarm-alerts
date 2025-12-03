@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"reflect"
 
 	"github.com/danielgtaylor/huma/v2"
 	"github.com/danielgtaylor/huma/v2/adapters/humago"
@@ -37,7 +38,8 @@ func Start(opts Opts) error {
 	app.AlertSource = alertsource.NewMockAlertSource(nil)
 	cli := humacli.New(func(hooks humacli.Hooks, options *Opts) {
 		router := http.NewServeMux()
-		api := humago.New(router, huma.DefaultConfig("SensorData Alerts API", "1.0.0"))
+		config := huma.DefaultConfig("SensorData Alerts API", "1.0.0")
+		api := humago.New(router, config)
 		app.RegisterHumaOperations(api)
 		server := &http.Server{
 			Addr:    fmt.Sprintf("%s:%d", opts.Http.Address, opts.Http.Port),
@@ -59,19 +61,61 @@ func Start(opts Opts) error {
 	return nil
 }
 
+type ErrorResponse struct {
+	Schema string `json:"$schema" doc:"Link to Object Model."`
+	Title  string `json:"title" doc:"Name associated with error code."`
+	Status int    `json:"status" doc:"Http Status Code."`
+	Detail string `json:"detail" doc:"Human Readable explanation of what went wrong."`
+}
+
 func (a *App) RegisterHumaOperations(api huma.API) {
 	operation := huma.Operation{
 		Method:  "POST",
-		Path:    "/notify",
+		Path:    "/alert/notify",
 		Tags:    []string{"Post Alerts"},
 		Summary: "Post an alert.",
 	}
 	huma.Register(api, operation, a.RespondToAlert)
+	registry := huma.NewMapRegistry("#/errors", huma.DefaultSchemaNamer)
+	operation = huma.Operation{
+		Method:      "POST",
+		Path:        "/alert/create",
+		Tags:        []string{"Create Alert Rules."},
+		Summary:     "Create an alert rule.",
+		RequestBody: &huma.RequestBody{},
+		Responses: map[string]*huma.Response{
+			"500": {
+				Content: map[string]*huma.MediaType{
+					"application/json": {
+						Schema: huma.SchemaFromType(registry, reflect.TypeOf(ErrorResponse{})),
+						Example: ErrorResponse{
+							Schema: "http://localhost:3030/schemas/ErrorModel.json",
+							Title:  "Internal Server Error",
+							Status: 500,
+							Detail: "Internal error while registering the alert.",
+						},
+					}}},
+			"400": {
+				Content: map[string]*huma.MediaType{
+					"application/json": {
+						Schema: huma.SchemaFromType(registry, reflect.TypeOf(ErrorResponse{})),
+						Example: ErrorResponse{
+							Schema: "http://localhost:3030/schemas/ErrorModel.json",
+							Title:  "Bad Request",
+							Status: 400,
+							Detail: "Need 2 range values for range alert.",
+						},
+					},
+				},
+			},
+		},
+	}
+	huma.Register(api, operation, a.CreateAlertRule)
 }
 
 func (a *App) RespondToAlert(
 	ctx context.Context,
-	in *struct{ Body alertsource.InfluxAlert }) (*any, error) {
+	in *struct{ Body alertsource.InfluxAlert }) (*struct{}, error) {
 	alert := in.Body.GetAlert()
 	previous, err := a.AlertStore.GetPreviousAlert(alert.DeviceId, alert.QueryField)
 	if err != nil {
@@ -132,13 +176,13 @@ func (a *App) CreateAlertRule(
 			huma.Error400BadRequest("more than one range value on less than or greater alert")
 	}
 	if in.Body.AlertRange == alertsource.Range && len(in.Body.RangeValues) != 2 {
-		log.Printf("need 2 range values for range alert")
+		log.Printf("Need 2 range values for range alert.")
 		return nil, huma.Error400BadRequest("need 2 range values for range alert")
 	}
-	alertId, err := a.AlertSource.CreateAlert(in.Body)
+	alertId, err := a.AlertSource.RegisterAlert(in.Body)
 	if err != nil {
 		log.Printf("registering alert: %v", err)
-		return nil, huma.Error500InternalServerError("internal error while registering the alert")
+		return nil, huma.Error500InternalServerError("Internal error while registering the alert.")
 	}
 	in.Body.Id = alertId
 	if err := a.AlertStore.StoreAlert(in.Body); err != nil {
@@ -148,7 +192,7 @@ func (a *App) CreateAlertRule(
 	if err := a.AlertStore.AddUserToNotifyList(in.Body.Id, in.Body.Username); err != nil {
 		log.Printf(
 			"add user: %s to alert: %s notify list: %v",
-			in.Body.Username, in.Body.Id)
+			in.Body.Username, in.Body.Id, err)
 		return nil, huma.Error500InternalServerError("internal error adding user to notify list.")
 	}
 	return &struct{ Body alertsource.RuleCreated }{

@@ -12,6 +12,6 @@ func (m *MockAlertSource) GetAlert() *Alert {
 	return nil
 }
 
-func (m *MockAlertSource) CreateAlert(ar AlertRule) (string, error) {
+func (m *MockAlertSource) RegisterAlert(ar AlertRule) (string, error) {
 	return "alert1", nil
 }

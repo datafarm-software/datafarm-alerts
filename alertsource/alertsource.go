@@ -20,17 +20,17 @@ const (
 )
 
 type AlertRule struct {
-	RangeValues []int      `json:"rangeValues" maxItems:"2"`
+	RangeValues []int      `json:"rangeValues" maxItems:"2" doc:"One or two values, depending on whether the alertRange is a range or < >"`
 	Id          string     `json:"-"`
-	Username    string     `json:"username" pattern:"^[a-zA-Z0-9_]+$"`
-	Duration    string     `json:"duration" pattern:"^[a-zA-Z0-9]+$"`
-	DeviceId    string     `json:"deviceId" pattern:"^[a-zA-Z0-9]+$"`
-	QueryField  string     `json:"queryField" pattern:"^[a-zA-Z0-9_]+$"`
-	AlertRange  AlertRange `json:"alertRange" maximum:"2"`
+	Username    string     `json:"username" pattern:"^[a-zA-Z0-9_]+$" doc:"Username to notify in the event of an alert."`
+	Duration    string     `json:"duration" pattern:"^[0-9]{,2}[smhd]$" doc:"A duration literal, specifying how often a check should occur."`
+	DeviceId    string     `json:"deviceId" pattern:"^[a-zA-Z0-9]+$" doc:"The device for which data should be checked."`
+	QueryField  string     `json:"queryField" pattern:"^[a-zA-Z0-9_]+$" doc:"The field on the device, for which data should be checked."`
+	AlertRange  AlertRange `json:"alertRange" maximum:"2" doc:"Specify type of check to perform. 0 = Less Than, 1 = Greater Than, 2 = Range."`
 }
 
 type RuleCreated struct {
-	AlertId string `json:"alertId" readOnly:"true"`
+	AlertId string `json:"alertId" readOnly:"true" doc:"Generated Alert Id."`
 }
 
 type Alert struct {
@@ -45,5 +45,5 @@ type Alert struct {
 
 type AlertSource interface {
 	GetAlert() *Alert
-	CreateAlert(AlertRule) (string, error)
+	RegisterAlert(AlertRule) (string, error)
 }
