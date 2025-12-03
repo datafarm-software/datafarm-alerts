@@ -110,3 +110,34 @@ func (m *MockAlertStore) AddUserToNotifyList(alertId, username string) error {
 	m.values["alertRecipients"] = recipientStore
 	return nil
 }
+
+func (m *MockAlertStore) CheckAlertExists(ar alertsource.AlertRule) (string, error) {
+	var alertId string
+	alerts, ok := m.values["alertStore"].(map[string]map[string]alertsource.Alert)
+	if !ok {
+		return alertId, fmt.Errorf("no alertstore found")
+	}
+	deviceAlerts, ok := alerts[ar.DeviceId]
+	if !ok {
+		deviceAlerts = make(map[string]alertsource.Alert)
+		return alertId, nil
+	}
+	existingAlert, ok := deviceAlerts[ar.QueryField]
+	if !ok {
+		return alertId, nil
+	}
+	duration, err := ParseDuration(ar.Duration)
+	if err != nil {
+		return alertId, fmt.Errorf("parsing duration: %v", err)
+	}
+	currentAlert := alertsource.Alert{
+		Duration:   duration,
+		DeviceId:   ar.DeviceId,
+		QueryField: ar.QueryField,
+	}
+	if AlertsMatch(existingAlert, currentAlert) {
+		alertId = existingAlert.Id
+		return alertId, AlertExists
+	}
+	return "", nil
+}

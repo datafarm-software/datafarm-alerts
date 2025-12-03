@@ -1,6 +1,7 @@
 package alertstore
 
 import (
+	"errors"
 	"fmt"
 	"strconv"
 	"time"
@@ -8,16 +9,18 @@ import (
 	"github.com/geraud22/sensordata-alerts/alertsource"
 )
 
+var InvalidDuration = time.Duration(-(1 * time.Hour))
+var AlertExists = errors.New("alert exists")
+
 type AlertStore interface {
-	//NOTE: could return alertsource.FirstAlert
 	GetPreviousAlert(deviceId, queryField string) (*alertsource.Alert, error)
 	GetAlertRecipients(id string) ([]string, error)
 	Update(*alertsource.Alert) error
 	StoreAlert(alertsource.AlertRule) error
 	AddUserToNotifyList(alertId string, username string) error
+	//NOTE: could return alertstore.AlertExists
+	CheckAlertExists(alertsource.AlertRule) (string, error)
 }
-
-var InvalidDuration = time.Duration(-(1 * time.Hour))
 
 func ParseDuration(d string) (time.Duration, error) {
 	if len(d) != 2 {

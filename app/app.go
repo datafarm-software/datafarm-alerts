@@ -61,11 +61,16 @@ func Start(opts Opts) error {
 	return nil
 }
 
-type ErrorResponse struct {
+type HumaError struct {
 	Schema string `json:"$schema" doc:"Link to Object Model."`
 	Title  string `json:"title" doc:"Name associated with error code."`
 	Status int    `json:"status" doc:"Http Status Code."`
 	Detail string `json:"detail" doc:"Human Readable explanation of what went wrong."`
+}
+
+type ErrorResponse struct {
+	huma.StatusError
+	AlertId string `json:"alertId" readOnly:"true" required:"false" doc:"In the event of a conflict, the existing alertId will be returned."`
 }
 
 func (a *App) RegisterHumaOperations(api huma.API) {
@@ -92,10 +97,8 @@ func (a *App) RegisterHumaOperations(api huma.API) {
 					"application/json": {
 						Schema: huma.SchemaFromType(registry, reflect.TypeOf(ErrorResponse{})),
 						Example: ErrorResponse{
-							Schema: "http://localhost:3030/schemas/ErrorModel.json",
-							Title:  "Internal Server Error",
-							Status: 500,
-							Detail: "Internal error while registering the alert.",
+							StatusError: huma.Error500InternalServerError(
+								"Internal error while registering the alert."),
 						},
 					}}},
 			"400": {
@@ -104,10 +107,8 @@ func (a *App) RegisterHumaOperations(api huma.API) {
 					"application/json": {
 						Schema: huma.SchemaFromType(registry, reflect.TypeOf(ErrorResponse{})),
 						Example: ErrorResponse{
-							Schema: "http://localhost:3030/schemas/ErrorModel.json",
-							Title:  "Bad Request",
-							Status: 400,
-							Detail: "Need 2 range values for range alert.",
+							StatusError: huma.Error400BadRequest(
+								"Need 2 range values for range alert."),
 						},
 					},
 				},
@@ -183,14 +184,17 @@ func (a *App) CreateAlertRule(
 		log.Printf("Need 2 range values for range alert.")
 		return nil, huma.Error400BadRequest("Need 2 range values for range alert.")
 	}
-	if err := a.AlertStore.CheckAlertExists(in.Body); err != nil {
+	if existingAlertId, err := a.AlertStore.CheckAlertExists(in.Body); err != nil {
 		if !errors.Is(err, alertstore.AlertExists) {
 			log.Printf("checking alert exists: %v", err)
 			return nil,
 				huma.Error500InternalServerError("Internal error checking if alert exists.")
 		}
-		return nil, huma.Error409Conflict(
-			"Alert with identical parameters already exists.")
+		return nil, ErrorResponse{
+			StatusError: huma.Error409Conflict(
+				"Alert with identical parameters already exists."),
+			AlertId: existingAlertId,
+		}
 	}
 	alertId, err := a.AlertSource.RegisterAlert(in.Body)
 	if err != nil {
