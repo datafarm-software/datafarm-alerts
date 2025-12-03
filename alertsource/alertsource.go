@@ -34,13 +34,14 @@ type RuleCreated struct {
 }
 
 type Alert struct {
-	Time       time.Time
-	Duration   time.Duration
-	DeviceId   string
-	Message    string
-	QueryField string
-	Id         string
-	Level      AlertLevel
+	Time        time.Time
+	Duration    time.Duration
+	RangeValues []int
+	DeviceId    string
+	Message     string
+	QueryField  string
+	Id          string
+	Level       AlertLevel
 }
 
 type AlertSource interface {

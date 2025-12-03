@@ -568,6 +568,21 @@ func TestAlertsMatch(t *testing.T) {
 				QueryField: RegisteredQueryField,
 			},
 		},
+		"alerts do match, except range": {
+			want: false,
+			existing: alertsource.Alert{
+				Duration:    SomeDuration,
+				DeviceId:    RegisteredDeviceId,
+				QueryField:  RegisteredQueryField,
+				RangeValues: []int{1},
+			},
+			current: alertsource.Alert{
+				Duration:    SomeDuration,
+				DeviceId:    RegisteredDeviceId,
+				QueryField:  RegisteredQueryField,
+				RangeValues: []int{2},
+			},
+		},
 	}
 	var got bool
 	for name, tc := range tests {
