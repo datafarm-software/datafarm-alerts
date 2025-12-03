@@ -23,16 +23,24 @@ type AlertStore interface {
 }
 
 func ParseDuration(d string) (time.Duration, error) {
-	if len(d) != 2 {
+	var num int
+	var err error
+	var period byte
+	switch {
+	case len(d) == 3:
+		num, err = strconv.Atoi(string(d[0:2]))
+		period = d[2]
+	case len(d) == 2:
+		num, err = strconv.Atoi(string(d[0]))
+		period = d[1]
+	default:
 		return InvalidDuration,
-			fmt.Errorf("expected duration length 2, got: %d", len(d))
+			fmt.Errorf("invalid duration length, got: %d", len(d))
 	}
-	num, err := strconv.Atoi(string(d[0]))
 	if err != nil {
 		return InvalidDuration, err
 	}
 	numAsDuration := time.Duration(num)
-	period := d[1]
 	var duration time.Duration
 	switch period {
 	case byte('s'):
