@@ -368,7 +368,7 @@ func TestCreateAlertRule(t *testing.T) {
 				"alertStore": map[string]map[string]alertsource.Alert{
 					RegisteredDeviceId: {
 						RegisteredQueryField: alertsource.Alert{
-							Duration:    time.Duration(6 * time.Hour),
+							Duration:    SomeDuration,
 							DeviceId:    RegisteredDeviceId,
 							RangeValues: []int{5},
 							QueryField:  RegisteredQueryField,
@@ -380,8 +380,8 @@ func TestCreateAlertRule(t *testing.T) {
 			},
 			alertRule: alertsource.AlertRule{
 				RangeValues: []int{5},
-				Duration:    "6h",
-				Username:    "user1",
+				Duration:    "24h",
+				Usernames:   []string{"user1"},
 				DeviceId:    "device1",
 				QueryField:  "temperature",
 				AlertRange:  alertsource.LessThan,
@@ -424,7 +424,7 @@ func TestCreateAlertRule(t *testing.T) {
 				"alertStore": map[string]map[string]alertsource.Alert{
 					RegisteredDeviceId: {
 						RegisteredQueryField: alertsource.Alert{
-							Duration:   time.Duration(6 * time.Hour),
+							Duration:   SomeDuration,
 							DeviceId:   RegisteredDeviceId,
 							QueryField: RegisteredQueryField,
 							Id:         "alert1",
@@ -440,7 +440,7 @@ func TestCreateAlertRule(t *testing.T) {
 				"alertStore": map[string]map[string]alertsource.Alert{
 					RegisteredDeviceId: {
 						RegisteredQueryField: alertsource.Alert{
-							Duration:   time.Duration(6 * time.Hour),
+							Duration:   SomeDuration,
 							DeviceId:   RegisteredDeviceId,
 							QueryField: RegisteredQueryField,
 							Id:         "alert1",
@@ -450,8 +450,8 @@ func TestCreateAlertRule(t *testing.T) {
 				},
 			},
 			alertRule: alertsource.AlertRule{
-				Username:    "user1",
-				Duration:    "6h",
+				Usernames:   []string{"user1"},
+				Duration:    "24h",
 				DeviceId:    "device1",
 				RangeValues: []int{5, 10},
 				QueryField:  "temperature",
@@ -510,6 +510,11 @@ func TestParseDuration(t *testing.T) {
 		"1 day": {
 			wantErr: false,
 			input:   "1d",
+			want:    time.Duration(24 * time.Hour),
+		},
+		"24 hours": {
+			wantErr: false,
+			input:   "24h",
 			want:    time.Duration(24 * time.Hour),
 		},
 		"invalid duration": {
