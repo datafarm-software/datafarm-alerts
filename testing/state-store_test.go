@@ -384,17 +384,43 @@ func TestCreateAlert(t *testing.T) {
 				AlertRange:  alertsource.LessThan,
 			},
 		},
+		"invalid range on less than alert": {
+			wantErr: true,
+			wantAlertStore: map[any]any{
+				"alertRecipients": map[string][]string{},
+				"alertStore":      map[string]map[string]alertsource.Alert{},
+			},
+			createAlert: alertsource.CreateAlert{
+				RangeValues: []int{5, 10},
+				AlertRange:  alertsource.LessThan,
+			},
+		},
+		"invalid range on range alert": {
+			wantErr: true,
+			wantAlertStore: map[any]any{
+				"alertRecipients": map[string][]string{},
+				"alertStore":      map[string]map[string]alertsource.Alert{},
+			},
+			createAlert: alertsource.CreateAlert{
+				RangeValues: []int{5},
+				AlertRange:  alertsource.Range,
+			},
+		},
 	}
 	var as *alertstore.MockAlertStore
 	var source *alertsource.MockAlertSource
+	var err error
 	for name, tt := range tests {
 		t.Run(name, func(t *testing.T) {
 			as = alertstore.NewMockAlertStore(tt.mockAlertStore)
 			a.AlertStore = as
 			source = alertsource.NewMockAlertSource(tt.mockAlertSource)
 			a.AlertSource = source
-			a.CreateAlert(context.Background(),
+			_, err = a.CreateAlert(context.Background(),
 				&struct{ Body alertsource.CreateAlert }{tt.createAlert})
+			if tt.wantErr != (err != nil) {
+				t.Fatalf("wantErr: %v, got: %v", tt.wantErr, err)
+			}
 			if diff := cmp.Diff(tt.wantAlertStore, as.GetValues()); diff != "" {
 				t.Fatalf("alertstore mismatch (-want +got):\n%s", diff)
 			}

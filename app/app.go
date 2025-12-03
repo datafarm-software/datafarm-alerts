@@ -124,6 +124,15 @@ func (a *App) ShouldNotifyCrit(alert *alertsource.Alert, previous *alertsource.A
 func (a *App) CreateAlert(
 	ctx context.Context,
 	in *struct{ Body alertsource.CreateAlert }) (*any, error) {
+	if in.Body.AlertRange < alertsource.Range && len(in.Body.RangeValues) > 1 {
+		log.Printf("can't have more than one range value on greater or less than alert")
+		return nil,
+			huma.Error400BadRequest("more than one range value on less than or greater alert")
+	}
+	if in.Body.AlertRange == alertsource.Range && len(in.Body.RangeValues) != 2 {
+		log.Printf("need 2 range values for range alert")
+		return nil, huma.Error400BadRequest("need 2 range values for range alert")
+	}
 	alertId, err := a.AlertSource.CreateAlert(in.Body)
 	if err != nil {
 		log.Printf("registering alert: %v", err)
