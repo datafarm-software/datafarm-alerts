@@ -368,11 +368,12 @@ func TestCreateAlertRule(t *testing.T) {
 				"alertStore": map[string]map[string]alertsource.Alert{
 					RegisteredDeviceId: {
 						RegisteredQueryField: alertsource.Alert{
-							Duration:   time.Duration(6 * time.Hour),
-							DeviceId:   RegisteredDeviceId,
-							QueryField: RegisteredQueryField,
-							Id:         "alert1",
-							Level:      alertsource.Ok,
+							Duration:    time.Duration(6 * time.Hour),
+							DeviceId:    RegisteredDeviceId,
+							RangeValues: []int{5},
+							QueryField:  RegisteredQueryField,
+							Id:          "alert1",
+							Level:       alertsource.Ok,
 						},
 					},
 				},

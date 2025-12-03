@@ -88,11 +88,12 @@ func (m *MockAlertStore) StoreAlert(ar alertsource.AlertRule) error {
 		return fmt.Errorf("parsing duration: %v", err)
 	}
 	deviceAlerts[ar.QueryField] = alertsource.Alert{
-		Duration:   duration,
-		DeviceId:   ar.DeviceId,
-		QueryField: ar.QueryField,
-		Id:         ar.Id,
-		Level:      alertsource.Ok,
+		Duration:    duration,
+		DeviceId:    ar.DeviceId,
+		QueryField:  ar.QueryField,
+		Id:          ar.Id,
+		Level:       alertsource.Ok,
+		RangeValues: ar.RangeValues,
 	}
 	alerts[ar.DeviceId] = deviceAlerts
 	m.values["alertStore"] = alerts
