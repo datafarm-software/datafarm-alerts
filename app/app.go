@@ -69,8 +69,8 @@ type HumaError struct {
 }
 
 type ErrorResponse struct {
-	huma.StatusError
-	AlertId string `json:"alertId" readOnly:"true" required:"false" doc:"In the event of a conflict, the existing alertId will be returned."`
+	huma.StatusError `json:"statusError" doc:"A breakdown of the error that occurred."`
+	AlertId          string `json:"alertId" readOnly:"true" required:"false" doc:"In the event of a conflict, the existing alertId will be returned."`
 }
 
 func (a *App) RegisterHumaOperations(api huma.API) {
@@ -88,7 +88,7 @@ func (a *App) RegisterHumaOperations(api huma.API) {
 		Path:        "/alert/create",
 		Tags:        []string{"Create"},
 		Summary:     "Create an alert rule.",
-		Description: "Clients can use this route to setup a new check on a device and query field combination, which will alert them according to the provided AlertRule request body.",
+		Description: "Clients can use this route to setup a new sensordata check, which will alert them according to the provided AlertRule request body.",
 		RequestBody: &huma.RequestBody{},
 		Responses: map[string]*huma.Response{
 			"500": {

@@ -76,11 +76,11 @@ func TestNotifyCrit(t *testing.T) {
 			},
 		},
 	}
-	for name, tt := range tests {
+	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
-			got = a.ShouldNotifyCrit(tt.alert, tt.previous)
-			if got != tt.want {
-				t.Fatalf("tt.want = %v, got = %v", tt.want, got)
+			got = a.ShouldNotifyCrit(tc.alert, tc.previous)
+			if got != tc.want {
+				t.Fatalf("tc.want = %v, got = %v", tc.want, got)
 			}
 		})
 	}
@@ -330,20 +330,20 @@ func TestRespondToAlert(t *testing.T) {
 	}
 	var n *notifier.MockNotifier
 	var as *alertstore.MockAlertStore
-	for name, tt := range tests {
+	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
-			n = notifier.NewMockNotifier(tt.mockNotifierStore)
-			as = alertstore.NewMockAlertStore(tt.mockAlertStore)
+			n = notifier.NewMockNotifier(tc.mockNotifierStore)
+			as = alertstore.NewMockAlertStore(tc.mockAlertStore)
 			a.AlertStore = as
 			a.Notifier = n
 			a.RespondToAlert(
 				context.Background(),
-				&struct{ Body alertsource.InfluxAlert }{tt.alert},
+				&struct{ Body alertsource.InfluxAlert }{tc.alert},
 			)
-			if diff := cmp.Diff(tt.wantUserInboxes, n.GetUserInboxes()); diff != "" {
+			if diff := cmp.Diff(tc.wantUserInboxes, n.GetUserInboxes()); diff != "" {
 				t.Fatalf("user inboxes mismatch (-want +got):\n%s", diff)
 			}
-			if diff := cmp.Diff(tt.wantAlertStore, as.GetValues()); diff != "" {
+			if diff := cmp.Diff(tc.wantAlertStore, as.GetValues()); diff != "" {
 				t.Fatalf("alertstore mismatch (-want +got):\n%s", diff)
 			}
 		})
@@ -358,6 +358,7 @@ func TestCreateAlertRule(t *testing.T) {
 		mockAlertStore, mockAlertSource map[any]any
 		alertRule                       alertsource.AlertRule
 	}{
+
 		"successfully create a less than alert rule": {
 			wantErr: false,
 			wantAlertStore: map[any]any{
@@ -390,6 +391,7 @@ func TestCreateAlertRule(t *testing.T) {
 				},
 			},
 		},
+
 		"invalid range on less than alert": {
 			wantErr: true,
 			wantAlertStore: map[any]any{
@@ -401,6 +403,7 @@ func TestCreateAlertRule(t *testing.T) {
 				AlertRange:  alertsource.LessThan,
 			},
 		},
+
 		"invalid range on range alert": {
 			wantErr: true,
 			wantAlertStore: map[any]any{
@@ -412,7 +415,8 @@ func TestCreateAlertRule(t *testing.T) {
 				AlertRange:  alertsource.LessThan,
 			},
 		},
-		"alert with identical parameters already exists and recipient list already includes username": {
+
+		"alert with identical parameters already exists": {
 			wantErr: true,
 			wantAlertStore: map[any]any{
 				"alertRecipients": map[string][]string{"alert1": {"user1"}},
@@ -458,23 +462,23 @@ func TestCreateAlertRule(t *testing.T) {
 	var source *alertsource.MockAlertSource
 	var err error
 	var got *struct{ Body alertsource.RuleCreated }
-	for name, tt := range tests {
+	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
-			as = alertstore.NewMockAlertStore(tt.mockAlertStore)
+			as = alertstore.NewMockAlertStore(tc.mockAlertStore)
 			a.AlertStore = as
-			source = alertsource.NewMockAlertSource(tt.mockAlertSource)
+			source = alertsource.NewMockAlertSource(tc.mockAlertSource)
 			a.AlertSource = source
 			got, err = a.CreateAlertRule(context.Background(),
-				&struct{ Body alertsource.AlertRule }{tt.alertRule})
-			if tt.wantErr != (err != nil) {
-				t.Fatalf("wantErr: %v, got: %v", tt.wantErr, err)
+				&struct{ Body alertsource.AlertRule }{tc.alertRule})
+			if tc.wantErr != (err != nil) {
+				t.Fatalf("wantErr: %v, got: %v", tc.wantErr, err)
 			}
-			if !tt.wantErr {
-				if diff := cmp.Diff(tt.wantResponse.Body, got.Body); diff != "" {
+			if !tc.wantErr {
+				if diff := cmp.Diff(tc.wantResponse.Body, got.Body); diff != "" {
 					t.Fatalf("response mismatch (-want +got):\n%s", diff)
 				}
 			}
-			if diff := cmp.Diff(tt.wantAlertStore, as.GetValues()); diff != "" {
+			if diff := cmp.Diff(tc.wantAlertStore, as.GetValues()); diff != "" {
 				t.Fatalf("alertstore mismatch (-want +got):\n%s", diff)
 			}
 		})
@@ -518,16 +522,59 @@ func TestParseDuration(t *testing.T) {
 	}
 	var got time.Duration
 	var err error
-	for name, tt := range tests {
+	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
-			got, err = alertstore.ParseDuration(tt.input)
-			if tt.wantErr != (err != nil) {
-				t.Fatalf("wantErr: %v, got: %v", tt.want, err)
+			got, err = alertstore.ParseDuration(tc.input)
+			if tc.wantErr != (err != nil) {
+				t.Fatalf("wantErr: %v, got: %v", tc.want, err)
 			}
-			if !tt.wantErr {
-				if tt.want != got {
-					t.Fatalf("want: %v, got: %v", tt.want, got)
+			if !tc.wantErr {
+				if tc.want != got {
+					t.Fatalf("want: %v, got: %v", tc.want, got)
 				}
+			}
+		})
+	}
+}
+
+func TestAlertsMatch(t *testing.T) {
+	tests := map[string]struct {
+		want              bool
+		existing, current alertsource.Alert
+	}{
+		"alerts don't match": {
+			want: false,
+			existing: alertsource.Alert{
+				Duration:   SomeDuration,
+				DeviceId:   RegisteredDeviceId,
+				QueryField: RegisteredQueryField,
+			},
+			current: alertsource.Alert{
+				Duration:   1 * time.Minute,
+				DeviceId:   UnregisteredDeviceId,
+				QueryField: UnregisteredQueryField,
+			},
+		},
+		"alerts do match": {
+			want: true,
+			existing: alertsource.Alert{
+				Duration:   SomeDuration,
+				DeviceId:   RegisteredDeviceId,
+				QueryField: RegisteredQueryField,
+			},
+			current: alertsource.Alert{
+				Duration:   SomeDuration,
+				DeviceId:   RegisteredDeviceId,
+				QueryField: RegisteredQueryField,
+			},
+		},
+	}
+	var got bool
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+			got = alertstore.AlertsMatch(tc.existing, tc.current)
+			if tc.want != got {
+				t.Fatalf("want: %v, got: %v", tc.want, got)
 			}
 		})
 	}
