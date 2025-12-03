@@ -127,12 +127,7 @@ func (m *MockAlertStore) CheckAlertExists(ar alertsource.AlertRule) (string, err
 	if !ok {
 		return alertId, nil
 	}
-	duration, err := ParseDuration(ar.Duration)
-	if err != nil {
-		return alertId, fmt.Errorf("parsing duration: %v", err)
-	}
 	currentAlert := alertsource.Alert{
-		Duration:   duration,
 		DeviceId:   ar.DeviceId,
 		QueryField: ar.QueryField,
 	}

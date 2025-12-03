@@ -3,7 +3,6 @@ package alertstore
 import (
 	"errors"
 	"fmt"
-	"slices"
 	"strconv"
 	"time"
 
@@ -51,12 +50,9 @@ func ParseDuration(d string) (time.Duration, error) {
 }
 
 func AlertsMatch(existing, current alertsource.Alert) bool {
-	if existing.Duration == current.Duration &&
-		existing.DeviceId == current.DeviceId &&
+	if existing.DeviceId == current.DeviceId &&
 		existing.QueryField == current.QueryField {
-		if slices.Equal(existing.RangeValues, current.RangeValues) {
-			return true
-		}
+		return true
 	}
 	return false
 }

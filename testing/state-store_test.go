@@ -546,12 +546,10 @@ func TestAlertsMatch(t *testing.T) {
 		"alerts don't match": {
 			want: false,
 			existing: alertsource.Alert{
-				Duration:   SomeDuration,
 				DeviceId:   RegisteredDeviceId,
 				QueryField: RegisteredQueryField,
 			},
 			current: alertsource.Alert{
-				Duration:   1 * time.Minute,
 				DeviceId:   UnregisteredDeviceId,
 				QueryField: UnregisteredQueryField,
 			},
@@ -559,29 +557,12 @@ func TestAlertsMatch(t *testing.T) {
 		"alerts do match": {
 			want: true,
 			existing: alertsource.Alert{
-				Duration:   SomeDuration,
 				DeviceId:   RegisteredDeviceId,
 				QueryField: RegisteredQueryField,
 			},
 			current: alertsource.Alert{
-				Duration:   SomeDuration,
 				DeviceId:   RegisteredDeviceId,
 				QueryField: RegisteredQueryField,
-			},
-		},
-		"alerts do match, except range": {
-			want: false,
-			existing: alertsource.Alert{
-				Duration:    SomeDuration,
-				DeviceId:    RegisteredDeviceId,
-				QueryField:  RegisteredQueryField,
-				RangeValues: []int{1},
-			},
-			current: alertsource.Alert{
-				Duration:    SomeDuration,
-				DeviceId:    RegisteredDeviceId,
-				QueryField:  RegisteredQueryField,
-				RangeValues: []int{2},
 			},
 		},
 	}
