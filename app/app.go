@@ -95,20 +95,37 @@ func (a *App) RegisterHumaOperations(api huma.API) {
 				Description: "Internal Server Error",
 				Content: map[string]*huma.MediaType{
 					"application/json": {
-						Schema: huma.SchemaFromType(registry, reflect.TypeOf(ErrorResponse{})),
-						Example: ErrorResponse{
-							StatusError: huma.Error500InternalServerError(
-								"Internal error while registering the alert."),
+						Schema: huma.SchemaFromType(registry, reflect.TypeOf(HumaError{})),
+						Example: HumaError{
+							Schema: "http://localhost:3030/schemas/ErrorModel.json",
+							Title:  "Bad Request",
+							Status: 400,
+							Detail: "Internal error while registering the alert.",
 						},
 					}}},
 			"400": {
 				Description: "Bad Request",
 				Content: map[string]*huma.MediaType{
 					"application/json": {
+						Schema: huma.SchemaFromType(registry, reflect.TypeOf(HumaError{})),
+						Example: HumaError{
+							Schema: "http://localhost:3030/schemas/ErrorModel.json",
+							Title:  "Bad Request",
+							Status: 400,
+							Detail: "Need 2 range values for range alert.",
+						},
+					},
+				},
+			},
+			"409": {
+				Description: "Resource Conflict",
+				Content: map[string]*huma.MediaType{
+					"application/json": {
 						Schema: huma.SchemaFromType(registry, reflect.TypeOf(ErrorResponse{})),
 						Example: ErrorResponse{
-							StatusError: huma.Error400BadRequest(
-								"Need 2 range values for range alert."),
+							StatusError: huma.Error409Conflict(
+								"Alert with identical parameters already exists."),
+							AlertId: "alert1",
 						},
 					},
 				},

@@ -48,3 +48,7 @@ func ParseDuration(d string) (time.Duration, error) {
 	}
 	return duration, nil
 }
+
+func AlertsMatch(existing, current alertsource.Alert) bool {
+	return false
+}
