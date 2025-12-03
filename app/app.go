@@ -74,17 +74,20 @@ func (a *App) RegisterHumaOperations(api huma.API) {
 		Path:    "/alert/notify",
 		Tags:    []string{"Post Alerts"},
 		Summary: "Post an alert.",
+		Hidden:  true,
 	}
 	huma.Register(api, operation, a.RespondToAlert)
 	registry := huma.NewMapRegistry("#/errors", huma.DefaultSchemaNamer)
 	operation = huma.Operation{
 		Method:      "POST",
 		Path:        "/alert/create",
-		Tags:        []string{"Create Alert Rules."},
+		Tags:        []string{"Create"},
 		Summary:     "Create an alert rule.",
+		Description: "Clients can use this route to setup a new check on a device and query field combination, which will alert them according to the provided AlertRule request body.",
 		RequestBody: &huma.RequestBody{},
 		Responses: map[string]*huma.Response{
 			"500": {
+				Description: "Internal Server Error",
 				Content: map[string]*huma.MediaType{
 					"application/json": {
 						Schema: huma.SchemaFromType(registry, reflect.TypeOf(ErrorResponse{})),
@@ -96,6 +99,7 @@ func (a *App) RegisterHumaOperations(api huma.API) {
 						},
 					}}},
 			"400": {
+				Description: "Bad Request",
 				Content: map[string]*huma.MediaType{
 					"application/json": {
 						Schema: huma.SchemaFromType(registry, reflect.TypeOf(ErrorResponse{})),

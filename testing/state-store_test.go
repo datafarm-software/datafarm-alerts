@@ -409,6 +409,47 @@ func TestCreateAlertRule(t *testing.T) {
 			},
 			alertRule: alertsource.AlertRule{
 				RangeValues: []int{5},
+				AlertRange:  alertsource.LessThan,
+			},
+		},
+		"alert with identical parameters already exists and recipient list already includes username": {
+			wantErr: true,
+			wantAlertStore: map[any]any{
+				"alertRecipients": map[string][]string{"alert1": {"user1"}},
+				"alertStore": map[string]map[string]alertsource.Alert{
+					RegisteredDeviceId: {
+						RegisteredQueryField: alertsource.Alert{
+							Duration:   time.Duration(6 * time.Hour),
+							DeviceId:   RegisteredDeviceId,
+							QueryField: RegisteredQueryField,
+							Id:         "alert1",
+							Level:      alertsource.Ok,
+						},
+					},
+				},
+			},
+			mockAlertStore: map[any]any{
+				"alertRecipients": map[string][]string{
+					"alert1": {"user1"},
+				},
+				"alertStore": map[string]map[string]alertsource.Alert{
+					RegisteredDeviceId: {
+						RegisteredQueryField: alertsource.Alert{
+							Duration:   time.Duration(6 * time.Hour),
+							DeviceId:   RegisteredDeviceId,
+							QueryField: RegisteredQueryField,
+							Id:         "alert1",
+							Level:      alertsource.Ok,
+						},
+					},
+				},
+			},
+			alertRule: alertsource.AlertRule{
+				Username:    "user1",
+				Duration:    "6h",
+				DeviceId:    "device1",
+				RangeValues: []int{5, 10},
+				QueryField:  "temperature",
 				AlertRange:  alertsource.Range,
 			},
 		},
