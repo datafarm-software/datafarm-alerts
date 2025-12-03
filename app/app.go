@@ -175,13 +175,22 @@ func (a *App) CreateAlertRule(
 		Body alertsource.AlertRule
 	}) (*struct{ Body alertsource.RuleCreated }, error) {
 	if in.Body.AlertRange < alertsource.Range && len(in.Body.RangeValues) > 1 {
-		log.Printf("can't have more than one range value on greater or less than alert")
+		log.Printf("can't have more than one range value on greater or less than alert.")
 		return nil,
-			huma.Error400BadRequest("more than one range value on less than or greater alert")
+			huma.Error400BadRequest("More than one range value on less than or greater alert.")
 	}
 	if in.Body.AlertRange == alertsource.Range && len(in.Body.RangeValues) != 2 {
 		log.Printf("Need 2 range values for range alert.")
-		return nil, huma.Error400BadRequest("need 2 range values for range alert")
+		return nil, huma.Error400BadRequest("Need 2 range values for range alert.")
+	}
+	if err := a.AlertStore.CheckAlertExists(in.Body); err != nil {
+		if !errors.Is(err, alertstore.AlertExists) {
+			log.Printf("checking alert exists: %v", err)
+			return nil,
+				huma.Error500InternalServerError("Internal error checking if alert exists.")
+		}
+		return nil, huma.Error409Conflict(
+			"Alert with identical parameters already exists.")
 	}
 	alertId, err := a.AlertSource.RegisterAlert(in.Body)
 	if err != nil {
