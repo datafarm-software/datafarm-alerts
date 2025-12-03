@@ -19,7 +19,7 @@ const (
 	Range
 )
 
-type CreateAlert struct {
+type AlertRule struct {
 	RangeValues []int      `json:"rangeValues" maxItems:"2"`
 	Id          string     `json:"-"`
 	Username    string     `json:"username" pattern:"^[a-zA-Z0-9_]+$"`
@@ -27,6 +27,10 @@ type CreateAlert struct {
 	DeviceId    string     `json:"deviceId" pattern:"^[a-zA-Z0-9]+$"`
 	QueryField  string     `json:"queryField" pattern:"^[a-zA-Z0-9_]+$"`
 	AlertRange  AlertRange `json:"alertRange" maximum:"2"`
+}
+
+type RuleCreated struct {
+	AlertId string `json:"alertId" readOnly:"true"`
 }
 
 type Alert struct {
@@ -41,5 +45,5 @@ type Alert struct {
 
 type AlertSource interface {
 	GetAlert() *Alert
-	CreateAlert(CreateAlert) (string, error)
+	CreateAlert(AlertRule) (string, error)
 }

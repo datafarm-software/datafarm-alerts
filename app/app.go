@@ -121,9 +121,11 @@ func (a *App) ShouldNotifyCrit(alert *alertsource.Alert, previous *alertsource.A
 	return false
 }
 
-func (a *App) CreateAlert(
+func (a *App) CreateAlertRule(
 	ctx context.Context,
-	in *struct{ Body alertsource.CreateAlert }) (*any, error) {
+	in *struct {
+		Body alertsource.AlertRule
+	}) (*struct{ Body alertsource.RuleCreated }, error) {
 	if in.Body.AlertRange < alertsource.Range && len(in.Body.RangeValues) > 1 {
 		log.Printf("can't have more than one range value on greater or less than alert")
 		return nil,
@@ -136,18 +138,22 @@ func (a *App) CreateAlert(
 	alertId, err := a.AlertSource.CreateAlert(in.Body)
 	if err != nil {
 		log.Printf("registering alert: %v", err)
-		return nil, nil
+		return nil, huma.Error500InternalServerError("internal error while registering the alert")
 	}
 	in.Body.Id = alertId
 	if err := a.AlertStore.StoreAlert(in.Body); err != nil {
 		log.Printf("storing alert: %v", err)
-		return nil, nil
+		return nil, huma.Error500InternalServerError("internal error storing the alert rule")
 	}
 	if err := a.AlertStore.AddUserToNotifyList(in.Body.Id, in.Body.Username); err != nil {
 		log.Printf(
 			"add user: %s to alert: %s notify list: %v",
 			in.Body.Username, in.Body.Id)
-		return nil, nil
+		return nil, huma.Error500InternalServerError("internal error adding user to notify list.")
 	}
-	return nil, nil
+	return &struct{ Body alertsource.RuleCreated }{
+		Body: alertsource.RuleCreated{
+			AlertId: alertId,
+		},
+	}, nil
 }
