@@ -581,3 +581,19 @@ func TestAlertsMatch(t *testing.T) {
 		})
 	}
 }
+
+func TestUpdateAlertRule(t *testing.T) {
+	tests := map[string]struct {
+		wantErr bool
+		input   alertstore.UpdateAlertRule
+	}{}
+	var err error
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+			err = a.UpdateAlertRule(&struct{ Body alertstore.UpdateAlertRule }{tc.input})
+			if tc.wantErr != (err != nil) {
+				t.Fatalf("wantErr: %v, got: %v", tc.wantErr, err)
+			}
+		})
+	}
+}
