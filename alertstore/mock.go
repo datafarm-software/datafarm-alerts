@@ -108,8 +108,6 @@ func (m *MockAlertStore) StoreAlert(alertId string, ar alertsource.AlertRule) er
 	}
 	alerts[alertId] = alertsource.Alert{
 		Duration:    duration,
-		DeviceId:    ar.DeviceId,
-		QueryField:  ar.QueryField,
 		Level:       alertsource.Ok,
 		RangeValues: ar.RangeValues,
 		Id:          alertId,
@@ -151,18 +149,8 @@ func (m *MockAlertStore) CheckAlertExists(ar alertsource.AlertRule) (string, err
 		return "", fmt.Errorf("alertstore is empty")
 	}
 	existingAlert, ok := alertStore[alertId]
-	if !ok {
-		return "", fmt.Errorf(
-			"alert id: %s attached to %s:%s, not found in alertstore.",
-			alertId, ar.DeviceId, ar.QueryField)
-	}
-	currentAlert := alertsource.Alert{
-		DeviceId:   ar.DeviceId,
-		QueryField: ar.QueryField,
-	}
-	if AlertsMatch(existingAlert, currentAlert) {
-		alertId = existingAlert.Id
-		return alertId, AlertExists
+	if ok {
+		return existingAlert.Id, AlertExists
 	}
 	return "", nil
 }

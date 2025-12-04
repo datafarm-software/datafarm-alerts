@@ -57,11 +57,3 @@ func ParseDuration(d string) (time.Duration, error) {
 	}
 	return duration, nil
 }
-
-func AlertsMatch(existing, current alertsource.Alert) bool {
-	if existing.DeviceId == current.DeviceId &&
-		existing.QueryField == current.QueryField {
-		return true
-	}
-	return false
-}

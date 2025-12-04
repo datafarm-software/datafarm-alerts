@@ -110,13 +110,11 @@ func TestRespondToAlert(t *testing.T) {
 				},
 				"alertStore": map[string]alertsource.Alert{
 					"alert1": {
-						Time:       AlertReceived,
-						Duration:   SomeDuration,
-						DeviceId:   RegisteredDeviceId,
-						Message:    "Already crit.",
-						QueryField: RegisteredQueryField,
-						Id:         "alert1",
-						Level:      alertsource.Crit,
+						Time:     AlertReceived,
+						Duration: SomeDuration,
+						Message:  "Already crit.",
+						Id:       "alert1",
+						Level:    alertsource.Crit,
 					},
 				},
 			},
@@ -139,13 +137,11 @@ func TestRespondToAlert(t *testing.T) {
 				},
 				"alertStore": map[string]alertsource.Alert{
 					"alert1": {
-						Time:       AfterDuration,
-						Duration:   SomeDuration,
-						DeviceId:   RegisteredDeviceId,
-						Message:    "Alert message stating crit level.",
-						QueryField: RegisteredQueryField,
-						Id:         "alert1",
-						Level:      alertsource.Crit,
+						Time:     AfterDuration,
+						Duration: SomeDuration,
+						Message:  "Alert message stating crit level.",
+						Id:       "alert1",
+						Level:    alertsource.Crit,
 					},
 				},
 			},
@@ -164,13 +160,11 @@ func TestRespondToAlert(t *testing.T) {
 				},
 				"alertStore": map[string]alertsource.Alert{
 					"alert1": {
-						Time:       AlertReceived,
-						Duration:   SomeDuration,
-						DeviceId:   RegisteredDeviceId,
-						Message:    "Already crit.",
-						QueryField: RegisteredQueryField,
-						Id:         "alert1",
-						Level:      alertsource.Crit,
+						Time:     AlertReceived,
+						Duration: SomeDuration,
+						Message:  "Already crit.",
+						Id:       "alert1",
+						Level:    alertsource.Crit,
 					},
 				},
 			},
@@ -193,13 +187,11 @@ func TestRespondToAlert(t *testing.T) {
 				},
 				"alertStore": map[string]alertsource.Alert{
 					"alert1": {
-						Time:       AlertReceived,
-						Duration:   SomeDuration,
-						DeviceId:   RegisteredDeviceId,
-						Message:    "Already crit.",
-						QueryField: RegisteredQueryField,
-						Id:         "alert1",
-						Level:      alertsource.Crit,
+						Time:     AlertReceived,
+						Duration: SomeDuration,
+						Message:  "Already crit.",
+						Id:       "alert1",
+						Level:    alertsource.Crit,
 					},
 				},
 			},
@@ -222,11 +214,9 @@ func TestRespondToAlert(t *testing.T) {
 				},
 				"alertStore": map[string]alertsource.Alert{
 					"alert1": {
-						Time:       AlertReceived,
-						DeviceId:   RegisteredDeviceId,
-						QueryField: RegisteredQueryField,
-						Id:         "alert1",
-						Level:      alertsource.Ok,
+						Time:  AlertReceived,
+						Id:    "alert1",
+						Level: alertsource.Ok,
 					},
 				},
 			},
@@ -249,12 +239,10 @@ func TestRespondToAlert(t *testing.T) {
 				},
 				"alertStore": map[string]alertsource.Alert{
 					"alert1": {
-						Time:       WithinDuration,
-						DeviceId:   RegisteredDeviceId,
-						QueryField: RegisteredQueryField,
-						Id:         "alert1",
-						Level:      alertsource.Crit,
-						Message:    "Alert message stating crit level.",
+						Time:    WithinDuration,
+						Id:      "alert1",
+						Level:   alertsource.Crit,
+						Message: "Alert message stating crit level.",
 					},
 				},
 			},
@@ -273,11 +261,9 @@ func TestRespondToAlert(t *testing.T) {
 				},
 				"alertStore": map[string]alertsource.Alert{
 					"alert1": {
-						Time:       AlertReceived,
-						DeviceId:   RegisteredDeviceId,
-						QueryField: RegisteredQueryField,
-						Id:         "alert1",
-						Level:      alertsource.Ok,
+						Time:  AlertReceived,
+						Id:    "alert1",
+						Level: alertsource.Ok,
 					},
 				},
 			},
@@ -299,11 +285,9 @@ func TestRespondToAlert(t *testing.T) {
 				},
 				"alertStore": map[string]alertsource.Alert{
 					"alert1": {
-						Time:       AlertReceived,
-						DeviceId:   RegisteredDeviceId,
-						QueryField: RegisteredQueryField,
-						Id:         "alert1",
-						Level:      alertsource.Ok,
+						Time:  AlertReceived,
+						Id:    "alert1",
+						Level: alertsource.Ok,
 					},
 				},
 			},
@@ -322,11 +306,9 @@ func TestRespondToAlert(t *testing.T) {
 				},
 				"alertStore": map[string]alertsource.Alert{
 					"alert1": {
-						Time:       AlertReceived,
-						DeviceId:   RegisteredDeviceId,
-						QueryField: RegisteredQueryField,
-						Id:         "alert1",
-						Level:      alertsource.Ok,
+						Time:  AlertReceived,
+						Id:    "alert1",
+						Level: alertsource.Ok,
 					},
 				},
 			},
@@ -348,11 +330,9 @@ func TestRespondToAlert(t *testing.T) {
 				},
 				"alertStore": map[string]alertsource.Alert{
 					"alert1": {
-						Time:       AlertReceived,
-						DeviceId:   RegisteredDeviceId,
-						QueryField: RegisteredQueryField,
-						Id:         "alert1",
-						Level:      alertsource.Ok,
+						Time:  AlertReceived,
+						Id:    "alert1",
+						Level: alertsource.Ok,
 					},
 				},
 			},
@@ -403,9 +383,7 @@ func TestCreateAlertRule(t *testing.T) {
 				"alertStore": map[string]alertsource.Alert{
 					"alert1": {
 						Duration:    SomeDuration,
-						DeviceId:    RegisteredDeviceId,
 						RangeValues: []int{5},
-						QueryField:  RegisteredQueryField,
 						Id:          "alert1",
 						Level:       alertsource.Ok,
 					},
@@ -463,11 +441,9 @@ func TestCreateAlertRule(t *testing.T) {
 				},
 				"alertStore": map[string]alertsource.Alert{
 					"alert1": {
-						Duration:   SomeDuration,
-						DeviceId:   RegisteredDeviceId,
-						QueryField: RegisteredQueryField,
-						Id:         "alert1",
-						Level:      alertsource.Ok,
+						Duration: SomeDuration,
+						Id:       "alert1",
+						Level:    alertsource.Ok,
 					},
 				},
 			},
@@ -480,11 +456,9 @@ func TestCreateAlertRule(t *testing.T) {
 				},
 				"alertStore": map[string]alertsource.Alert{
 					"alert1": {
-						Duration:   SomeDuration,
-						DeviceId:   RegisteredDeviceId,
-						QueryField: RegisteredQueryField,
-						Id:         "alert1",
-						Level:      alertsource.Ok,
+						Duration: SomeDuration,
+						Id:       "alert1",
+						Level:    alertsource.Ok,
 					},
 				},
 			},
@@ -583,45 +557,6 @@ func TestParseDuration(t *testing.T) {
 	}
 }
 
-func TestAlertsMatch(t *testing.T) {
-	tests := map[string]struct {
-		want              bool
-		existing, current alertsource.Alert
-	}{
-		"alerts don't match": {
-			want: false,
-			existing: alertsource.Alert{
-				DeviceId:   RegisteredDeviceId,
-				QueryField: RegisteredQueryField,
-			},
-			current: alertsource.Alert{
-				DeviceId:   UnregisteredDeviceId,
-				QueryField: UnregisteredQueryField,
-			},
-		},
-		"alerts do match": {
-			want: true,
-			existing: alertsource.Alert{
-				DeviceId:   RegisteredDeviceId,
-				QueryField: RegisteredQueryField,
-			},
-			current: alertsource.Alert{
-				DeviceId:   RegisteredDeviceId,
-				QueryField: RegisteredQueryField,
-			},
-		},
-	}
-	var got bool
-	for name, tc := range tests {
-		t.Run(name, func(t *testing.T) {
-			got = alertstore.AlertsMatch(tc.existing, tc.current)
-			if tc.want != got {
-				t.Fatalf("want: %v, got: %v", tc.want, got)
-			}
-		})
-	}
-}
-
 func TestUpdateAlertRule(t *testing.T) {
 	tests := map[string]struct {
 		wantErr                        bool
@@ -652,8 +587,6 @@ func TestUpdateAlertRule(t *testing.T) {
 					"alert1": {
 						Duration:    SomeDuration,
 						RangeValues: []int{43, 90},
-						DeviceId:    RegisteredDeviceId,
-						QueryField:  RegisteredQueryField,
 						Id:          "alert1",
 						Level:       0,
 					},
@@ -672,8 +605,6 @@ func TestUpdateAlertRule(t *testing.T) {
 					"alert1": {
 						Duration:    SomeDuration,
 						RangeValues: []int{10, 20},
-						DeviceId:    RegisteredDeviceId,
-						QueryField:  RegisteredQueryField,
 						Id:          "alert1",
 						Level:       0,
 					},

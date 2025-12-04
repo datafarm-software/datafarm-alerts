@@ -43,11 +43,9 @@ func (i *InfluxAlert) GetLevel() AlertLevel {
 
 func (i *InfluxAlert) GetAlert() *Alert {
 	return &Alert{
-		DeviceId:   i.DeviceId,
-		Level:      i.GetLevel(),
-		QueryField: i.QueryField,
-		Time:       i.Time,
-		Message:    i.Message,
-		Id:         i.Id,
+		Level:   i.GetLevel(),
+		Time:    i.Time,
+		Message: i.Message,
+		Id:      i.Id,
 	}
 }

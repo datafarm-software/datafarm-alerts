@@ -189,11 +189,11 @@ func (a *App) RespondToAlert(
 	ctx context.Context,
 	in *struct{ Body alertsource.InfluxAlert }) (*struct{}, error) {
 	alert := in.Body.GetAlert()
-	previous, err := a.AlertStore.GetPreviousAlert(alert.DeviceId, alert.QueryField)
+	previous, err := a.AlertStore.GetPreviousAlert(in.Body.DeviceId, in.Body.QueryField)
 	if err != nil {
 		log.Printf(
 			"getting previous alert for %s: %s, error: %v",
-			alert.DeviceId, alert.QueryField, err,
+			in.Body.DeviceId, in.Body.QueryField, err,
 		)
 		return nil, huma.Error500InternalServerError("no alert configured")
 	}
