@@ -143,6 +143,10 @@ func (a *App) RegisterHumaOperations(api huma.API) {
 				Description:     "Alert Id to be updated.",
 				Required:        true,
 				AllowEmptyValue: false,
+				Schema: &huma.Schema{
+					Type:    "string",
+					Pattern: "^[a-zA-Z0-9]+$",
+				},
 			},
 		},
 		Tags:        []string{"Update"},

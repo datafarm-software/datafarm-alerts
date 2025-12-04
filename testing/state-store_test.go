@@ -498,6 +498,7 @@ func TestCreateAlertRule(t *testing.T) {
 			},
 		},
 	}
+
 	var as *alertstore.MockAlertStore
 	var source *alertsource.MockAlertSource
 	var err error
@@ -623,18 +624,30 @@ func TestAlertsMatch(t *testing.T) {
 
 func TestUpdateAlertRule(t *testing.T) {
 	tests := map[string]struct {
-		wantErr bool
-		input   alertsource.AlertRule
-	}{}
+		wantErr                        bool
+		input                          alertsource.AlertRule
+		mockAlertStore, wantAlertStore map[any]any
+	}{
+		"alert does not exist": {
+			wantErr: true,
+			input:   alertsource.AlertRule{},
+		},
+	}
 	var err error
+	var as *alertstore.MockAlertStore
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
+			as = alertstore.NewMockAlertStore(tc.mockAlertStore)
+			a.AlertStore = as
 			_, err = a.UpdateAlertRule(
 				context.Background(),
 				&struct{ Body alertsource.AlertRule }{tc.input},
 			)
 			if tc.wantErr != (err != nil) {
 				t.Fatalf("wantErr: %v, got: %v", tc.wantErr, err)
+			}
+			if diff := cmp.Diff(tc.wantAlertStore, as.GetValues()); diff != "" {
+				t.Fatalf("alertstore mismatch (-want +got):\n%s", diff)
 			}
 		})
 	}
