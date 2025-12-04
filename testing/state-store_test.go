@@ -365,16 +365,19 @@ func TestCreateAlertRule(t *testing.T) {
 				"alertRecipients": map[string][]string{
 					"alert1": {"user1"},
 				},
-				"alertStore": map[string]map[string]alertsource.Alert{
+				"deviceAlerts": map[string]map[string]string{
 					RegisteredDeviceId: {
-						RegisteredQueryField: alertsource.Alert{
-							Duration:    SomeDuration,
-							DeviceId:    RegisteredDeviceId,
-							RangeValues: []int{5},
-							QueryField:  RegisteredQueryField,
-							Id:          "alert1",
-							Level:       alertsource.Ok,
-						},
+						RegisteredQueryField: "alert1",
+					},
+				},
+				"alertStore": map[string]alertsource.Alert{
+					"alert1": {
+						Duration:    SomeDuration,
+						DeviceId:    RegisteredDeviceId,
+						RangeValues: []int{5},
+						QueryField:  RegisteredQueryField,
+						Id:          "alert1",
+						Level:       alertsource.Ok,
 					},
 				},
 			},
@@ -421,31 +424,35 @@ func TestCreateAlertRule(t *testing.T) {
 			wantErr: true,
 			wantAlertStore: map[any]any{
 				"alertRecipients": map[string][]string{"alert1": {"user1"}},
-				"alertStore": map[string]map[string]alertsource.Alert{
+				"deviceAlerts": map[string]map[string]string{
 					RegisteredDeviceId: {
-						RegisteredQueryField: alertsource.Alert{
-							Duration:   SomeDuration,
-							DeviceId:   RegisteredDeviceId,
-							QueryField: RegisteredQueryField,
-							Id:         "alert1",
-							Level:      alertsource.Ok,
-						},
+						RegisteredQueryField: "alert1",
+					},
+				},
+				"alertStore": map[string]alertsource.Alert{
+					"alert1": {
+						Duration:   SomeDuration,
+						DeviceId:   RegisteredDeviceId,
+						QueryField: RegisteredQueryField,
+						Id:         "alert1",
+						Level:      alertsource.Ok,
 					},
 				},
 			},
 			mockAlertStore: map[any]any{
-				"alertRecipients": map[string][]string{
-					"alert1": {"user1"},
-				},
-				"alertStore": map[string]map[string]alertsource.Alert{
+				"alertRecipients": map[string][]string{"alert1": {"user1"}},
+				"deviceAlerts": map[string]map[string]string{
 					RegisteredDeviceId: {
-						RegisteredQueryField: alertsource.Alert{
-							Duration:   SomeDuration,
-							DeviceId:   RegisteredDeviceId,
-							QueryField: RegisteredQueryField,
-							Id:         "alert1",
-							Level:      alertsource.Ok,
-						},
+						RegisteredQueryField: "alert1",
+					},
+				},
+				"alertStore": map[string]alertsource.Alert{
+					"alert1": {
+						Duration:   SomeDuration,
+						DeviceId:   RegisteredDeviceId,
+						QueryField: RegisteredQueryField,
+						Id:         "alert1",
+						Level:      alertsource.Ok,
 					},
 				},
 			},
