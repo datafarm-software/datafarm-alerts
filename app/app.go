@@ -85,7 +85,7 @@ func (a *App) RegisterHumaOperations(api huma.API) {
 	registry := huma.NewMapRegistry("#/errors", huma.DefaultSchemaNamer)
 	operation = huma.Operation{
 		Method:      "POST",
-		Path:        "/alert/create",
+		Path:        "/alerts",
 		Tags:        []string{"Create"},
 		Summary:     "Create an alert rule.",
 		Description: "Clients can use this route to setup a new sensordata check, which will alert them according to the provided AlertRule request body.",
@@ -98,8 +98,8 @@ func (a *App) RegisterHumaOperations(api huma.API) {
 						Schema: huma.SchemaFromType(registry, reflect.TypeOf(HumaError{})),
 						Example: HumaError{
 							Schema: "http://localhost:3030/schemas/ErrorModel.json",
-							Title:  "Bad Request",
-							Status: 400,
+							Title:  "Internal Server Error",
+							Status: 500,
 							Detail: "Internal error while registering the alert.",
 						},
 					}}},
@@ -133,6 +133,52 @@ func (a *App) RegisterHumaOperations(api huma.API) {
 		},
 	}
 	huma.Register(api, operation, a.CreateAlertRule)
+	operation = huma.Operation{
+		Method: "PUT",
+		Path:   "/alerts/{alertId}",
+		Parameters: []*huma.Param{
+			{
+				Name:            "alertId",
+				In:              "path",
+				Description:     "Alert Id to be updated.",
+				Required:        true,
+				AllowEmptyValue: false,
+			},
+		},
+		Tags:        []string{"Update"},
+		Summary:     "Update an alert rule.",
+		Description: "Clients can use this route to update an existing sensordata check, which will alert them according to the provided AlertRule request body.",
+		RequestBody: &huma.RequestBody{},
+		Responses: map[string]*huma.Response{
+			"500": {
+				Description: "Internal Server Error",
+				Content: map[string]*huma.MediaType{
+					"application/json": {
+						Schema: huma.SchemaFromType(registry, reflect.TypeOf(HumaError{})),
+						Example: HumaError{
+							Schema: "http://localhost:3030/schemas/ErrorModel.json",
+							Title:  "Internal Server Error",
+							Status: 500,
+							Detail: "Internal error while retrieving the alert.",
+						},
+					}}},
+			"400": {
+				Description: "Bad Request",
+				Content: map[string]*huma.MediaType{
+					"application/json": {
+						Schema: huma.SchemaFromType(registry, reflect.TypeOf(HumaError{})),
+						Example: HumaError{
+							Schema: "http://localhost:3030/schemas/ErrorModel.json",
+							Title:  "Bad Request",
+							Status: 400,
+							Detail: "Something went wrong.",
+						},
+					},
+				},
+			},
+		},
+	}
+	huma.Register(api, operation, a.UpdateAlertRule)
 }
 
 func (a *App) RespondToAlert(
@@ -218,13 +264,12 @@ func (a *App) CreateAlertRule(
 		log.Printf("registering alert: %v", err)
 		return nil, huma.Error500InternalServerError("Internal error while registering the alert.")
 	}
-	in.Body.Id = alertId
-	if err := a.AlertStore.StoreAlert(in.Body); err != nil {
+	if err := a.AlertStore.StoreAlert(alertId, in.Body); err != nil {
 		log.Printf("storing alert: %v", err)
 		return nil, huma.Error500InternalServerError("internal error storing the alert rule")
 	}
-	if err := a.AlertStore.AddUsersToNotifyList(in.Body.Id, in.Body.Usernames); err != nil {
-		log.Printf("add usernames to alert: %s notify list: %v", in.Body.Id, err)
+	if err := a.AlertStore.AddUsersToNotifyList(alertId, in.Body.Usernames); err != nil {
+		log.Printf("add usernames to alert: %s notify list: %v", alertId, err)
 		return nil, huma.Error500InternalServerError("internal error adding user to notify list.")
 	}
 	return &struct{ Body alertsource.RuleCreated }{

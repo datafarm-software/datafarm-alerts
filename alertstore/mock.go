@@ -74,7 +74,7 @@ func (m *MockAlertStore) Update(alert *alertsource.Alert) error {
 	return nil
 }
 
-func (m *MockAlertStore) StoreAlert(ar alertsource.AlertRule) error {
+func (m *MockAlertStore) StoreAlert(alertId string, ar alertsource.AlertRule) error {
 	alerts, ok := m.values["alertStore"].(map[string]map[string]alertsource.Alert)
 	if !ok {
 		return fmt.Errorf("no alertstore found")
@@ -91,9 +91,9 @@ func (m *MockAlertStore) StoreAlert(ar alertsource.AlertRule) error {
 		Duration:    duration,
 		DeviceId:    ar.DeviceId,
 		QueryField:  ar.QueryField,
-		Id:          ar.Id,
 		Level:       alertsource.Ok,
 		RangeValues: ar.RangeValues,
+		Id:          alertId,
 	}
 	alerts[ar.DeviceId] = deviceAlerts
 	m.values["alertStore"] = alerts
