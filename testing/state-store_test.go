@@ -585,12 +585,15 @@ func TestAlertsMatch(t *testing.T) {
 func TestUpdateAlertRule(t *testing.T) {
 	tests := map[string]struct {
 		wantErr bool
-		input   alertstore.UpdateAlertRule
+		input   alertsource.AlertRule
 	}{}
 	var err error
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
-			err = a.UpdateAlertRule(&struct{ Body alertstore.UpdateAlertRule }{tc.input})
+			_, err = a.UpdateAlertRule(
+				context.Background(),
+				&struct{ Body alertsource.AlertRule }{tc.input},
+			)
 			if tc.wantErr != (err != nil) {
 				t.Fatalf("wantErr: %v, got: %v", tc.wantErr, err)
 			}

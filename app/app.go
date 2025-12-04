@@ -233,3 +233,10 @@ func (a *App) CreateAlertRule(
 		},
 	}, nil
 }
+
+func (a *App) UpdateAlertRule(
+	ctx context.Context,
+	in *struct{ Body alertsource.AlertRule },
+) (*struct{}, error) {
+	return nil, fmt.Errorf("not implemented")
+}
