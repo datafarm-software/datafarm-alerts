@@ -75,19 +75,27 @@ func (m *MockAlertStore) Update(alert *alertsource.Alert) error {
 }
 
 func (m *MockAlertStore) StoreAlert(alertId string, ar alertsource.AlertRule) error {
-	alerts, ok := m.values["alertStore"].(map[string]map[string]alertsource.Alert)
+	deviceAlerts, ok := m.values["deviceAlerts"].(map[string]map[string]string)
+	if !ok {
+		deviceAlerts = make(map[string]map[string]string)
+	}
+	deviceQueryFieldAlerts, ok := deviceAlerts[ar.DeviceId]
+	if !ok {
+		deviceQueryFieldAlerts = make(map[string]string)
+	}
+	deviceQueryFieldAlerts[ar.QueryField] = alertId
+	deviceAlerts[ar.DeviceId] = deviceQueryFieldAlerts
+	m.values["deviceAlerts"] = deviceAlerts
+
+	alerts, ok := m.values["alertStore"].(map[string]alertsource.Alert)
 	if !ok {
 		return fmt.Errorf("no alertstore found")
-	}
-	deviceAlerts, ok := alerts[ar.DeviceId]
-	if !ok {
-		deviceAlerts = make(map[string]alertsource.Alert)
 	}
 	duration, err := ParseDuration(ar.Duration)
 	if err != nil {
 		return fmt.Errorf("parsing duration: %v", err)
 	}
-	deviceAlerts[ar.QueryField] = alertsource.Alert{
+	alerts[alertId] = alertsource.Alert{
 		Duration:    duration,
 		DeviceId:    ar.DeviceId,
 		QueryField:  ar.QueryField,
@@ -95,7 +103,6 @@ func (m *MockAlertStore) StoreAlert(alertId string, ar alertsource.AlertRule) er
 		RangeValues: ar.RangeValues,
 		Id:          alertId,
 	}
-	alerts[ar.DeviceId] = deviceAlerts
 	m.values["alertStore"] = alerts
 	return nil
 }

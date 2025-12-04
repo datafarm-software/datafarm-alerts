@@ -103,17 +103,20 @@ func TestRespondToAlert(t *testing.T) {
 				"alertRecipients": map[string][]string{
 					"alert1": {"user1"},
 				},
-				"alertStore": map[string]map[string]alertsource.Alert{
+				"deviceAlerts": map[string]map[string]string{
 					RegisteredDeviceId: {
-						RegisteredQueryField: alertsource.Alert{
-							Time:       AlertReceived,
-							Duration:   SomeDuration,
-							DeviceId:   RegisteredDeviceId,
-							Message:    "Already crit.",
-							QueryField: RegisteredQueryField,
-							Id:         "alert1",
-							Level:      alertsource.Crit,
-						},
+						RegisteredQueryField: "alert1",
+					},
+				},
+				"alertStore": map[string]alertsource.Alert{
+					"alert1": {
+						Time:       AlertReceived,
+						Duration:   SomeDuration,
+						DeviceId:   RegisteredDeviceId,
+						Message:    "Already crit.",
+						QueryField: RegisteredQueryField,
+						Id:         "alert1",
+						Level:      alertsource.Crit,
 					},
 				},
 			},
@@ -129,17 +132,20 @@ func TestRespondToAlert(t *testing.T) {
 				"alertRecipients": map[string][]string{
 					"alert1": {"user1"},
 				},
-				"alertStore": map[string]map[string]alertsource.Alert{
+				"deviceAlerts": map[string]map[string]string{
 					RegisteredDeviceId: {
-						RegisteredQueryField: alertsource.Alert{
-							Time:       AfterDuration,
-							Duration:   SomeDuration,
-							DeviceId:   RegisteredDeviceId,
-							Message:    "Alert message stating crit level.",
-							QueryField: RegisteredQueryField,
-							Id:         "alert1",
-							Level:      alertsource.Crit,
-						},
+						RegisteredQueryField: "alert1",
+					},
+				},
+				"alertStore": map[string]alertsource.Alert{
+					"alert1": {
+						Time:       AfterDuration,
+						Duration:   SomeDuration,
+						DeviceId:   RegisteredDeviceId,
+						Message:    "Alert message stating crit level.",
+						QueryField: RegisteredQueryField,
+						Id:         "alert1",
+						Level:      alertsource.Crit,
 					},
 				},
 			},
@@ -151,17 +157,20 @@ func TestRespondToAlert(t *testing.T) {
 				"alertRecipients": map[string][]string{
 					"alert1": {"user1"},
 				},
-				"alertStore": map[string]map[string]alertsource.Alert{
+				"deviceAlerts": map[string]map[string]string{
 					RegisteredDeviceId: {
-						RegisteredQueryField: alertsource.Alert{
-							Time:       AlertReceived,
-							Duration:   SomeDuration,
-							DeviceId:   RegisteredDeviceId,
-							Message:    "Already crit.",
-							QueryField: RegisteredQueryField,
-							Id:         "alert1",
-							Level:      alertsource.Crit,
-						},
+						RegisteredQueryField: "alert1",
+					},
+				},
+				"alertStore": map[string]alertsource.Alert{
+					"alert1": {
+						Time:       AlertReceived,
+						Duration:   SomeDuration,
+						DeviceId:   RegisteredDeviceId,
+						Message:    "Already crit.",
+						QueryField: RegisteredQueryField,
+						Id:         "alert1",
+						Level:      alertsource.Crit,
 					},
 				},
 			},
@@ -177,17 +186,20 @@ func TestRespondToAlert(t *testing.T) {
 				"alertRecipients": map[string][]string{
 					"alert1": {"user1"},
 				},
-				"alertStore": map[string]map[string]alertsource.Alert{
+				"deviceAlerts": map[string]map[string]string{
 					RegisteredDeviceId: {
-						RegisteredQueryField: alertsource.Alert{
-							Time:       AlertReceived,
-							Duration:   SomeDuration,
-							DeviceId:   RegisteredDeviceId,
-							Message:    "Already crit.",
-							QueryField: RegisteredQueryField,
-							Id:         "alert1",
-							Level:      alertsource.Crit,
-						},
+						RegisteredQueryField: "alert1",
+					},
+				},
+				"alertStore": map[string]alertsource.Alert{
+					"alert1": {
+						Time:       AlertReceived,
+						Duration:   SomeDuration,
+						DeviceId:   RegisteredDeviceId,
+						Message:    "Already crit.",
+						QueryField: RegisteredQueryField,
+						Id:         "alert1",
+						Level:      alertsource.Crit,
 					},
 				},
 			},
@@ -203,15 +215,18 @@ func TestRespondToAlert(t *testing.T) {
 				"alertRecipients": map[string][]string{
 					"alert1": {"user1"},
 				},
-				"alertStore": map[string]map[string]alertsource.Alert{
+				"deviceAlerts": map[string]map[string]string{
 					RegisteredDeviceId: {
-						RegisteredQueryField: alertsource.Alert{
-							Time:       AlertReceived,
-							DeviceId:   RegisteredDeviceId,
-							QueryField: RegisteredQueryField,
-							Id:         "alert1",
-							Level:      alertsource.Ok,
-						},
+						RegisteredQueryField: "alert1",
+					},
+				},
+				"alertStore": map[string]alertsource.Alert{
+					"alert1": {
+						Time:       AlertReceived,
+						DeviceId:   RegisteredDeviceId,
+						QueryField: RegisteredQueryField,
+						Id:         "alert1",
+						Level:      alertsource.Ok,
 					},
 				},
 			},
@@ -227,16 +242,19 @@ func TestRespondToAlert(t *testing.T) {
 				"alertRecipients": map[string][]string{
 					"alert1": {"user1"},
 				},
-				"alertStore": map[string]map[string]alertsource.Alert{
+				"deviceAlerts": map[string]map[string]string{
 					RegisteredDeviceId: {
-						RegisteredQueryField: alertsource.Alert{
-							Time:       WithinDuration,
-							DeviceId:   RegisteredDeviceId,
-							QueryField: RegisteredQueryField,
-							Id:         "alert1",
-							Level:      alertsource.Crit,
-							Message:    "Alert message stating crit level.",
-						},
+						RegisteredQueryField: "alert1",
+					},
+				},
+				"alertStore": map[string]alertsource.Alert{
+					"alert1": {
+						Time:       WithinDuration,
+						DeviceId:   RegisteredDeviceId,
+						QueryField: RegisteredQueryField,
+						Id:         "alert1",
+						Level:      alertsource.Crit,
+						Message:    "Alert message stating crit level.",
 					},
 				},
 			},
@@ -248,15 +266,18 @@ func TestRespondToAlert(t *testing.T) {
 				"alertRecipients": map[string][]string{
 					"alert1": {"user1"},
 				},
-				"alertStore": map[string]map[string]alertsource.Alert{
+				"deviceAlerts": map[string]map[string]string{
 					RegisteredDeviceId: {
-						RegisteredQueryField: alertsource.Alert{
-							Time:       AlertReceived,
-							DeviceId:   RegisteredDeviceId,
-							QueryField: RegisteredQueryField,
-							Id:         "alert1",
-							Level:      alertsource.Ok,
-						},
+						RegisteredQueryField: "alert1",
+					},
+				},
+				"alertStore": map[string]alertsource.Alert{
+					"alert1": {
+						Time:       AlertReceived,
+						DeviceId:   RegisteredDeviceId,
+						QueryField: RegisteredQueryField,
+						Id:         "alert1",
+						Level:      alertsource.Ok,
 					},
 				},
 			},
@@ -271,15 +292,18 @@ func TestRespondToAlert(t *testing.T) {
 				"alertRecipients": map[string][]string{
 					"alert1": {"user1"},
 				},
-				"alertStore": map[string]map[string]alertsource.Alert{
+				"deviceAlerts": map[string]map[string]string{
 					RegisteredDeviceId: {
-						RegisteredQueryField: alertsource.Alert{
-							Time:       AlertReceived,
-							DeviceId:   RegisteredDeviceId,
-							QueryField: RegisteredQueryField,
-							Id:         "alert1",
-							Level:      alertsource.Ok,
-						},
+						RegisteredQueryField: "alert1",
+					},
+				},
+				"alertStore": map[string]alertsource.Alert{
+					"alert1": {
+						Time:       AlertReceived,
+						DeviceId:   RegisteredDeviceId,
+						QueryField: RegisteredQueryField,
+						Id:         "alert1",
+						Level:      alertsource.Ok,
 					},
 				},
 			},
@@ -291,15 +315,18 @@ func TestRespondToAlert(t *testing.T) {
 				"alertRecipients": map[string][]string{
 					"alert1": {"user1"},
 				},
-				"alertStore": map[string]map[string]alertsource.Alert{
+				"deviceAlerts": map[string]map[string]string{
 					RegisteredDeviceId: {
-						RegisteredQueryField: alertsource.Alert{
-							Time:       AlertReceived,
-							DeviceId:   RegisteredDeviceId,
-							QueryField: RegisteredQueryField,
-							Id:         "alert1",
-							Level:      alertsource.Ok,
-						},
+						RegisteredQueryField: "alert1",
+					},
+				},
+				"alertStore": map[string]alertsource.Alert{
+					"alert1": {
+						Time:       AlertReceived,
+						DeviceId:   RegisteredDeviceId,
+						QueryField: RegisteredQueryField,
+						Id:         "alert1",
+						Level:      alertsource.Ok,
 					},
 				},
 			},
@@ -314,15 +341,18 @@ func TestRespondToAlert(t *testing.T) {
 				"alertRecipients": map[string][]string{
 					"alert1": {"user1"},
 				},
-				"alertStore": map[string]map[string]alertsource.Alert{
+				"deviceAlerts": map[string]map[string]string{
 					RegisteredDeviceId: {
-						RegisteredQueryField: alertsource.Alert{
-							Time:       AlertReceived,
-							DeviceId:   RegisteredDeviceId,
-							QueryField: RegisteredQueryField,
-							Id:         "alert1",
-							Level:      alertsource.Ok,
-						},
+						RegisteredQueryField: "alert1",
+					},
+				},
+				"alertStore": map[string]alertsource.Alert{
+					"alert1": {
+						Time:       AlertReceived,
+						DeviceId:   RegisteredDeviceId,
+						QueryField: RegisteredQueryField,
+						Id:         "alert1",
+						Level:      alertsource.Ok,
 					},
 				},
 			},
@@ -400,6 +430,7 @@ func TestCreateAlertRule(t *testing.T) {
 			wantErr: true,
 			wantAlertStore: map[any]any{
 				"alertRecipients": map[string][]string{},
+				"deviceAlerts":    map[string]map[string]string{},
 				"alertStore":      map[string]map[string]alertsource.Alert{},
 			},
 			alertRule: alertsource.AlertRule{
@@ -412,7 +443,8 @@ func TestCreateAlertRule(t *testing.T) {
 			wantErr: true,
 			wantAlertStore: map[any]any{
 				"alertRecipients": map[string][]string{},
-				"alertStore":      map[string]map[string]alertsource.Alert{},
+				"deviceAlerts":    map[string]map[string]string{},
+				"alertStore":      map[string]alertsource.Alert{},
 			},
 			alertRule: alertsource.AlertRule{
 				RangeValues: []int{5},
