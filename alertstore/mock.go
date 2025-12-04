@@ -120,19 +120,30 @@ func (m *MockAlertStore) AddUsersToNotifyList(alertId string, usernames []string
 }
 
 func (m *MockAlertStore) CheckAlertExists(ar alertsource.AlertRule) (string, error) {
-	var alertId string
-	alerts, ok := m.values["alertStore"].(map[string]map[string]alertsource.Alert)
+	deviceAlerts, ok := m.values["deviceAlerts"].(map[string]map[string]string)
 	if !ok {
-		return alertId, fmt.Errorf("no alertstore found")
+		m.values["deviceAlerts"] = make(map[string]map[string]string)
+		return "", nil
 	}
-	deviceAlerts, ok := alerts[ar.DeviceId]
+	deviceQueryFieldAlerts, ok := deviceAlerts[ar.DeviceId]
 	if !ok {
-		deviceAlerts = make(map[string]alertsource.Alert)
-		return alertId, nil
+		deviceAlerts[ar.DeviceId] = make(map[string]string)
+		return "", nil
 	}
-	existingAlert, ok := deviceAlerts[ar.QueryField]
+	alertId, ok := deviceQueryFieldAlerts[ar.QueryField]
 	if !ok {
-		return alertId, nil
+		return "", nil
+	}
+	alertStore, ok := m.values["alertStore"].(map[string]alertsource.Alert)
+	if !ok {
+		m.values["alertStore"] = make(map[string]alertsource.Alert)
+		return "", fmt.Errorf("alertstore is empty")
+	}
+	existingAlert, ok := alertStore[alertId]
+	if !ok {
+		return "", fmt.Errorf(
+			"alert id: %s attached to %s:%s, not found in alertstore.",
+			alertId, ar.DeviceId, ar.QueryField)
 	}
 	currentAlert := alertsource.Alert{
 		DeviceId:   ar.DeviceId,
