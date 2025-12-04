@@ -210,7 +210,7 @@ func (a *App) RespondToAlert(
 		log.Printf("notifying users: %v", err)
 		return nil, nil
 	}
-	if err = a.AlertStore.Update(alert); err != nil {
+	if err = a.AlertStore.UpdateAlertLevel(alert.Id, alert.Level); err != nil {
 		log.Printf("updating alertstore: %v", err)
 		return nil, nil
 	}
@@ -287,5 +287,10 @@ func (a *App) UpdateAlertRule(
 	ctx context.Context,
 	in *struct{ Body alertsource.AlertRule },
 ) (*struct{}, error) {
-	return nil, fmt.Errorf("not implemented")
+	if err := a.AlertStore.UpdateAlertRule(in.Body); err != nil {
+		log.Printf("updating alert rule for id: %s, error: %v", in.Body.Id, err)
+		return nil, huma.Error500InternalServerError(
+			"Internal error while storing the updated alert rule.")
+	}
+	return nil, nil
 }

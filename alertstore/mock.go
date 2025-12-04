@@ -70,12 +70,17 @@ func (m *MockAlertStore) GetAlertRecipients(id string) ([]string, error) {
 	return recipients, nil
 }
 
-func (m *MockAlertStore) Update(alert *alertsource.Alert) error {
+func (m *MockAlertStore) UpdateAlertLevel(alertId string, level alertsource.AlertLevel) error {
 	alerts, ok := m.values["alertStore"].(map[string]alertsource.Alert)
 	if !ok {
 		return fmt.Errorf("no alertstore found")
 	}
-	alerts[alert.Id] = *alert
+	alert, ok := alerts[alertId]
+	if !ok {
+		return fmt.Errorf("no alert for id: %v", alertId)
+	}
+	alert.Level = level
+	alerts[alertId] = alert
 	m.values["alertStore"] = alerts
 	return nil
 }
@@ -160,4 +165,21 @@ func (m *MockAlertStore) CheckAlertExists(ar alertsource.AlertRule) (string, err
 		return alertId, AlertExists
 	}
 	return "", nil
+}
+
+func (m *MockAlertStore) UpdateAlertRule(ar alertsource.AlertRule) error {
+	alertStore, ok := m.values["alertStore"].(map[string]alertsource.Alert)
+	if !ok {
+		return fmt.Errorf("alertStore is empty")
+	}
+	duration, err := ParseDuration(ar.Duration)
+	if err != nil {
+		return err
+	}
+	alertStore[ar.Id] = alertsource.Alert{
+		Duration:    duration,
+		RangeValues: ar.RangeValues,
+		Id:          ar.Id,
+	}
+	return nil
 }

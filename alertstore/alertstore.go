@@ -15,11 +15,12 @@ var AlertExists = errors.New("alert exists")
 type AlertStore interface {
 	GetPreviousAlert(deviceId, queryField string) (*alertsource.Alert, error)
 	GetAlertRecipients(id string) ([]string, error)
-	Update(*alertsource.Alert) error
+	UpdateAlertLevel(alertId string, level alertsource.AlertLevel) error
 	StoreAlert(alertId string, alert alertsource.AlertRule) error
 	AddUsersToNotifyList(alertId string, usernames []string) error
 	//NOTE: could return alertstore.AlertExists
 	CheckAlertExists(alertsource.AlertRule) (string, error)
+	UpdateAlertRule(alertsource.AlertRule) error
 }
 
 func ParseDuration(d string) (time.Duration, error) {
