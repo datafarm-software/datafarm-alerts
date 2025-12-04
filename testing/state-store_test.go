@@ -448,7 +448,7 @@ func TestCreateAlertRule(t *testing.T) {
 			},
 			alertRule: alertsource.AlertRule{
 				RangeValues: []int{5},
-				AlertRange:  alertsource.LessThan,
+				AlertRange:  alertsource.Range,
 			},
 		},
 
