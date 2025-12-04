@@ -628,9 +628,57 @@ func TestUpdateAlertRule(t *testing.T) {
 		input                          alertsource.AlertRule
 		mockAlertStore, wantAlertStore map[any]any
 	}{
-		"alert does not exist": {
-			wantErr: true,
-			input:   alertsource.AlertRule{},
+		"update the range values of an alert": {
+			wantErr: false,
+			input: alertsource.AlertRule{
+				Id:          "alert1",
+				Usernames:   []string{"user1"},
+				RangeValues: []int{10, 20},
+				Duration:    "24h",
+				DeviceId:    RegisteredDeviceId,
+				QueryField:  RegisteredQueryField,
+				AlertRange:  2,
+			},
+			mockAlertStore: map[any]any{
+				"alertRecipients": map[string][]string{
+					"alert1": {"user1"},
+				},
+				"deviceAlerts": map[string]map[string]string{
+					RegisteredDeviceId: {
+						RegisteredQueryField: "alert1",
+					},
+				},
+				"alertStore": map[string]alertsource.Alert{
+					"alert1": {
+						Duration:    SomeDuration,
+						RangeValues: []int{43, 90},
+						DeviceId:    RegisteredDeviceId,
+						QueryField:  RegisteredQueryField,
+						Id:          "alert1",
+						Level:       0,
+					},
+				},
+			},
+			wantAlertStore: map[any]any{
+				"alertRecipients": map[string][]string{
+					"alert1": {"user1"},
+				},
+				"deviceAlerts": map[string]map[string]string{
+					RegisteredDeviceId: {
+						RegisteredQueryField: "alert1",
+					},
+				},
+				"alertStore": map[string]alertsource.Alert{
+					"alert1": {
+						Duration:    SomeDuration,
+						RangeValues: []int{10, 20},
+						DeviceId:    RegisteredDeviceId,
+						QueryField:  RegisteredQueryField,
+						Id:          "alert1",
+						Level:       0,
+					},
+				},
+			},
 		},
 	}
 	var err error
