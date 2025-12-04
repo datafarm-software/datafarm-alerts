@@ -431,7 +431,7 @@ func TestCreateAlertRule(t *testing.T) {
 			wantAlertStore: map[any]any{
 				"alertRecipients": map[string][]string{},
 				"deviceAlerts":    map[string]map[string]string{},
-				"alertStore":      map[string]map[string]alertsource.Alert{},
+				"alertStore":      map[string]alertsource.Alert{},
 			},
 			alertRule: alertsource.AlertRule{
 				RangeValues: []int{5, 10},
