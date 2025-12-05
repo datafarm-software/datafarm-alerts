@@ -189,7 +189,7 @@ func (a *App) RespondToAlert(
 	ctx context.Context,
 	in *struct{ Body alertsource.InfluxAlert }) (*struct{}, error) {
 	alert := in.Body.GetAlert()
-	previous, err := a.AlertStore.GetPreviousAlert(in.Body.DeviceId, in.Body.QueryField)
+	previous, err := a.AlertStore.GetPreviousAlert(in.Body.Id)
 	if err != nil {
 		log.Printf(
 			"getting previous alert for %s: %s, error: %v",
@@ -319,5 +319,21 @@ func (a *App) GetAlertRule(
 	ctx context.Context,
 	in *struct{ Body alertsource.CreatedRule },
 ) (*struct{ Body alertsource.AlertRule }, error) {
-	return nil, fmt.Errorf("not implemented")
+	alert, err := a.AlertStore.GetPreviousAlert(in.Body.AlertId)
+	if err != nil {
+		if !errors.Is(err, alertstore.NoAlert) {
+			log.Printf("GetPreviousAlert(%s): %v", in.Body.AlertId, err)
+			return nil, huma.Error500InternalServerError(
+				"Unexpected area retrieving alert.")
+		}
+		return nil, huma.Error404NotFound("No alert rule found.")
+	}
+	ar := alertsource.AlertRule{
+		Id:          alert.Id,
+		RangeValues: alert.RangeValues,
+		Duration:    alert.Duration.String(),
+		DeviceId:    alert.DeviceId,
+		QueryField:  alert.QueryField,
+		AlertRange:  something,
+	}
 }

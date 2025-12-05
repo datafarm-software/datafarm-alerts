@@ -11,9 +11,11 @@ import (
 
 var InvalidDuration = time.Duration(-(1 * time.Hour))
 var AlertExists = errors.New("alert exists")
+var NoAlert = errors.New("no alert")
 
 type AlertStore interface {
-	GetPreviousAlert(deviceId, queryField string) (*alertsource.Alert, error)
+	//NOTE: could return alertstore.NoAlert
+	GetPreviousAlert(alertId string) (*alertsource.Alert, error)
 	GetAlertRecipients(id string) ([]string, error)
 	UpdateAlertLastSeen(alert *alertsource.Alert) error
 	StoreAlert(alertId string, alert alertsource.AlertRule) error

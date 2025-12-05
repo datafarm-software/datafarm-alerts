@@ -47,4 +47,5 @@ type Alert struct {
 type AlertSource interface {
 	GetAlert() *Alert
 	RegisterAlert(AlertRule) (string, error)
+	GetLevel() AlertLevel
 }
