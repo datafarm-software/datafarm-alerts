@@ -15,7 +15,7 @@ var AlertExists = errors.New("alert exists")
 type AlertStore interface {
 	GetPreviousAlert(deviceId, queryField string) (*alertsource.Alert, error)
 	GetAlertRecipients(id string) ([]string, error)
-	UpdateAlertLevel(alertId string, level alertsource.AlertLevel) error
+	UpdateAlertLastSeen(alert *alertsource.Alert) error
 	StoreAlert(alertId string, alert alertsource.AlertRule) error
 	AddUsersToNotifyList(alertId string, usernames []string) error
 	//NOTE: could return alertstore.AlertExists

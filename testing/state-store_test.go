@@ -611,6 +611,18 @@ func TestUpdateAlertRule(t *testing.T) {
 				},
 			},
 		},
+		"error when trying to update non existent alert rule": {
+			wantErr: true,
+			input: alertsource.AlertRule{
+				Id:          "alert1",
+				Usernames:   []string{"user1"},
+				RangeValues: []int{10, 20},
+				Duration:    "24h",
+				DeviceId:    RegisteredDeviceId,
+				QueryField:  RegisteredQueryField,
+				AlertRange:  2,
+			},
+		},
 	}
 	var err error
 	var as *alertstore.MockAlertStore
@@ -625,8 +637,10 @@ func TestUpdateAlertRule(t *testing.T) {
 			if tc.wantErr != (err != nil) {
 				t.Fatalf("wantErr: %v, got: %v", tc.wantErr, err)
 			}
-			if diff := cmp.Diff(tc.wantAlertStore, as.GetValues()); diff != "" {
-				t.Fatalf("alertstore mismatch (-want +got):\n%s", diff)
+			if !tc.wantErr {
+				if diff := cmp.Diff(tc.wantAlertStore, as.GetValues()); diff != "" {
+					t.Fatalf("alertstore mismatch (-want +got):\n%s", diff)
+				}
 			}
 		})
 	}

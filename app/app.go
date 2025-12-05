@@ -210,7 +210,7 @@ func (a *App) RespondToAlert(
 		log.Printf("notifying users: %v", err)
 		return nil, nil
 	}
-	if err = a.AlertStore.UpdateAlertLevel(alert.Id, alert.Level); err != nil {
+	if err = a.AlertStore.UpdateAlertLastSeen(alert); err != nil {
 		log.Printf("updating alertstore: %v", err)
 		return nil, nil
 	}
@@ -287,6 +287,17 @@ func (a *App) UpdateAlertRule(
 	ctx context.Context,
 	in *struct{ Body alertsource.AlertRule },
 ) (*struct{}, error) {
+	existingAlertId, err := a.AlertStore.CheckAlertExists(in.Body)
+	if existingAlertId == "" && err == nil {
+		log.Printf("tried to update an alert that does not exist.")
+		return nil,
+			huma.Error400BadRequest("Tried to update an alert that does not exist.")
+	}
+	if err != nil && !errors.Is(err, alertstore.AlertExists) {
+		log.Printf("checking alert exists: %v", err)
+		return nil,
+			huma.Error500InternalServerError("Internal error checking if alert exists.")
+	}
 	if err := a.AlertStore.UpdateAlertRule(in.Body); err != nil {
 		log.Printf("updating alert rule for id: %s, error: %v", in.Body.Id, err)
 		return nil, huma.Error500InternalServerError(

@@ -70,17 +70,12 @@ func (m *MockAlertStore) GetAlertRecipients(id string) ([]string, error) {
 	return recipients, nil
 }
 
-func (m *MockAlertStore) UpdateAlertLevel(alertId string, level alertsource.AlertLevel) error {
+func (m *MockAlertStore) UpdateAlertLastSeen(alert *alertsource.Alert) error {
 	alerts, ok := m.values["alertStore"].(map[string]alertsource.Alert)
 	if !ok {
 		return fmt.Errorf("no alertstore found")
 	}
-	alert, ok := alerts[alertId]
-	if !ok {
-		return fmt.Errorf("no alert for id: %v", alertId)
-	}
-	alert.Level = level
-	alerts[alertId] = alert
+	alerts[alert.Id] = *alert
 	m.values["alertStore"] = alerts
 	return nil
 }
@@ -136,7 +131,6 @@ func (m *MockAlertStore) CheckAlertExists(ar alertsource.AlertRule) (string, err
 	}
 	deviceQueryFieldAlerts, ok := deviceAlerts[ar.DeviceId]
 	if !ok {
-		deviceAlerts[ar.DeviceId] = make(map[string]string)
 		return "", nil
 	}
 	alertId, ok := deviceQueryFieldAlerts[ar.QueryField]
