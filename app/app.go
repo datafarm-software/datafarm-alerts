@@ -241,7 +241,7 @@ func (a *App) CreateAlertRule(
 	ctx context.Context,
 	in *struct {
 		Body alertsource.AlertRule
-	}) (*struct{ Body alertsource.RuleCreated }, error) {
+	}) (*struct{ Body alertsource.CreatedRule }, error) {
 	if in.Body.AlertRange < alertsource.Range && len(in.Body.RangeValues) > 1 {
 		log.Printf("can't have more than one range value on greater or less than alert.")
 		return nil,
@@ -276,8 +276,8 @@ func (a *App) CreateAlertRule(
 		log.Printf("add usernames to alert: %s notify list: %v", alertId, err)
 		return nil, huma.Error500InternalServerError("internal error adding user to notify list.")
 	}
-	return &struct{ Body alertsource.RuleCreated }{
-		Body: alertsource.RuleCreated{
+	return &struct{ Body alertsource.CreatedRule }{
+		Body: alertsource.CreatedRule{
 			AlertId: alertId,
 		},
 	}, nil

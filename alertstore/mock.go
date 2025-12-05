@@ -105,6 +105,8 @@ func (m *MockAlertStore) StoreAlert(alertId string, ar alertsource.AlertRule) er
 		Duration:    duration,
 		Level:       alertsource.Ok,
 		RangeValues: ar.RangeValues,
+		QueryField:  ar.QueryField,
+		DeviceId:    ar.DeviceId,
 		Id:          alertId,
 	}
 	m.values["alertStore"] = alerts

@@ -363,7 +363,7 @@ func TestRespondToAlert(t *testing.T) {
 func TestCreateAlertRule(t *testing.T) {
 	tests := map[string]struct {
 		wantErr                         bool
-		wantResponse                    *struct{ Body alertsource.RuleCreated }
+		wantResponse                    *struct{ Body alertsource.CreatedRule }
 		wantAlertStore                  map[any]any
 		mockAlertStore, mockAlertSource map[any]any
 		alertRule                       alertsource.AlertRule
@@ -384,6 +384,8 @@ func TestCreateAlertRule(t *testing.T) {
 					"alert1": {
 						Duration:    SomeDuration,
 						RangeValues: []int{5},
+						QueryField:  RegisteredQueryField,
+						DeviceId:    RegisteredDeviceId,
 						Id:          "alert1",
 						Level:       alertsource.Ok,
 					},
@@ -397,8 +399,8 @@ func TestCreateAlertRule(t *testing.T) {
 				QueryField:  "temperature",
 				AlertRange:  alertsource.LessThan,
 			},
-			wantResponse: &struct{ Body alertsource.RuleCreated }{
-				Body: alertsource.RuleCreated{
+			wantResponse: &struct{ Body alertsource.CreatedRule }{
+				Body: alertsource.CreatedRule{
 					AlertId: "alert1",
 				},
 			},
@@ -430,7 +432,7 @@ func TestCreateAlertRule(t *testing.T) {
 			},
 		},
 
-		"alert with identical parameters already exists": {
+		"alert with identical deviceId and queryField parameters already exists": {
 			wantErr: true,
 			wantAlertStore: map[any]any{
 				"alertRecipients": map[string][]string{"alert1": {"user1"}},
@@ -465,9 +467,9 @@ func TestCreateAlertRule(t *testing.T) {
 			alertRule: alertsource.AlertRule{
 				Usernames:   []string{"user1"},
 				Duration:    "24h",
-				DeviceId:    "device1",
+				DeviceId:    RegisteredDeviceId,
 				RangeValues: []int{5, 10},
-				QueryField:  "temperature",
+				QueryField:  RegisteredQueryField,
 				AlertRange:  alertsource.Range,
 			},
 		},
@@ -476,7 +478,7 @@ func TestCreateAlertRule(t *testing.T) {
 	var as *alertstore.MockAlertStore
 	var source *alertsource.MockAlertSource
 	var err error
-	var got *struct{ Body alertsource.RuleCreated }
+	var got *struct{ Body alertsource.CreatedRule }
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
 			as = alertstore.NewMockAlertStore(tc.mockAlertStore)
@@ -586,6 +588,8 @@ func TestUpdateAlertRule(t *testing.T) {
 				"alertStore": map[string]alertsource.Alert{
 					"alert1": {
 						Duration:    SomeDuration,
+						QueryField:  RegisteredQueryField,
+						DeviceId:    RegisteredDeviceId,
 						RangeValues: []int{43, 90},
 						Id:          "alert1",
 						Level:       0,
@@ -604,6 +608,8 @@ func TestUpdateAlertRule(t *testing.T) {
 				"alertStore": map[string]alertsource.Alert{
 					"alert1": {
 						Duration:    SomeDuration,
+						QueryField:  RegisteredQueryField,
+						DeviceId:    RegisteredDeviceId,
 						RangeValues: []int{10, 20},
 						Id:          "alert1",
 						Level:       alertsource.Ok,
@@ -634,42 +640,6 @@ func TestUpdateAlertRule(t *testing.T) {
 				QueryField:  RegisteredQueryField,
 				AlertRange:  alertsource.Range,
 			},
-			mockAlertStore: map[any]any{
-				"alertRecipients": map[string][]string{
-					"alert1": {"user1"},
-				},
-				"deviceAlerts": map[string]map[string]string{
-					RegisteredDeviceId: {
-						RegisteredQueryField: "alert1",
-					},
-				},
-				"alertStore": map[string]alertsource.Alert{
-					"alert1": {
-						Duration:    SomeDuration,
-						RangeValues: []int{10, 20},
-						Id:          "alert1",
-						Level:       alertsource.Ok,
-					},
-				},
-			},
-			wantAlertStore: map[any]any{
-				"alertRecipients": map[string][]string{
-					"alert1": {"user1"},
-				},
-				"deviceAlerts": map[string]map[string]string{
-					RegisteredDeviceId: {
-						RegisteredQueryField: "alert1",
-					},
-				},
-				"alertStore": map[string]alertsource.Alert{
-					"alert1": {
-						Duration:    SomeDuration,
-						RangeValues: []int{10, 20},
-						Id:          "alert1",
-						Level:       alertsource.Ok,
-					},
-				},
-			},
 		},
 		"invalid: 2 range values on a less than type alert check": {
 			wantErr: true,
@@ -681,42 +651,6 @@ func TestUpdateAlertRule(t *testing.T) {
 				DeviceId:    RegisteredDeviceId,
 				QueryField:  RegisteredQueryField,
 				AlertRange:  alertsource.LessThan,
-			},
-			mockAlertStore: map[any]any{
-				"alertRecipients": map[string][]string{
-					"alert1": {"user1"},
-				},
-				"deviceAlerts": map[string]map[string]string{
-					RegisteredDeviceId: {
-						RegisteredQueryField: "alert1",
-					},
-				},
-				"alertStore": map[string]alertsource.Alert{
-					"alert1": {
-						Duration:    SomeDuration,
-						RangeValues: []int{10, 20},
-						Id:          "alert1",
-						Level:       alertsource.Ok,
-					},
-				},
-			},
-			wantAlertStore: map[any]any{
-				"alertRecipients": map[string][]string{
-					"alert1": {"user1"},
-				},
-				"deviceAlerts": map[string]map[string]string{
-					RegisteredDeviceId: {
-						RegisteredQueryField: "alert1",
-					},
-				},
-				"alertStore": map[string]alertsource.Alert{
-					"alert1": {
-						Duration:    SomeDuration,
-						RangeValues: []int{10, 20},
-						Id:          "alert1",
-						Level:       alertsource.Ok,
-					},
-				},
 			},
 		},
 	}
@@ -738,6 +672,24 @@ func TestUpdateAlertRule(t *testing.T) {
 					t.Fatalf("alertstore mismatch (-want +got):\n%s", diff)
 				}
 			}
+		})
+	}
+}
+
+func TestGetAlertRule(t *testing.T) {
+	tests := map[string]struct {
+		wantErr                        bool
+		input                          alertsource.CreatedRule
+		mockAlertStore, wantAlertStore map[any]any
+	}{}
+	var err error
+	var got *struct{ Body alertsource.AlertRule }
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+			_, err = a.GetAlertRule(
+				context.Background(),
+				&struct{ Body alertsource.CreatedRule }{tc.input},
+			)
 		})
 	}
 }

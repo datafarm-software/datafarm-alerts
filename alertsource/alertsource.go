@@ -29,7 +29,7 @@ type AlertRule struct {
 	AlertRange  AlertRange `json:"alertRange" maximum:"2" doc:"Specify type of check to perform. 0 = Less Than, 1 = Greater Than, 2 = Range."`
 }
 
-type RuleCreated struct {
+type CreatedRule struct {
 	AlertId string `json:"alertId" readOnly:"true" doc:"Generated Alert Id."`
 }
 
@@ -37,6 +37,8 @@ type Alert struct {
 	Time        time.Time
 	Duration    time.Duration
 	RangeValues []int
+	QueryField  string
+	DeviceId    string
 	Message     string
 	Id          string
 	Level       AlertLevel
