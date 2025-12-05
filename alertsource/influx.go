@@ -1,6 +1,9 @@
 package alertsource
 
-import "time"
+import (
+	"fmt"
+	"time"
+)
 
 type InfluxAlert struct {
 	Id                       string    `json:"_check_id" required:"true"`
@@ -43,9 +46,17 @@ func (i *InfluxAlert) GetAlertLevel() AlertLevel {
 
 func (i *InfluxAlert) GetAlertState() *AlertState {
 	return &AlertState{
-		Level:   i.GetAlertLevel(),
 		Time:    i.Time,
 		Message: i.Message,
 		Id:      i.Id,
+		Level:   i.GetAlertLevel(),
 	}
+}
+
+func (i *InfluxAlert) RegisterAlertRule(ar AlertRule) (string, error) {
+	return "", fmt.Errorf("not implemented")
+}
+
+func (i *InfluxAlert) UpdateAlertRule(ar AlertRule) error {
+	return fmt.Errorf("not implemented")
 }

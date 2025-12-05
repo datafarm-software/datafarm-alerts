@@ -189,13 +189,21 @@ func (a *App) RespondToAlert(
 	ctx context.Context,
 	in *struct{ Body alertsource.InfluxAlert }) (*struct{}, error) {
 	source := alertsource.AlertSource(&in.Body)
-	alert := source.GetAlert()
-	previous, err := a.AlertStore.GetAlertState(alert.Id)
+	alert := source.GetAlertState()
+	previousAlert, err := a.AlertStore.GetAlertState(alert.Id)
 	if err != nil {
 		log.Printf("getting previous alert for %s: %v", alert.Id, err)
 		return nil, huma.Error500InternalServerError("no alert configured")
 	}
-	alert.Duration = previous.Duration
+	alertRule, err := a.AlertStore.GetAlertRule(alert.Id)
+	if err != nil {
+		log.Printf("getting alert rule for %s: %v", alert.Id, err)
+	}
+	alert.Duration = previousAlert.Duration
+	if err = a.AlertStore.UpdateAlertState(alert); err != nil {
+		log.Printf("updating alertstore: %v", err)
+		return nil, nil
+	}
 	if !a.ShouldNotifyCrit(alert, previous) {
 		return nil, nil
 	}
@@ -208,21 +216,9 @@ func (a *App) RespondToAlert(
 		log.Printf("notifying users: %v", err)
 		return nil, nil
 	}
-	if err = a.AlertStore.UpdateAlertState(alert); err != nil {
-		log.Printf("updating alertstore: %v", err)
-		return nil, nil
-	}
 	return nil, nil
 }
-func (a *App) ShouldNotifyCrit(alert *alertsource.Alert, previous *alertsource.Alert) bool {
-	if alert.Level == previous.Level {
-		if alert.Level != alertsource.Crit {
-			return false
-		}
-		if alert.Time.Sub(previous.Time) > alert.Duration {
-			return true
-		}
-	}
+func (a *App) ShouldNotifyCrit(alert *alertsource.AlertState, previous *alertsource.AlertState) bool {
 	if alert.Level != alertsource.Crit {
 		return false
 	}
@@ -249,7 +245,7 @@ func (a *App) CreateAlertRule(
 		log.Printf("Need 2 range values for range alert.")
 		return nil, huma.Error400BadRequest("Need 2 range values for range alert.")
 	}
-	if existingAlertId, err := a.AlertStore.CheckAlertExists(in.Body); err != nil {
+	if existingAlertId, err := a.AlertStore.CheckAlertRuleExists(in.Body); err != nil {
 		if !errors.Is(err, alertstore.AlertExists) {
 			log.Printf("checking alert exists: %v", err)
 			return nil,
@@ -261,12 +257,12 @@ func (a *App) CreateAlertRule(
 			AlertId: existingAlertId,
 		}
 	}
-	alertId, err := a.AlertSource.RegisterAlert(in.Body)
+	alertId, err := a.AlertSource.RegisterAlertRule(in.Body)
 	if err != nil {
 		log.Printf("registering alert: %v", err)
 		return nil, huma.Error500InternalServerError("Internal error while registering the alert.")
 	}
-	if err := a.AlertStore.StoreAlert(alertId, in.Body); err != nil {
+	if err := a.AlertStore.UpdateAlertRule(alertId, in.Body); err != nil {
 		log.Printf("storing alert: %v", err)
 		return nil, huma.Error500InternalServerError("internal error storing the alert rule")
 	}
@@ -294,7 +290,7 @@ func (a *App) UpdateAlertRule(
 		log.Printf("Need 2 range values for range alert.")
 		return nil, huma.Error400BadRequest("Need 2 range values for range alert.")
 	}
-	existingAlertId, err := a.AlertStore.CheckAlertExists(in.Body)
+	existingAlertId, err := a.AlertStore.CheckAlertRuleExists(in.Body)
 	if existingAlertId == "" && err == nil {
 		log.Printf("tried to update an alert that does not exist.")
 		return nil,
@@ -305,7 +301,7 @@ func (a *App) UpdateAlertRule(
 		return nil,
 			huma.Error500InternalServerError("Internal error checking if alert exists.")
 	}
-	if err := a.AlertStore.UpdateAlertRule(in.Body); err != nil {
+	if err := a.AlertStore.UpdateAlertRule(existingAlertId, in.Body); err != nil {
 		log.Printf("updating alert rule for id: %s, error: %v", in.Body.Id, err)
 		return nil, huma.Error500InternalServerError(
 			"Internal error while storing the updated alert rule.")
@@ -317,21 +313,14 @@ func (a *App) GetAlertRule(
 	ctx context.Context,
 	in *struct{ Body alertsource.CreatedRule },
 ) (*struct{ Body alertsource.AlertRule }, error) {
-	alert, err := a.AlertStore.GetPreviousAlert(in.Body.AlertId)
+	alert, err := a.AlertStore.GetAlertRule(in.Body.AlertId)
 	if err != nil {
 		if !errors.Is(err, alertstore.NoAlert) {
-			log.Printf("GetPreviousAlert(%s): %v", in.Body.AlertId, err)
+			log.Printf("GetAlertRule(%s): %v", in.Body.AlertId, err)
 			return nil, huma.Error500InternalServerError(
 				"Unexpected area retrieving alert.")
 		}
 		return nil, huma.Error404NotFound("No alert rule found.")
 	}
-	ar := alertsource.AlertRule{
-		Id:          alert.Id,
-		RangeValues: alert.RangeValues,
-		Duration:    alert.Duration.String(),
-		DeviceId:    alert.DeviceId,
-		QueryField:  alert.QueryField,
-		AlertRange:  something,
-	}
+	return &struct{ Body alertsource.AlertRule }{alert}, nil
 }

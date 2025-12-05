@@ -16,13 +16,14 @@ var NoAlert = errors.New("no alert")
 type AlertStore interface {
 	//NOTE: could return alertstore.NoAlert
 	GetAlertState(alertId string) (*alertsource.AlertState, error)
+	GetAlertRule(alertId string) (alertsource.AlertRule, error)
 	GetAlertRecipients(alertId string) ([]string, error)
 	UpdateAlertState(alert *alertsource.AlertState) error
 	StoreAlertRule(alertId string, alert alertsource.AlertRule) error
 	AddUsersToNotifyList(alertId string, usernames []string) error
 	//NOTE: could return alertstore.AlertExists
 	CheckAlertRuleExists(alertsource.AlertRule) (string, error)
-	UpdateAlertRule(alertsource.AlertRule) error
+	UpdateAlertRule(alertId string, rule alertsource.AlertRule) error
 }
 
 func ParseDuration(d string) (time.Duration, error) {

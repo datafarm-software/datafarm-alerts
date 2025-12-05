@@ -43,8 +43,8 @@ type AlertState struct {
 }
 
 type AlertSource interface {
-	UpdateAlert(AlertRule) error
+	UpdateAlertRule(AlertRule) error
 	GetAlertState() *AlertState
-	RegisterAlert(AlertRule) (string, error)
+	RegisterAlertRule(AlertRule) (string, error)
 	GetAlertLevel() AlertLevel
 }
