@@ -110,11 +110,13 @@ func TestRespondToAlert(t *testing.T) {
 				},
 				"alertStore": map[string]alertsource.Alert{
 					"alert1": {
-						Time:     AlertReceived,
-						Duration: SomeDuration,
-						Message:  "Already crit.",
-						Id:       "alert1",
-						Level:    alertsource.Crit,
+						Time:       AlertReceived,
+						QueryField: RegisteredQueryField,
+						DeviceId:   RegisteredDeviceId,
+						Duration:   SomeDuration,
+						Message:    "Already crit.",
+						Id:         "alert1",
+						Level:      alertsource.Crit,
 					},
 				},
 			},
@@ -137,11 +139,13 @@ func TestRespondToAlert(t *testing.T) {
 				},
 				"alertStore": map[string]alertsource.Alert{
 					"alert1": {
-						Time:     AfterDuration,
-						Duration: SomeDuration,
-						Message:  "Alert message stating crit level.",
-						Id:       "alert1",
-						Level:    alertsource.Crit,
+						Time:       AfterDuration,
+						QueryField: RegisteredQueryField,
+						DeviceId:   RegisteredDeviceId,
+						Duration:   SomeDuration,
+						Message:    "Alert message stating crit level.",
+						Id:         "alert1",
+						Level:      alertsource.Crit,
 					},
 				},
 			},
@@ -239,10 +243,12 @@ func TestRespondToAlert(t *testing.T) {
 				},
 				"alertStore": map[string]alertsource.Alert{
 					"alert1": {
-						Time:    WithinDuration,
-						Id:      "alert1",
-						Level:   alertsource.Crit,
-						Message: "Alert message stating crit level.",
+						Time:       WithinDuration,
+						QueryField: RegisteredQueryField,
+						DeviceId:   RegisteredDeviceId,
+						Id:         "alert1",
+						Level:      alertsource.Crit,
+						Message:    "Alert message stating crit level.",
 					},
 				},
 			},
@@ -592,7 +598,7 @@ func TestUpdateAlertRule(t *testing.T) {
 						DeviceId:    RegisteredDeviceId,
 						RangeValues: []int{43, 90},
 						Id:          "alert1",
-						Level:       0,
+						Level:       alertsource.Ok,
 					},
 				},
 			},
@@ -617,6 +623,7 @@ func TestUpdateAlertRule(t *testing.T) {
 				},
 			},
 		},
+
 		"error when trying to update non existent alert rule": {
 			wantErr: true,
 			input: alertsource.AlertRule{
@@ -629,6 +636,7 @@ func TestUpdateAlertRule(t *testing.T) {
 				AlertRange:  alertsource.Range,
 			},
 		},
+
 		"invalid: 1 range value on a range type alert check": {
 			wantErr: true,
 			input: alertsource.AlertRule{
@@ -678,18 +686,66 @@ func TestUpdateAlertRule(t *testing.T) {
 
 func TestGetAlertRule(t *testing.T) {
 	tests := map[string]struct {
-		wantErr                        bool
-		input                          alertsource.CreatedRule
-		mockAlertStore, wantAlertStore map[any]any
-	}{}
+		wantErr        bool
+		want           *struct{ Body alertsource.AlertRule }
+		input          alertsource.CreatedRule
+		mockAlertStore map[any]any
+	}{
+
+		"successfully get a stored alert": {
+			wantErr: false,
+			input:   alertsource.CreatedRule{AlertId: "alert1"},
+			mockAlertStore: map[any]any{
+				"alertRecipients": map[string][]string{
+					"alert1": {"user1"},
+				},
+				"deviceAlerts": map[string]map[string]string{
+					RegisteredDeviceId: {
+						RegisteredQueryField: "alert1",
+					},
+				},
+				"alertStore": map[string]alertsource.Alert{
+					"alert1": {
+						Duration:    SomeDuration,
+						QueryField:  RegisteredQueryField,
+						DeviceId:    RegisteredDeviceId,
+						RangeValues: []int{10, 20},
+						Id:          "alert1",
+						Level:       alertsource.Ok,
+					},
+				},
+			},
+			want: &struct{ Body alertsource.AlertRule }{
+				alertsource.AlertRule{
+					Id:          "alert1",
+					Usernames:   []string{"user1"},
+					RangeValues: []int{10, 20},
+					Duration:    "24h",
+					DeviceId:    RegisteredDeviceId,
+					QueryField:  RegisteredQueryField,
+					AlertRange:  alertsource.Range,
+				},
+			},
+		},
+	}
+
 	var err error
 	var got *struct{ Body alertsource.AlertRule }
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
-			_, err = a.GetAlertRule(
+			got, err = a.GetAlertRule(
 				context.Background(),
 				&struct{ Body alertsource.CreatedRule }{tc.input},
 			)
+			if tc.wantErr != (err != nil) {
+				t.Fatalf("wantErr: %v, got: %v", tc.wantErr, err)
+			}
+			if !tc.wantErr {
+				if diff := cmp.Diff(tc.want, got); diff != "" {
+					t.Fatalf("response mismatch (-want +got):\n%s", diff)
+				}
+			}
+
 		})
 	}
 }

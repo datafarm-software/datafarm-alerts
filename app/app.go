@@ -314,3 +314,10 @@ func (a *App) UpdateAlertRule(
 	}
 	return nil, nil
 }
+
+func (a *App) GetAlertRule(
+	ctx context.Context,
+	in *struct{ Body alertsource.CreatedRule },
+) (*struct{ Body alertsource.AlertRule }, error) {
+	return nil, fmt.Errorf("not implemented")
+}

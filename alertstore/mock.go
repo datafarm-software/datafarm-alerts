@@ -160,10 +160,11 @@ func (m *MockAlertStore) UpdateAlertRule(ar alertsource.AlertRule) error {
 	if err != nil {
 		return err
 	}
-	alertStore[ar.Id] = alertsource.Alert{
-		Duration:    duration,
-		RangeValues: ar.RangeValues,
-		Id:          ar.Id,
-	}
+	alertToUpdate := alertStore[ar.Id]
+	alertToUpdate.Duration = duration
+	alertToUpdate.RangeValues = ar.RangeValues
+	alertToUpdate.Id = ar.Id
+	alertStore[ar.Id] = alertToUpdate
+	m.values["alertStore"] = alertStore
 	return nil
 }
