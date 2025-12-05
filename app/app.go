@@ -188,13 +188,11 @@ func (a *App) RegisterHumaOperations(api huma.API) {
 func (a *App) RespondToAlert(
 	ctx context.Context,
 	in *struct{ Body alertsource.InfluxAlert }) (*struct{}, error) {
-	alert := in.Body.GetAlert()
-	previous, err := a.AlertStore.GetPreviousAlert(in.Body.Id)
+	source := alertsource.AlertSource(&in.Body)
+	alert := source.GetAlert()
+	previous, err := a.AlertStore.GetAlertState(alert.Id)
 	if err != nil {
-		log.Printf(
-			"getting previous alert for %s: %s, error: %v",
-			in.Body.DeviceId, in.Body.QueryField, err,
-		)
+		log.Printf("getting previous alert for %s: %v", alert.Id, err)
 		return nil, huma.Error500InternalServerError("no alert configured")
 	}
 	alert.Duration = previous.Duration
@@ -210,7 +208,7 @@ func (a *App) RespondToAlert(
 		log.Printf("notifying users: %v", err)
 		return nil, nil
 	}
-	if err = a.AlertStore.UpdateAlertLastSeen(alert); err != nil {
+	if err = a.AlertStore.UpdateAlertState(alert); err != nil {
 		log.Printf("updating alertstore: %v", err)
 		return nil, nil
 	}

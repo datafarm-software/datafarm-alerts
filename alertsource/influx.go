@@ -26,7 +26,7 @@ type InfluxAlert struct {
 	_          struct{} `json:"-" additionalProperties:"true"`
 }
 
-func (i *InfluxAlert) GetLevel() AlertLevel {
+func (i *InfluxAlert) GetAlertLevel() AlertLevel {
 	var al AlertLevel
 	switch i.Level {
 	case "ok":
@@ -41,13 +41,11 @@ func (i *InfluxAlert) GetLevel() AlertLevel {
 	return al
 }
 
-func (i *InfluxAlert) GetAlert() *Alert {
-	return &Alert{
-		Level:      i.GetLevel(),
-		Time:       i.Time,
-		Message:    i.Message,
-		DeviceId:   i.DeviceId,
-		QueryField: i.QueryField,
-		Id:         i.Id,
+func (i *InfluxAlert) GetAlertState() *AlertState {
+	return &AlertState{
+		Level:   i.GetAlertLevel(),
+		Time:    i.Time,
+		Message: i.Message,
+		Id:      i.Id,
 	}
 }
