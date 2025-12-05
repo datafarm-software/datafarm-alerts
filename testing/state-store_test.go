@@ -29,16 +29,16 @@ func TestNotifyCrit(t *testing.T) {
 	var got bool
 	tests := map[string]struct {
 		want            bool
-		alert, previous *alertsource.Alert
+		alert, previous *alertsource.AlertState
 	}{
 		"no change within duration, so do nothing": {
 			want: false,
-			alert: &alertsource.Alert{
+			alert: &alertsource.AlertState{
 				Level:    alertsource.Crit,
 				Time:     WithinDuration,
 				Duration: SomeDuration,
 			},
-			previous: &alertsource.Alert{
+			previous: &alertsource.AlertState{
 				Level:    alertsource.Crit,
 				Time:     AlertReceived,
 				Duration: SomeDuration,
@@ -46,12 +46,12 @@ func TestNotifyCrit(t *testing.T) {
 		},
 		"still crit after duration, so notify": {
 			want: true,
-			alert: &alertsource.Alert{
+			alert: &alertsource.AlertState{
 				Level:    alertsource.Crit,
 				Time:     AfterDuration,
 				Duration: SomeDuration,
 			},
-			previous: &alertsource.Alert{
+			previous: &alertsource.AlertState{
 				Level:    alertsource.Crit,
 				Time:     AlertReceived,
 				Duration: SomeDuration,
@@ -59,19 +59,19 @@ func TestNotifyCrit(t *testing.T) {
 		},
 		"change to crit, so notify": {
 			want: true,
-			alert: &alertsource.Alert{
+			alert: &alertsource.AlertState{
 				Level: alertsource.Crit,
 			},
-			previous: &alertsource.Alert{
+			previous: &alertsource.AlertState{
 				Level: alertsource.Ok,
 			},
 		},
 		"change from crit to ok, so do nothing": {
 			want: false,
-			alert: &alertsource.Alert{
+			alert: &alertsource.AlertState{
 				Level: alertsource.Ok,
 			},
-			previous: &alertsource.Alert{
+			previous: &alertsource.AlertState{
 				Level: alertsource.Crit,
 			},
 		},
@@ -108,7 +108,7 @@ func TestRespondToAlert(t *testing.T) {
 						RegisteredQueryField: "alert1",
 					},
 				},
-				"alertStore": map[string]alertsource.Alert{
+				"alertStore": map[string]alertsource.AlertState{
 					"alert1": {
 						Time:       AlertReceived,
 						QueryField: RegisteredQueryField,
@@ -137,7 +137,7 @@ func TestRespondToAlert(t *testing.T) {
 						RegisteredQueryField: "alert1",
 					},
 				},
-				"alertStore": map[string]alertsource.Alert{
+				"alertStore": map[string]alertsource.AlertState{
 					"alert1": {
 						Time:       AfterDuration,
 						QueryField: RegisteredQueryField,
@@ -162,7 +162,7 @@ func TestRespondToAlert(t *testing.T) {
 						RegisteredQueryField: "alert1",
 					},
 				},
-				"alertStore": map[string]alertsource.Alert{
+				"alertStore": map[string]alertsource.AlertState{
 					"alert1": {
 						Time:     AlertReceived,
 						Duration: SomeDuration,
@@ -189,7 +189,7 @@ func TestRespondToAlert(t *testing.T) {
 						RegisteredQueryField: "alert1",
 					},
 				},
-				"alertStore": map[string]alertsource.Alert{
+				"alertStore": map[string]alertsource.AlertState{
 					"alert1": {
 						Time:     AlertReceived,
 						Duration: SomeDuration,
@@ -216,7 +216,7 @@ func TestRespondToAlert(t *testing.T) {
 						RegisteredQueryField: "alert1",
 					},
 				},
-				"alertStore": map[string]alertsource.Alert{
+				"alertStore": map[string]alertsource.AlertState{
 					"alert1": {
 						Time:  AlertReceived,
 						Id:    "alert1",
@@ -241,7 +241,7 @@ func TestRespondToAlert(t *testing.T) {
 						RegisteredQueryField: "alert1",
 					},
 				},
-				"alertStore": map[string]alertsource.Alert{
+				"alertStore": map[string]alertsource.AlertState{
 					"alert1": {
 						Time:       WithinDuration,
 						QueryField: RegisteredQueryField,
@@ -265,7 +265,7 @@ func TestRespondToAlert(t *testing.T) {
 						RegisteredQueryField: "alert1",
 					},
 				},
-				"alertStore": map[string]alertsource.Alert{
+				"alertStore": map[string]alertsource.AlertState{
 					"alert1": {
 						Time:  AlertReceived,
 						Id:    "alert1",
@@ -289,7 +289,7 @@ func TestRespondToAlert(t *testing.T) {
 						RegisteredQueryField: "alert1",
 					},
 				},
-				"alertStore": map[string]alertsource.Alert{
+				"alertStore": map[string]alertsource.AlertState{
 					"alert1": {
 						Time:  AlertReceived,
 						Id:    "alert1",
@@ -310,7 +310,7 @@ func TestRespondToAlert(t *testing.T) {
 						RegisteredQueryField: "alert1",
 					},
 				},
-				"alertStore": map[string]alertsource.Alert{
+				"alertStore": map[string]alertsource.AlertState{
 					"alert1": {
 						Time:  AlertReceived,
 						Id:    "alert1",
@@ -334,7 +334,7 @@ func TestRespondToAlert(t *testing.T) {
 						RegisteredQueryField: "alert1",
 					},
 				},
-				"alertStore": map[string]alertsource.Alert{
+				"alertStore": map[string]alertsource.AlertState{
 					"alert1": {
 						Time:  AlertReceived,
 						Id:    "alert1",
@@ -386,7 +386,7 @@ func TestCreateAlertRule(t *testing.T) {
 						RegisteredQueryField: "alert1",
 					},
 				},
-				"alertStore": map[string]alertsource.Alert{
+				"alertStore": map[string]alertsource.AlertState{
 					"alert1": {
 						Duration:    SomeDuration,
 						RangeValues: []int{5},
@@ -417,7 +417,7 @@ func TestCreateAlertRule(t *testing.T) {
 			wantAlertStore: map[any]any{
 				"alertRecipients": map[string][]string{},
 				"deviceAlerts":    map[string]map[string]string{},
-				"alertStore":      map[string]alertsource.Alert{},
+				"alertStore":      map[string]alertsource.AlertState{},
 			},
 			alertRule: alertsource.AlertRule{
 				RangeValues: []int{5, 10},
@@ -430,7 +430,7 @@ func TestCreateAlertRule(t *testing.T) {
 			wantAlertStore: map[any]any{
 				"alertRecipients": map[string][]string{},
 				"deviceAlerts":    map[string]map[string]string{},
-				"alertStore":      map[string]alertsource.Alert{},
+				"alertStore":      map[string]alertsource.AlertState{},
 			},
 			alertRule: alertsource.AlertRule{
 				RangeValues: []int{5},
@@ -447,7 +447,7 @@ func TestCreateAlertRule(t *testing.T) {
 						RegisteredQueryField: "alert1",
 					},
 				},
-				"alertStore": map[string]alertsource.Alert{
+				"alertStore": map[string]alertsource.AlertState{
 					"alert1": {
 						Duration: SomeDuration,
 						Id:       "alert1",
@@ -591,7 +591,7 @@ func TestUpdateAlertRule(t *testing.T) {
 						RegisteredQueryField: "alert1",
 					},
 				},
-				"alertStore": map[string]alertsource.Alert{
+				"alertStore": map[string]alertsource.AlertState{
 					"alert1": {
 						Duration:    SomeDuration,
 						QueryField:  RegisteredQueryField,
@@ -611,7 +611,7 @@ func TestUpdateAlertRule(t *testing.T) {
 						RegisteredQueryField: "alert1",
 					},
 				},
-				"alertStore": map[string]alertsource.Alert{
+				"alertStore": map[string]alertsource.AlertState{
 					"alert1": {
 						Duration:    SomeDuration,
 						QueryField:  RegisteredQueryField,
@@ -704,7 +704,7 @@ func TestGetAlertRule(t *testing.T) {
 						RegisteredQueryField: "alert1",
 					},
 				},
-				"alertStore": map[string]alertsource.Alert{
+				"alertStore": map[string]alertsource.AlertState{
 					"alert1": {
 						Duration:    SomeDuration,
 						QueryField:  RegisteredQueryField,

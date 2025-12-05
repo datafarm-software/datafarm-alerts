@@ -198,13 +198,14 @@ func (a *App) RespondToAlert(
 	alertRule, err := a.AlertStore.GetAlertRule(alert.Id)
 	if err != nil {
 		log.Printf("getting alert rule for %s: %v", alert.Id, err)
+		return nil, huma.Error500InternalServerError("Internal error getting the alert rule.")
 	}
-	alert.Duration = previousAlert.Duration
-	if err = a.AlertStore.UpdateAlertState(alert); err != nil {
-		log.Printf("updating alertstore: %v", err)
-		return nil, nil
+	alert.Duration, err = alertstore.ParseDuration(alertRule.Duration)
+	if err != nil {
+		log.Printf("parsing duration for alert: %s, %s, err: %v", alert.Id, alertRule.Duration, err)
+		return nil, huma.Error500InternalServerError("Internal error parsing the duration of the alert.")
 	}
-	if !a.ShouldNotifyCrit(alert, previous) {
+	if !a.ShouldNotifyCrit(alert, previousAlert) {
 		return nil, nil
 	}
 	users, err := a.AlertStore.GetAlertRecipients(alert.Id)
