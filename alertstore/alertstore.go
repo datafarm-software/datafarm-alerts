@@ -15,13 +15,13 @@ var NoAlert = errors.New("no alert")
 
 type AlertStore interface {
 	//NOTE: could return alertstore.NoAlert
-	GetPreviousAlert(alertId string) (*alertsource.Alert, error)
-	GetAlertRecipients(id string) ([]string, error)
-	UpdateAlertLastSeen(alert *alertsource.Alert) error
-	StoreAlert(alertId string, alert alertsource.AlertRule) error
+	GetAlertState(alertId string) (*alertsource.AlertState, error)
+	GetAlertRecipients(alertId string) ([]string, error)
+	UpdateAlertState(alert *alertsource.AlertState) error
+	StoreAlertRule(alertId string, alert alertsource.AlertRule) error
 	AddUsersToNotifyList(alertId string, usernames []string) error
 	//NOTE: could return alertstore.AlertExists
-	CheckAlertExists(alertsource.AlertRule) (string, error)
+	CheckAlertRuleExists(alertsource.AlertRule) (string, error)
 	UpdateAlertRule(alertsource.AlertRule) error
 }
 

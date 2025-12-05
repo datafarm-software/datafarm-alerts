@@ -33,19 +33,18 @@ type CreatedRule struct {
 	AlertId string `json:"alertId" readOnly:"true" doc:"Generated Alert Id."`
 }
 
-type Alert struct {
+type AlertState struct {
 	Time        time.Time
 	Duration    time.Duration
 	RangeValues []int
-	QueryField  string
-	DeviceId    string
 	Message     string
 	Id          string
 	Level       AlertLevel
 }
 
 type AlertSource interface {
-	GetAlert() *Alert
-	RegisterAlert(AlertRule) (string, error)
-	GetLevel() AlertLevel
+	UpdateAlertRule(AlertRule) error
+	GetAlertState() *AlertState
+	RegisterAlertRule(AlertRule) (string, error)
+	GetAlertLevel() AlertLevel
 }
