@@ -287,6 +287,15 @@ func (a *App) UpdateAlertRule(
 	ctx context.Context,
 	in *struct{ Body alertsource.AlertRule },
 ) (*struct{}, error) {
+	if in.Body.AlertRange < alertsource.Range && len(in.Body.RangeValues) > 1 {
+		log.Printf("can't have more than one range value on greater or less than alert.")
+		return nil,
+			huma.Error400BadRequest("More than one range value on less than or greater alert.")
+	}
+	if in.Body.AlertRange == alertsource.Range && len(in.Body.RangeValues) != 2 {
+		log.Printf("Need 2 range values for range alert.")
+		return nil, huma.Error400BadRequest("Need 2 range values for range alert.")
+	}
 	existingAlertId, err := a.AlertStore.CheckAlertExists(in.Body)
 	if existingAlertId == "" && err == nil {
 		log.Printf("tried to update an alert that does not exist.")

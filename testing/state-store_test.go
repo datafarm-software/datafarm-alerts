@@ -572,7 +572,7 @@ func TestUpdateAlertRule(t *testing.T) {
 				Duration:    "24h",
 				DeviceId:    RegisteredDeviceId,
 				QueryField:  RegisteredQueryField,
-				AlertRange:  2,
+				AlertRange:  alertsource.Range,
 			},
 			mockAlertStore: map[any]any{
 				"alertRecipients": map[string][]string{
@@ -606,7 +606,7 @@ func TestUpdateAlertRule(t *testing.T) {
 						Duration:    SomeDuration,
 						RangeValues: []int{10, 20},
 						Id:          "alert1",
-						Level:       0,
+						Level:       alertsource.Ok,
 					},
 				},
 			},
@@ -620,7 +620,103 @@ func TestUpdateAlertRule(t *testing.T) {
 				Duration:    "24h",
 				DeviceId:    RegisteredDeviceId,
 				QueryField:  RegisteredQueryField,
-				AlertRange:  2,
+				AlertRange:  alertsource.Range,
+			},
+		},
+		"invalid: 1 range value on a range type alert check": {
+			wantErr: true,
+			input: alertsource.AlertRule{
+				Id:          "alert1",
+				Usernames:   []string{"user1"},
+				RangeValues: []int{10},
+				Duration:    "24h",
+				DeviceId:    RegisteredDeviceId,
+				QueryField:  RegisteredQueryField,
+				AlertRange:  alertsource.Range,
+			},
+			mockAlertStore: map[any]any{
+				"alertRecipients": map[string][]string{
+					"alert1": {"user1"},
+				},
+				"deviceAlerts": map[string]map[string]string{
+					RegisteredDeviceId: {
+						RegisteredQueryField: "alert1",
+					},
+				},
+				"alertStore": map[string]alertsource.Alert{
+					"alert1": {
+						Duration:    SomeDuration,
+						RangeValues: []int{10, 20},
+						Id:          "alert1",
+						Level:       alertsource.Ok,
+					},
+				},
+			},
+			wantAlertStore: map[any]any{
+				"alertRecipients": map[string][]string{
+					"alert1": {"user1"},
+				},
+				"deviceAlerts": map[string]map[string]string{
+					RegisteredDeviceId: {
+						RegisteredQueryField: "alert1",
+					},
+				},
+				"alertStore": map[string]alertsource.Alert{
+					"alert1": {
+						Duration:    SomeDuration,
+						RangeValues: []int{10, 20},
+						Id:          "alert1",
+						Level:       alertsource.Ok,
+					},
+				},
+			},
+		},
+		"invalid: 2 range values on a less than type alert check": {
+			wantErr: true,
+			input: alertsource.AlertRule{
+				Id:          "alert1",
+				Usernames:   []string{"user1"},
+				RangeValues: []int{50, 90},
+				Duration:    "24h",
+				DeviceId:    RegisteredDeviceId,
+				QueryField:  RegisteredQueryField,
+				AlertRange:  alertsource.LessThan,
+			},
+			mockAlertStore: map[any]any{
+				"alertRecipients": map[string][]string{
+					"alert1": {"user1"},
+				},
+				"deviceAlerts": map[string]map[string]string{
+					RegisteredDeviceId: {
+						RegisteredQueryField: "alert1",
+					},
+				},
+				"alertStore": map[string]alertsource.Alert{
+					"alert1": {
+						Duration:    SomeDuration,
+						RangeValues: []int{10, 20},
+						Id:          "alert1",
+						Level:       alertsource.Ok,
+					},
+				},
+			},
+			wantAlertStore: map[any]any{
+				"alertRecipients": map[string][]string{
+					"alert1": {"user1"},
+				},
+				"deviceAlerts": map[string]map[string]string{
+					RegisteredDeviceId: {
+						RegisteredQueryField: "alert1",
+					},
+				},
+				"alertStore": map[string]alertsource.Alert{
+					"alert1": {
+						Duration:    SomeDuration,
+						RangeValues: []int{10, 20},
+						Id:          "alert1",
+						Level:       alertsource.Ok,
+					},
+				},
 			},
 		},
 	}
