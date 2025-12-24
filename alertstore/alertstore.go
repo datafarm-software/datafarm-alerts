@@ -23,7 +23,6 @@ type AlertStore interface {
 	AddUsersToNotifyList(alertId string, usernames []string) error
 	//NOTE: could return alertstore.AlertExists
 	CheckAlertRuleExists(alertsource.AlertRule) (string, error)
-	UpdateAlertRule(alertId string, rule alertsource.AlertRule) error
 }
 
 func ParseDuration(d string) (time.Duration, error) {

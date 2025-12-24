@@ -97,8 +97,6 @@ func (m *MockAlertStore) StoreAlertRule(alertId string, ar alertsource.AlertRule
 		Duration:    duration,
 		Level:       alertsource.Ok,
 		RangeValues: ar.RangeValues,
-		QueryField:  ar.QueryField,
-		DeviceId:    ar.DeviceId,
 		Id:          alertId,
 	}
 	m.values["alertStore"] = alerts
@@ -141,24 +139,6 @@ func (m *MockAlertStore) CheckAlertRuleExists(ar alertsource.AlertRule) (string,
 		return existingAlert.Id, AlertExists
 	}
 	return "", nil
-}
-
-func (m *MockAlertStore) UpdateAlertRule(alertId string, ar alertsource.AlertRule) error {
-	alertStore, ok := m.values["alertStore"].(map[string]alertsource.AlertState)
-	if !ok {
-		return fmt.Errorf("alertStore is empty")
-	}
-	duration, err := ParseDuration(ar.Duration)
-	if err != nil {
-		return err
-	}
-	alertToUpdate := alertStore[ar.Id]
-	alertToUpdate.Duration = duration
-	alertToUpdate.RangeValues = ar.RangeValues
-	alertToUpdate.Id = ar.Id
-	alertStore[ar.Id] = alertToUpdate
-	m.values["alertStore"] = alertStore
-	return nil
 }
 
 func (m *MockAlertStore) UpdateAlertState(alert *alertsource.AlertState) error {

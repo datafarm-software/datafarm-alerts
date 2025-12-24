@@ -74,6 +74,7 @@ type ErrorResponse struct {
 }
 
 func (a *App) RegisterHumaOperations(api huma.API) {
+	registry := huma.NewMapRegistry("#/errors", huma.DefaultSchemaNamer)
 	operation := huma.Operation{
 		Method:  "POST",
 		Path:    "/alert/notify",
@@ -82,7 +83,6 @@ func (a *App) RegisterHumaOperations(api huma.API) {
 		Hidden:  true,
 	}
 	huma.Register(api, operation, a.RespondToAlert)
-	registry := huma.NewMapRegistry("#/errors", huma.DefaultSchemaNamer)
 	operation = huma.Operation{
 		Method:      "POST",
 		Path:        "/alerts",
@@ -263,7 +263,7 @@ func (a *App) CreateAlertRule(
 		log.Printf("registering alert: %v", err)
 		return nil, huma.Error500InternalServerError("Internal error while registering the alert.")
 	}
-	if err := a.AlertStore.UpdateAlertRule(alertId, in.Body); err != nil {
+	if err := a.AlertStore.StoreAlertRule(alertId, in.Body); err != nil {
 		log.Printf("storing alert: %v", err)
 		return nil, huma.Error500InternalServerError("internal error storing the alert rule")
 	}
@@ -302,7 +302,7 @@ func (a *App) UpdateAlertRule(
 		return nil,
 			huma.Error500InternalServerError("Internal error checking if alert exists.")
 	}
-	if err := a.AlertStore.UpdateAlertRule(existingAlertId, in.Body); err != nil {
+	if err := a.AlertStore.StoreAlertRule(existingAlertId, in.Body); err != nil {
 		log.Printf("updating alert rule for id: %s, error: %v", in.Body.Id, err)
 		return nil, huma.Error500InternalServerError(
 			"Internal error while storing the updated alert rule.")
