@@ -17,8 +17,11 @@ func NewMockAlertStore(values map[any]any) *MockAlertStore {
 	if _, ok := values["alertRecipients"].(map[string][]string); !ok {
 		values["alertRecipients"] = make(map[string][]string)
 	}
-	if _, ok := values["alertStore"].(map[string]alertsource.AlertState); !ok {
-		values["alertStore"] = make(map[string]alertsource.AlertState)
+	// if _, ok := values["alertStore"].(map[string]alertsource.AlertState); !ok {
+	// 	values["alertStore"] = make(map[string]alertsource.AlertState)
+	// }
+	if _, ok := values["alertRules"].(map[string]alertsource.AlertRule); !ok {
+		values["alertRules"] = make(map[string]alertsource.AlertRule)
 	}
 	if _, ok := values["deviceAlerts"].(map[string]map[string]string); !ok {
 		values["deviceAlerts"] = make(map[string]map[string]string)
@@ -72,34 +75,25 @@ func (m *MockAlertStore) UpdateAlertLastSeen(alert *alertsource.AlertState) erro
 	return nil
 }
 
-func (m *MockAlertStore) StoreAlertRule(alertId string, ar alertsource.AlertRule) error {
+func (m *MockAlertStore) StoreAlertRule(alertId string, rule alertsource.AlertRule) error {
 	deviceAlerts, ok := m.values["deviceAlerts"].(map[string]map[string]string)
 	if !ok {
 		deviceAlerts = make(map[string]map[string]string)
 	}
-	deviceQueryFieldAlerts, ok := deviceAlerts[ar.DeviceId]
+	deviceQueryFieldAlerts, ok := deviceAlerts[rule.DeviceId]
 	if !ok {
 		deviceQueryFieldAlerts = make(map[string]string)
 	}
-	deviceQueryFieldAlerts[ar.QueryField] = alertId
-	deviceAlerts[ar.DeviceId] = deviceQueryFieldAlerts
+	deviceQueryFieldAlerts[rule.QueryField] = alertId
+	deviceAlerts[rule.DeviceId] = deviceQueryFieldAlerts
 	m.values["deviceAlerts"] = deviceAlerts
 
-	alerts, ok := m.values["alertStore"].(map[string]alertsource.AlertState)
+	alertRules, ok := m.values["alertRules"].(map[string]alertsource.AlertRule)
 	if !ok {
-		alerts = make(map[string]alertsource.AlertState)
+		alertRules = make(map[string]alertsource.AlertRule)
 	}
-	duration, err := ParseDuration(ar.Duration)
-	if err != nil {
-		return fmt.Errorf("parsing duration: %v", err)
-	}
-	alerts[alertId] = alertsource.AlertState{
-		Duration:    duration,
-		Level:       alertsource.Ok,
-		RangeValues: ar.RangeValues,
-		Id:          alertId,
-	}
-	m.values["alertStore"] = alerts
+	alertRules[alertId] = rule
+	m.values["alertRules"] = alertRules
 	return nil
 }
 
@@ -129,12 +123,12 @@ func (m *MockAlertStore) CheckAlertRuleExists(ar alertsource.AlertRule) (string,
 	if !ok {
 		return "", nil
 	}
-	alertStore, ok := m.values["alertStore"].(map[string]alertsource.AlertState)
+	alertRules, ok := m.values["alertRules"].(map[string]alertsource.AlertRule)
 	if !ok {
-		m.values["alertStore"] = make(map[string]alertsource.AlertState)
-		return "", fmt.Errorf("alertstore is empty")
+		m.values["alertRules"] = make(map[string]alertsource.AlertRule)
+		return "", fmt.Errorf("alertrules is empty")
 	}
-	existingAlert, ok := alertStore[alertId]
+	existingAlert, ok := alertRules[alertId]
 	if ok {
 		return existingAlert.Id, AlertExists
 	}

@@ -246,7 +246,8 @@ func (a *App) CreateAlertRule(
 		log.Printf("Need 2 range values for range alert.")
 		return nil, huma.Error400BadRequest("Need 2 range values for range alert.")
 	}
-	if existingAlertId, err := a.AlertStore.CheckAlertRuleExists(in.Body); err != nil {
+	existingAlertId, err := a.AlertStore.CheckAlertRuleExists(in.Body)
+	if err != nil {
 		if !errors.Is(err, alertstore.AlertExists) {
 			log.Printf("checking alert exists: %v", err)
 			return nil,

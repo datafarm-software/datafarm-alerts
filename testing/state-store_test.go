@@ -411,7 +411,7 @@ func TestCreateAlertRule(t *testing.T) {
 			wantAlertStore: map[any]any{
 				"alertRecipients": map[string][]string{},
 				"deviceAlerts":    map[string]map[string]string{},
-				"alertStore":      map[string]alertsource.AlertState{},
+				"alertRules":      map[string]alertsource.AlertRule{},
 			},
 			alertRule: alertsource.AlertRule{
 				RangeValues: []int{5, 10},
@@ -424,7 +424,7 @@ func TestCreateAlertRule(t *testing.T) {
 			wantAlertStore: map[any]any{
 				"alertRecipients": map[string][]string{},
 				"deviceAlerts":    map[string]map[string]string{},
-				"alertStore":      map[string]alertsource.AlertState{},
+				"alertRules":      map[string]alertsource.AlertRule{},
 			},
 			alertRule: alertsource.AlertRule{
 				RangeValues: []int{5},
@@ -441,11 +441,11 @@ func TestCreateAlertRule(t *testing.T) {
 						RegisteredQueryField: "alert1",
 					},
 				},
-				"alertStore": map[string]alertsource.AlertState{
+				"alertRules": map[string]alertsource.AlertRule{
 					"alert1": {
-						Duration: SomeDuration,
-						Id:       "alert1",
-						Level:    alertsource.Ok,
+						Duration:   "24h",
+						DeviceId:   RegisteredDeviceId,
+						QueryField: RegisteredQueryField,
 					},
 				},
 			},
@@ -456,19 +456,19 @@ func TestCreateAlertRule(t *testing.T) {
 						RegisteredQueryField: "alert1",
 					},
 				},
-				"alertStore": map[string]alertsource.AlertState{
+				"alertRules": map[string]alertsource.AlertRule{
 					"alert1": {
-						Duration: SomeDuration,
-						Id:       "alert1",
-						Level:    alertsource.Ok,
+						Duration:   "24h",
+						DeviceId:   RegisteredDeviceId,
+						QueryField: RegisteredQueryField,
 					},
 				},
 			},
 			alertRule: alertsource.AlertRule{
 				Usernames:   []string{"user1"},
+				RangeValues: []int{5, 10},
 				Duration:    "24h",
 				DeviceId:    RegisteredDeviceId,
-				RangeValues: []int{5, 10},
 				QueryField:  RegisteredQueryField,
 				AlertRange:  alertsource.Range,
 			},
