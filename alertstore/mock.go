@@ -23,8 +23,8 @@ func NewMockAlertStore(values map[any]any) *MockAlertStore {
 	if _, ok := values["alertRules"].(map[string]alertsource.AlertRule); !ok {
 		values["alertRules"] = make(map[string]alertsource.AlertRule)
 	}
-	if _, ok := values["deviceAlerts"].(map[string]map[string]string); !ok {
-		values["deviceAlerts"] = make(map[string]map[string]string)
+	if _, ok := values["deviceAlerts"].(map[string]map[string][]string); !ok {
+		values["deviceAlerts"] = make(map[string]map[string][]string)
 	}
 	return &MockAlertStore{
 		values: values,
@@ -76,15 +76,15 @@ func (m *MockAlertStore) UpdateAlertLastSeen(alert *alertsource.AlertState) erro
 }
 
 func (m *MockAlertStore) StoreAlertRule(alertId string, rule alertsource.AlertRule) error {
-	deviceAlerts, ok := m.values["deviceAlerts"].(map[string]map[string]string)
+	deviceAlerts, ok := m.values["deviceAlerts"].(map[string]map[string][]string)
 	if !ok {
-		deviceAlerts = make(map[string]map[string]string)
+		deviceAlerts = make(map[string]map[string][]string)
 	}
 	deviceQueryFieldAlerts, ok := deviceAlerts[rule.DeviceId]
 	if !ok {
-		deviceQueryFieldAlerts = make(map[string]string)
+		deviceQueryFieldAlerts = make(map[string][]string)
 	}
-	deviceQueryFieldAlerts[rule.QueryField] = alertId
+	deviceQueryFieldAlerts[rule.QueryField] = append(deviceQueryFieldAlerts[rule.QueryField], alertId)
 	deviceAlerts[rule.DeviceId] = deviceQueryFieldAlerts
 	m.values["deviceAlerts"] = deviceAlerts
 
@@ -110,26 +110,28 @@ func (m *MockAlertStore) AddUsersToNotifyList(alertId string, usernames []string
 }
 
 func (m *MockAlertStore) CheckAlertRuleExists(ar alertsource.AlertRule) (string, error) {
-	deviceAlerts, ok := m.values["deviceAlerts"].(map[string]map[string]string)
+	deviceAlerts, ok := m.values["deviceAlerts"].(map[string]map[string][]string)
 	if !ok {
-		m.values["deviceAlerts"] = make(map[string]map[string]string)
+		m.values["deviceAlerts"] = make(map[string]map[string][]string)
 		return "", nil
 	}
 	deviceQueryFieldAlerts, ok := deviceAlerts[ar.DeviceId]
 	if !ok {
 		return "", nil
 	}
-	alertId, ok := deviceQueryFieldAlerts[ar.QueryField]
+	alertIds, ok := deviceQueryFieldAlerts[ar.QueryField]
 	if !ok {
 		return "", nil
 	}
 	alertRules, ok := m.values["alertRules"].(map[string]alertsource.AlertRule)
 	if !ok {
 		m.values["alertRules"] = make(map[string]alertsource.AlertRule)
-		return "", fmt.Errorf("alertrules is empty")
+		return "", fmt.Errorf("alertrules was empty")
 	}
-	if _, ok := alertRules[alertId]; ok {
-		return alertId, AlertExists
+	for _, alertId := range alertIds {
+		if _, ok := alertRules[alertId]; ok {
+			return alertId, AlertExists
+		}
 	}
 	return "", nil
 }
