@@ -20,6 +20,8 @@ const RegisteredQueryField = "temperature"
 const UnregisteredDeviceId = "device2"
 const RegisteredDeviceId = "device1"
 const SomeDuration = (24 * time.Hour)
+const AlertId = "alert1"
+const UserId = "user1"
 
 var AlertReceived = time.Now()
 var AfterDuration = time.Now().Add(25 * time.Hour)
@@ -95,31 +97,31 @@ func TestRespondToAlert(t *testing.T) {
 	}{
 		"send alert because still crit after duration": {
 			wantUserInboxes: map[string][]string{
-				"user1": {
+				UserId: {
 					"Alert message stating crit level.",
 				},
 			},
 			mockAlertStore: map[any]any{
 				"alertRecipients": map[string][]string{
-					"alert1": {"user1"},
+					AlertId: {UserId},
 				},
 				"deviceAlerts": map[string]map[string]string{
 					RegisteredDeviceId: {
-						RegisteredQueryField: "alert1",
+						RegisteredQueryField: AlertId,
 					},
 				},
 				"alertStore": map[string]alertsource.AlertState{
-					"alert1": {
+					AlertId: {
 						Time:     AlertReceived,
 						Duration: SomeDuration,
 						Message:  "Already crit.",
-						Id:       "alert1",
+						Id:       AlertId,
 						Level:    alertsource.Crit,
 					},
 				},
 			},
 			alert: alertsource.InfluxAlert{
-				Id:         "alert1",
+				Id:         AlertId,
 				Level:      "crit",
 				Message:    "Alert message stating crit level.",
 				Time:       AfterDuration,
@@ -128,19 +130,19 @@ func TestRespondToAlert(t *testing.T) {
 			},
 			wantAlertStore: map[any]any{
 				"alertRecipients": map[string][]string{
-					"alert1": {"user1"},
+					AlertId: {UserId},
 				},
 				"deviceAlerts": map[string]map[string]string{
 					RegisteredDeviceId: {
-						RegisteredQueryField: "alert1",
+						RegisteredQueryField: AlertId,
 					},
 				},
 				"alertStore": map[string]alertsource.AlertState{
-					"alert1": {
+					AlertId: {
 						Time:     AfterDuration,
 						Duration: SomeDuration,
 						Message:  "Alert message stating crit level.",
-						Id:       "alert1",
+						Id:       AlertId,
 						Level:    alertsource.Crit,
 					},
 				},
@@ -151,25 +153,25 @@ func TestRespondToAlert(t *testing.T) {
 			wantUserInboxes: EmptyInboxes,
 			mockAlertStore: map[any]any{
 				"alertRecipients": map[string][]string{
-					"alert1": {"user1"},
+					AlertId: {UserId},
 				},
 				"deviceAlerts": map[string]map[string]string{
 					RegisteredDeviceId: {
-						RegisteredQueryField: "alert1",
+						RegisteredQueryField: AlertId,
 					},
 				},
 				"alertStore": map[string]alertsource.AlertState{
-					"alert1": {
+					AlertId: {
 						Time:     AlertReceived,
 						Duration: SomeDuration,
 						Message:  "Already crit.",
-						Id:       "alert1",
+						Id:       AlertId,
 						Level:    alertsource.Crit,
 					},
 				},
 			},
 			alert: alertsource.InfluxAlert{
-				Id:         "alert1",
+				Id:         AlertId,
 				Level:      "crit",
 				Message:    "Alert message stating crit level.",
 				Time:       WithinDuration,
@@ -178,19 +180,19 @@ func TestRespondToAlert(t *testing.T) {
 			},
 			wantAlertStore: map[any]any{
 				"alertRecipients": map[string][]string{
-					"alert1": {"user1"},
+					AlertId: {UserId},
 				},
 				"deviceAlerts": map[string]map[string]string{
 					RegisteredDeviceId: {
-						RegisteredQueryField: "alert1",
+						RegisteredQueryField: AlertId,
 					},
 				},
 				"alertStore": map[string]alertsource.AlertState{
-					"alert1": {
+					AlertId: {
 						Time:     AlertReceived,
 						Duration: SomeDuration,
 						Message:  "Already crit.",
-						Id:       "alert1",
+						Id:       AlertId,
 						Level:    alertsource.Crit,
 					},
 				},
@@ -199,29 +201,29 @@ func TestRespondToAlert(t *testing.T) {
 
 		"send notification because alert level changing from ok to crit": {
 			wantUserInboxes: map[string][]string{
-				"user1": {
+				UserId: {
 					"Alert message stating crit level.",
 				},
 			},
 			mockAlertStore: map[any]any{
 				"alertRecipients": map[string][]string{
-					"alert1": {"user1"},
+					AlertId: {UserId},
 				},
 				"deviceAlerts": map[string]map[string]string{
 					RegisteredDeviceId: {
-						RegisteredQueryField: "alert1",
+						RegisteredQueryField: AlertId,
 					},
 				},
 				"alertStore": map[string]alertsource.AlertState{
-					"alert1": {
+					AlertId: {
 						Time:  AlertReceived,
-						Id:    "alert1",
+						Id:    AlertId,
 						Level: alertsource.Ok,
 					},
 				},
 			},
 			alert: alertsource.InfluxAlert{
-				Id:         "alert1",
+				Id:         AlertId,
 				Level:      "crit",
 				Message:    "Alert message stating crit level.",
 				Time:       WithinDuration,
@@ -230,17 +232,17 @@ func TestRespondToAlert(t *testing.T) {
 			},
 			wantAlertStore: map[any]any{
 				"alertRecipients": map[string][]string{
-					"alert1": {"user1"},
+					AlertId: {UserId},
 				},
 				"deviceAlerts": map[string]map[string]string{
 					RegisteredDeviceId: {
-						RegisteredQueryField: "alert1",
+						RegisteredQueryField: AlertId,
 					},
 				},
 				"alertStore": map[string]alertsource.AlertState{
-					"alert1": {
+					AlertId: {
 						Time:    WithinDuration,
-						Id:      "alert1",
+						Id:      AlertId,
 						Level:   alertsource.Crit,
 						Message: "Alert message stating crit level.",
 					},
@@ -252,23 +254,23 @@ func TestRespondToAlert(t *testing.T) {
 			wantUserInboxes: EmptyInboxes,
 			mockAlertStore: map[any]any{
 				"alertRecipients": map[string][]string{
-					"alert1": {"user1"},
+					AlertId: {UserId},
 				},
 				"deviceAlerts": map[string]map[string]string{
 					RegisteredDeviceId: {
-						RegisteredQueryField: "alert1",
+						RegisteredQueryField: AlertId,
 					},
 				},
 				"alertStore": map[string]alertsource.AlertState{
-					"alert1": {
+					AlertId: {
 						Time:  AlertReceived,
-						Id:    "alert1",
+						Id:    AlertId,
 						Level: alertsource.Ok,
 					},
 				},
 			},
 			alert: alertsource.InfluxAlert{
-				Id:         "alert1",
+				Id:         AlertId,
 				Level:      "crit",
 				Message:    "Alert that should be ignored.",
 				DeviceId:   RegisteredDeviceId,
@@ -276,17 +278,17 @@ func TestRespondToAlert(t *testing.T) {
 			},
 			wantAlertStore: map[any]any{
 				"alertRecipients": map[string][]string{
-					"alert1": {"user1"},
+					AlertId: {UserId},
 				},
 				"deviceAlerts": map[string]map[string]string{
 					RegisteredDeviceId: {
-						RegisteredQueryField: "alert1",
+						RegisteredQueryField: AlertId,
 					},
 				},
 				"alertStore": map[string]alertsource.AlertState{
-					"alert1": {
+					AlertId: {
 						Time:  AlertReceived,
-						Id:    "alert1",
+						Id:    AlertId,
 						Level: alertsource.Ok,
 					},
 				},
@@ -297,23 +299,23 @@ func TestRespondToAlert(t *testing.T) {
 			wantUserInboxes: EmptyInboxes,
 			mockAlertStore: map[any]any{
 				"alertRecipients": map[string][]string{
-					"alert1": {"user1"},
+					AlertId: {UserId},
 				},
 				"deviceAlerts": map[string]map[string]string{
 					RegisteredDeviceId: {
-						RegisteredQueryField: "alert1",
+						RegisteredQueryField: AlertId,
 					},
 				},
 				"alertStore": map[string]alertsource.AlertState{
-					"alert1": {
+					AlertId: {
 						Time:  AlertReceived,
-						Id:    "alert1",
+						Id:    AlertId,
 						Level: alertsource.Ok,
 					},
 				},
 			},
 			alert: alertsource.InfluxAlert{
-				Id:         "alert1",
+				Id:         AlertId,
 				Level:      "crit",
 				Message:    "Alert message stating crit level.",
 				DeviceId:   UnregisteredDeviceId,
@@ -321,17 +323,17 @@ func TestRespondToAlert(t *testing.T) {
 			},
 			wantAlertStore: map[any]any{
 				"alertRecipients": map[string][]string{
-					"alert1": {"user1"},
+					AlertId: {UserId},
 				},
 				"deviceAlerts": map[string]map[string]string{
 					RegisteredDeviceId: {
-						RegisteredQueryField: "alert1",
+						RegisteredQueryField: AlertId,
 					},
 				},
 				"alertStore": map[string]alertsource.AlertState{
-					"alert1": {
+					AlertId: {
 						Time:  AlertReceived,
-						Id:    "alert1",
+						Id:    AlertId,
 						Level: alertsource.Ok,
 					},
 				},
@@ -373,18 +375,18 @@ func TestCreateAlertRule(t *testing.T) {
 			wantErr: false,
 			wantAlertStore: map[any]any{
 				"alertRecipients": map[string][]string{
-					"alert1": {"user1"},
+					AlertId: {UserId},
 				},
 				"deviceAlerts": map[string]map[string]string{
 					RegisteredDeviceId: {
-						RegisteredQueryField: "alert1",
+						RegisteredQueryField: AlertId,
 					},
 				},
 				"alertRules": map[string]alertsource.AlertRule{
-					"alert1": {
+					AlertId: {
 						RangeValues: []int{5},
 						Duration:    "24h",
-						Usernames:   []string{"user1"},
+						Usernames:   []string{UserId},
 						DeviceId:    "device1",
 						QueryField:  "temperature",
 						AlertRange:  alertsource.LessThan,
@@ -394,14 +396,14 @@ func TestCreateAlertRule(t *testing.T) {
 			alertRule: alertsource.AlertRule{
 				RangeValues: []int{5},
 				Duration:    "24h",
-				Usernames:   []string{"user1"},
+				Usernames:   []string{UserId},
 				DeviceId:    "device1",
 				QueryField:  "temperature",
 				AlertRange:  alertsource.LessThan,
 			},
 			wantResponse: &struct{ Body alertsource.CreatedRule }{
 				Body: alertsource.CreatedRule{
-					AlertId: "alert1",
+					AlertId: AlertId,
 				},
 			},
 		},
@@ -448,14 +450,14 @@ func TestCreateAlertRule(t *testing.T) {
 		"alert with identical deviceId and queryField parameters already exists": {
 			wantErr: true,
 			wantAlertStore: map[any]any{
-				"alertRecipients": map[string][]string{"alert1": {"user1"}},
+				"alertRecipients": map[string][]string{AlertId: {UserId}},
 				"deviceAlerts": map[string]map[string]string{
 					RegisteredDeviceId: {
-						RegisteredQueryField: "alert1",
+						RegisteredQueryField: AlertId,
 					},
 				},
 				"alertRules": map[string]alertsource.AlertRule{
-					"alert1": {
+					AlertId: {
 						Duration:   "24h",
 						DeviceId:   RegisteredDeviceId,
 						QueryField: RegisteredQueryField,
@@ -463,14 +465,14 @@ func TestCreateAlertRule(t *testing.T) {
 				},
 			},
 			mockAlertStore: map[any]any{
-				"alertRecipients": map[string][]string{"alert1": {"user1"}},
+				"alertRecipients": map[string][]string{AlertId: {UserId}},
 				"deviceAlerts": map[string]map[string]string{
 					RegisteredDeviceId: {
-						RegisteredQueryField: "alert1",
+						RegisteredQueryField: AlertId,
 					},
 				},
 				"alertRules": map[string]alertsource.AlertRule{
-					"alert1": {
+					AlertId: {
 						Duration:   "24h",
 						DeviceId:   RegisteredDeviceId,
 						QueryField: RegisteredQueryField,
@@ -478,7 +480,7 @@ func TestCreateAlertRule(t *testing.T) {
 				},
 			},
 			alertRule: alertsource.AlertRule{
-				Usernames:   []string{"user1"},
+				Usernames:   []string{UserId},
 				RangeValues: []int{5, 10},
 				Duration:    "24h",
 				DeviceId:    RegisteredDeviceId,
@@ -575,14 +577,15 @@ func TestParseDuration(t *testing.T) {
 func TestUpdateAlertRule(t *testing.T) {
 	tests := map[string]struct {
 		wantErr                        bool
+		alertId                        string
 		input                          alertsource.AlertRule
 		mockAlertStore, wantAlertStore map[any]any
 	}{
 		"update the range values of an alert": {
 			wantErr: false,
+			alertId: AlertId,
 			input: alertsource.AlertRule{
-				Id:          "alert1",
-				Usernames:   []string{"user1"},
+				Usernames:   []string{UserId},
 				RangeValues: []int{10, 20},
 				Duration:    "24h",
 				DeviceId:    RegisteredDeviceId,
@@ -591,36 +594,36 @@ func TestUpdateAlertRule(t *testing.T) {
 			},
 			mockAlertStore: map[any]any{
 				"alertRecipients": map[string][]string{
-					"alert1": {"user1"},
+					AlertId: {UserId},
 				},
 				"deviceAlerts": map[string]map[string]string{
 					RegisteredDeviceId: {
-						RegisteredQueryField: "alert1",
+						RegisteredQueryField: AlertId,
 					},
 				},
 				"alertStore": map[string]alertsource.AlertState{
-					"alert1": {
+					AlertId: {
 						Duration:    SomeDuration,
 						RangeValues: []int{43, 90},
-						Id:          "alert1",
+						Id:          AlertId,
 						Level:       alertsource.Ok,
 					},
 				},
 			},
 			wantAlertStore: map[any]any{
 				"alertRecipients": map[string][]string{
-					"alert1": {"user1"},
+					AlertId: {UserId},
 				},
 				"deviceAlerts": map[string]map[string]string{
 					RegisteredDeviceId: {
-						RegisteredQueryField: "alert1",
+						RegisteredQueryField: AlertId,
 					},
 				},
 				"alertStore": map[string]alertsource.AlertState{
-					"alert1": {
+					AlertId: {
 						Duration:    SomeDuration,
 						RangeValues: []int{10, 20},
-						Id:          "alert1",
+						Id:          AlertId,
 						Level:       alertsource.Ok,
 					},
 				},
@@ -629,9 +632,9 @@ func TestUpdateAlertRule(t *testing.T) {
 
 		"error when trying to update non existent alert rule": {
 			wantErr: true,
+			alertId: AlertId,
 			input: alertsource.AlertRule{
-				Id:          "alert1",
-				Usernames:   []string{"user1"},
+				Usernames:   []string{UserId},
 				RangeValues: []int{10, 20},
 				Duration:    "24h",
 				DeviceId:    RegisteredDeviceId,
@@ -642,9 +645,9 @@ func TestUpdateAlertRule(t *testing.T) {
 
 		"invalid: 1 range value on a range type alert check": {
 			wantErr: true,
+			alertId: AlertId,
 			input: alertsource.AlertRule{
-				Id:          "alert1",
-				Usernames:   []string{"user1"},
+				Usernames:   []string{UserId},
 				RangeValues: []int{10},
 				Duration:    "24h",
 				DeviceId:    RegisteredDeviceId,
@@ -654,9 +657,9 @@ func TestUpdateAlertRule(t *testing.T) {
 		},
 		"invalid: 2 range values on a less than type alert check": {
 			wantErr: true,
+			alertId: AlertId,
 			input: alertsource.AlertRule{
-				Id:          "alert1",
-				Usernames:   []string{"user1"},
+				Usernames:   []string{UserId},
 				RangeValues: []int{50, 90},
 				Duration:    "24h",
 				DeviceId:    RegisteredDeviceId,
@@ -673,7 +676,10 @@ func TestUpdateAlertRule(t *testing.T) {
 			a.AlertStore = as
 			_, err = a.UpdateAlertRule(
 				context.Background(),
-				&struct{ Body alertsource.AlertRule }{tc.input},
+				&struct {
+					AlertId string `path:"alertId"`
+					Body    alertsource.AlertRule
+				}{tc.alertId, tc.input},
 			)
 			if tc.wantErr != (err != nil) {
 				t.Fatalf("wantErr: %v, got: %v", tc.wantErr, err)
@@ -697,29 +703,28 @@ func TestGetAlertRule(t *testing.T) {
 
 		"successfully get a stored alert": {
 			wantErr: false,
-			input:   alertsource.CreatedRule{AlertId: "alert1"},
+			input:   alertsource.CreatedRule{AlertId: AlertId},
 			mockAlertStore: map[any]any{
 				"alertRecipients": map[string][]string{
-					"alert1": {"user1"},
+					AlertId: {UserId},
 				},
 				"deviceAlerts": map[string]map[string]string{
 					RegisteredDeviceId: {
-						RegisteredQueryField: "alert1",
+						RegisteredQueryField: AlertId,
 					},
 				},
 				"alertStore": map[string]alertsource.AlertState{
-					"alert1": {
+					AlertId: {
 						Duration:    SomeDuration,
 						RangeValues: []int{10, 20},
-						Id:          "alert1",
+						Id:          AlertId,
 						Level:       alertsource.Ok,
 					},
 				},
 			},
 			want: &struct{ Body alertsource.AlertRule }{
 				alertsource.AlertRule{
-					Id:          "alert1",
-					Usernames:   []string{"user1"},
+					Usernames:   []string{UserId},
 					RangeValues: []int{10, 20},
 					Duration:    "24h",
 					DeviceId:    RegisteredDeviceId,
