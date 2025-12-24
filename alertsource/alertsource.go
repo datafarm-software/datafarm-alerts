@@ -20,7 +20,6 @@ const (
 )
 
 type AlertRule struct {
-	Id          string     `json:"alertId" hidden:"true"`
 	Usernames   []string   `json:"usernames" pattern:"^[a-zA-Z0-9_]+$" doc:"Usernames to notify in the event of an alert."`
 	RangeValues []int      `json:"rangeValues" minItems:"1" maxItems:"2" doc:"One or two values, depending on whether the alertRange is a range or < >"`
 	Duration    string     `json:"duration" pattern:"^[0-9]{1,2}[smhd]$" doc:"A duration literal, specifying how often a check should occur."`

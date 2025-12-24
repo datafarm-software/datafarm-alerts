@@ -281,7 +281,10 @@ func (a *App) CreateAlertRule(
 
 func (a *App) UpdateAlertRule(
 	ctx context.Context,
-	in *struct{ Body alertsource.AlertRule },
+	in *struct {
+		AlertId string `path:"alertId"`
+		Body    alertsource.AlertRule
+	},
 ) (*struct{}, error) {
 	if in.Body.AlertRange < alertsource.Range && len(in.Body.RangeValues) > 1 {
 		log.Printf("can't have more than one range value on greater or less than alert.")
@@ -304,7 +307,7 @@ func (a *App) UpdateAlertRule(
 			huma.Error500InternalServerError("Internal error checking if alert exists.")
 	}
 	if err := a.AlertStore.StoreAlertRule(existingAlertId, in.Body); err != nil {
-		log.Printf("updating alert rule for id: %s, error: %v", in.Body.Id, err)
+		log.Printf("updating alert rule for id: %s, error: %v", in.AlertId, err)
 		return nil, huma.Error500InternalServerError(
 			"Internal error while storing the updated alert rule.")
 	}

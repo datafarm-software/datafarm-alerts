@@ -128,9 +128,8 @@ func (m *MockAlertStore) CheckAlertRuleExists(ar alertsource.AlertRule) (string,
 		m.values["alertRules"] = make(map[string]alertsource.AlertRule)
 		return "", fmt.Errorf("alertrules is empty")
 	}
-	existingAlert, ok := alertRules[alertId]
-	if ok {
-		return existingAlert.Id, AlertExists
+	if _, ok := alertRules[alertId]; ok {
+		return alertId, AlertExists
 	}
 	return "", nil
 }

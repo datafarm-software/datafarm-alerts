@@ -431,6 +431,19 @@ func TestCreateAlertRule(t *testing.T) {
 				AlertRange:  alertsource.Range,
 			},
 		},
+		"invalid alert rule": {
+			wantErr: true,
+			wantAlertStore: map[any]any{
+				"alertRecipients": map[string][]string{},
+				"deviceAlerts":    map[string]map[string]string{},
+				"alertRules":      map[string]alertsource.AlertRule{},
+			},
+			alertRule: alertsource.AlertRule{
+				Usernames:  []string{},
+				Duration:   "",
+				AlertRange: alertsource.Range,
+			},
+		},
 
 		"alert with identical deviceId and queryField parameters already exists": {
 			wantErr: true,
