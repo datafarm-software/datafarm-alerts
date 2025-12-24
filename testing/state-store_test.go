@@ -494,6 +494,55 @@ func TestCreateAlertRule(t *testing.T) {
 				AlertRange:  alertsource.LessThan,
 			},
 		},
+
+		"multiple alerts on deviceId and queryField combination": {
+			wantErr: false,
+			wantAlertStore: map[any]any{
+				"alertRecipients": map[string][]string{AlertId: {UserId}},
+				"deviceAlerts": map[string]map[string][]string{
+					RegisteredDeviceId: {
+						RegisteredQueryField: {AlertId},
+					},
+				},
+				"alertRules": map[string]alertsource.AlertRule{
+					AlertId: {
+						Usernames:   []string{UserId},
+						RangeValues: []int{5},
+						Duration:    "24h",
+						DeviceId:    RegisteredDeviceId,
+						QueryField:  RegisteredQueryField,
+						AlertRange:  alertsource.LessThan,
+					},
+					"alert2": {},
+				},
+			},
+			mockAlertStore: map[any]any{
+				"alertRecipients": map[string][]string{AlertId: {UserId}},
+				"deviceAlerts": map[string]map[string][]string{
+					RegisteredDeviceId: {
+						RegisteredQueryField: {AlertId},
+					},
+				},
+				"alertRules": map[string]alertsource.AlertRule{
+					AlertId: {
+						Usernames:   []string{UserId},
+						RangeValues: []int{5},
+						Duration:    "24h",
+						DeviceId:    RegisteredDeviceId,
+						QueryField:  RegisteredQueryField,
+						AlertRange:  alertsource.LessThan,
+					},
+				},
+			},
+			alertRule: alertsource.AlertRule{
+				Usernames:   []string{UserId},
+				RangeValues: []int{5},
+				Duration:    "24h",
+				DeviceId:    RegisteredDeviceId,
+				QueryField:  RegisteredQueryField,
+				AlertRange:  alertsource.LessThan,
+			},
+		},
 	}
 
 	var as *alertstore.MockAlertStore
