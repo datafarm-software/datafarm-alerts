@@ -11,6 +11,9 @@ type MockAlertStore struct {
 }
 
 func NewMockAlertStore(db *Schema) *MockAlertStore {
+	if db == nil {
+		db = &Schema{}
+	}
 	return &MockAlertStore{
 		Db: db,
 	}
