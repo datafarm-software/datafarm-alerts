@@ -5,13 +5,28 @@ import (
 	"fmt"
 	"strconv"
 	"time"
-
-	"github.com/geraud22/sensordata-alerts/alertsource"
 )
 
 var InvalidDuration = time.Duration(-(1 * time.Hour))
 var AlertExists = errors.New("alert exists")
 var NoAlert = errors.New("no alert")
+
+type AlertRange int
+
+const (
+	LessThan AlertRange = iota
+	GreaterThan
+	Range
+)
+
+type AlertLevel int
+
+const (
+	Ok AlertLevel = iota
+	Warn
+	Crit
+	Invalid
+)
 
 type AlertStore interface {
 	//NOTE: could return alertstore.NoAlert
@@ -49,17 +64,21 @@ type AlertState struct {
 	RangeValues []int
 	Message     string
 	Id          string
-	Level       alertsource.AlertLevel
+	Level       AlertLevel
 }
 
 type AlertRule struct {
-	AlertId     string                 `json:"alertId" doc:"Alert Id."`
-	Usernames   []string               `json:"usernames" pattern:"^[a-zA-Z0-9_]+$" doc:"Usernames to notify in the event of an alert."`
-	RangeValues []int                  `json:"rangeValues" minItems:"1" maxItems:"2" doc:"One or two values, depending on whether the alertRange is a range or < >"`
-	Duration    string                 `json:"duration" pattern:"^[0-9]{1,2}[smhd]$" doc:"A duration literal, specifying how often a check should occur."`
-	DeviceId    string                 `json:"deviceId" pattern:"^[a-zA-Z0-9]+$" doc:"The device for which data should be checked."`
-	QueryField  string                 `json:"queryField" pattern:"^[a-zA-Z0-9_]+$" doc:"The field on the device, for which data should be checked."`
-	AlertRange  alertsource.AlertRange `json:"alertRange" maximum:"2" doc:"Specify type of check to perform. 0 = Less Than, 1 = Greater Than, 2 = Range."`
+	AlertId     string     `json:"alertId" doc:"Alert Id."`
+	Usernames   []string   `json:"usernames" pattern:"^[a-zA-Z0-9_]+$" doc:"Usernames to notify in the event of an alert."`
+	RangeValues []int      `json:"rangeValues" minItems:"1" maxItems:"2" doc:"One or two values, depending on whether the alertRange is a range or < >"`
+	Duration    string     `json:"duration" pattern:"^[0-9]{1,2}[smhd]$" doc:"A duration literal, specifying how often a check should occur."`
+	DeviceId    string     `json:"deviceId" pattern:"^[a-zA-Z0-9]+$" doc:"The device for which data should be checked."`
+	QueryField  string     `json:"queryField" pattern:"^[a-zA-Z0-9_]+$" doc:"The field on the device, for which data should be checked."`
+	AlertRange  AlertRange `json:"alertRange" maximum:"2" doc:"Specify type of check to perform. 0 = Less Than, 1 = Greater Than, 2 = Range."`
+}
+
+type CreatedRule struct {
+	AlertId string `json:"alertId" readOnly:"true" doc:"Generated Alert Id."`
 }
 
 func ParseDuration(d string) (time.Duration, error) {

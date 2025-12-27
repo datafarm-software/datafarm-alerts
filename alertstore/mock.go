@@ -24,7 +24,7 @@ func (m *MockAlertStore) GetAlertState(alertId string) (*AlertState, error) {
 	var state *AlertState
 	for _, as := range m.Db.AlertStates {
 		if as.Id == alertId {
-			state = &as
+			state = as
 		}
 	}
 	if state == nil {

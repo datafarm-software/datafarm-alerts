@@ -3,6 +3,8 @@ package alertsource
 import (
 	"fmt"
 	"time"
+
+	"github.com/geraud22/sensordata-alerts/alertstore"
 )
 
 type InfluxAlert struct {
@@ -29,23 +31,23 @@ type InfluxAlert struct {
 	_          struct{} `json:"-" additionalProperties:"true"`
 }
 
-func (i *InfluxAlert) GetAlertLevel() AlertLevel {
-	var al AlertLevel
+func (i *InfluxAlert) GetAlertLevel() alertstore.AlertLevel {
+	var al alertstore.AlertLevel
 	switch i.Level {
 	case "ok":
-		al = Ok
+		al = alertstore.Ok
 	case "warn":
-		al = Warn
+		al = alertstore.Warn
 	case "crit":
-		al = Crit
+		al = alertstore.Crit
 	default:
-		al = Invalid
+		al = alertstore.Invalid
 	}
 	return al
 }
 
-func (i *InfluxAlert) GetAlertState() *AlertState {
-	return &AlertState{
+func (i *InfluxAlert) GetAlertState() *alertstore.AlertState {
+	return &alertstore.AlertState{
 		Time:    i.Time,
 		Message: i.Message,
 		Id:      i.Id,
@@ -53,10 +55,10 @@ func (i *InfluxAlert) GetAlertState() *AlertState {
 	}
 }
 
-func (i *InfluxAlert) RegisterAlertRule(ar AlertRule) (string, error) {
+func (i *InfluxAlert) RegisterAlertRule(ar alertstore.AlertRule) (string, error) {
 	return "", fmt.Errorf("not implemented")
 }
 
-func (i *InfluxAlert) UpdateAlertRule(ar AlertRule) error {
+func (i *InfluxAlert) UpdateAlertRule(ar alertstore.AlertRule) error {
 	return fmt.Errorf("not implemented")
 }

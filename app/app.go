@@ -220,7 +220,7 @@ func (a *App) RespondToAlert(
 	return nil, nil
 }
 func (a *App) ShouldNotifyCrit(alert *alertstore.AlertState, previous *alertstore.AlertState) bool {
-	if alert.Level != alertsource.Crit {
+	if alert.Level != alertstore.Crit {
 		return false
 	}
 	if alert.Level > previous.Level {
@@ -236,13 +236,13 @@ func (a *App) CreateAlertRule(
 	ctx context.Context,
 	in *struct {
 		Body alertstore.AlertRule
-	}) (*struct{ Body alertsource.CreatedRule }, error) {
-	if in.Body.AlertRange < alertsource.Range && len(in.Body.RangeValues) > 1 {
+	}) (*struct{ Body alertstore.CreatedRule }, error) {
+	if in.Body.AlertRange < alertstore.Range && len(in.Body.RangeValues) > 1 {
 		log.Printf("can't have more than one range value on greater or less than alert.")
 		return nil,
 			huma.Error400BadRequest("More than one range value on less than or greater alert.")
 	}
-	if in.Body.AlertRange == alertsource.Range && len(in.Body.RangeValues) != 2 {
+	if in.Body.AlertRange == alertstore.Range && len(in.Body.RangeValues) != 2 {
 		log.Printf("Need 2 range values for range alert.")
 		return nil, huma.Error400BadRequest("Need 2 range values for range alert.")
 	}
@@ -272,8 +272,8 @@ func (a *App) CreateAlertRule(
 		log.Printf("add usernames to alert: %s notify list: %v", alertId, err)
 		return nil, huma.Error500InternalServerError("internal error adding user to notify list.")
 	}
-	return &struct{ Body alertsource.CreatedRule }{
-		Body: alertsource.CreatedRule{
+	return &struct{ Body alertstore.CreatedRule }{
+		Body: alertstore.CreatedRule{
 			AlertId: alertId,
 		},
 	}, nil
@@ -286,12 +286,12 @@ func (a *App) UpdateAlertRule(
 		Body    alertstore.AlertRule
 	},
 ) (*struct{}, error) {
-	if in.Body.AlertRange < alertsource.Range && len(in.Body.RangeValues) > 1 {
+	if in.Body.AlertRange < alertstore.Range && len(in.Body.RangeValues) > 1 {
 		log.Printf("can't have more than one range value on greater or less than alert.")
 		return nil,
 			huma.Error400BadRequest("More than one range value on less than or greater alert.")
 	}
-	if in.Body.AlertRange == alertsource.Range && len(in.Body.RangeValues) != 2 {
+	if in.Body.AlertRange == alertstore.Range && len(in.Body.RangeValues) != 2 {
 		log.Printf("Need 2 range values for range alert.")
 		return nil, huma.Error400BadRequest("Need 2 range values for range alert.")
 	}
@@ -316,7 +316,7 @@ func (a *App) UpdateAlertRule(
 
 func (a *App) GetAlertRule(
 	ctx context.Context,
-	in *struct{ Body alertsource.CreatedRule },
+	in *struct{ Body alertstore.CreatedRule },
 ) (*struct{ Body alertstore.AlertRule }, error) {
 	alert, err := a.AlertStore.GetAlertRule(in.Body.AlertId)
 	if err != nil {

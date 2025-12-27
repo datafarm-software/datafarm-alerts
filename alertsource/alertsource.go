@@ -1,29 +1,10 @@
 package alertsource
 
-type AlertLevel int
-
-const (
-	Ok AlertLevel = iota
-	Warn
-	Crit
-	Invalid
-)
-
-type AlertRange int
-
-const (
-	LessThan AlertRange = iota
-	GreaterThan
-	Range
-)
-
-type CreatedRule struct {
-	AlertId string `json:"alertId" readOnly:"true" doc:"Generated Alert Id."`
-}
+import "github.com/geraud22/sensordata-alerts/alertstore"
 
 type AlertSource interface {
-	UpdateAlertRule(AlertRule) error
-	GetAlertState() *AlertState
-	RegisterAlertRule(AlertRule) (string, error)
-	GetAlertLevel() AlertLevel
+	UpdateAlertRule(alertstore.AlertRule) error
+	GetAlertState() *alertstore.AlertState
+	RegisterAlertRule(alertstore.AlertRule) (string, error)
+	GetAlertLevel() alertstore.AlertLevel
 }

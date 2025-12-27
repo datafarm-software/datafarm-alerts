@@ -36,12 +36,12 @@ func TestNotifyCrit(t *testing.T) {
 		"no change within duration, so do nothing": {
 			want: false,
 			alert: &alertstore.AlertState{
-				Level:    alertsource.Crit,
+				Level:    alertstore.Crit,
 				Time:     WithinDuration,
 				Duration: SomeDuration,
 			},
 			previous: &alertstore.AlertState{
-				Level:    alertsource.Crit,
+				Level:    alertstore.Crit,
 				Time:     AlertReceived,
 				Duration: SomeDuration,
 			},
@@ -49,12 +49,12 @@ func TestNotifyCrit(t *testing.T) {
 		"still crit after duration, so notify": {
 			want: true,
 			alert: &alertstore.AlertState{
-				Level:    alertsource.Crit,
+				Level:    alertstore.Crit,
 				Time:     AfterDuration,
 				Duration: SomeDuration,
 			},
 			previous: &alertstore.AlertState{
-				Level:    alertsource.Crit,
+				Level:    alertstore.Crit,
 				Time:     AlertReceived,
 				Duration: SomeDuration,
 			},
@@ -62,19 +62,19 @@ func TestNotifyCrit(t *testing.T) {
 		"change to crit, so notify": {
 			want: true,
 			alert: &alertstore.AlertState{
-				Level: alertsource.Crit,
+				Level: alertstore.Crit,
 			},
 			previous: &alertstore.AlertState{
-				Level: alertsource.Ok,
+				Level: alertstore.Ok,
 			},
 		},
 		"change from crit to ok, so do nothing": {
 			want: false,
 			alert: &alertstore.AlertState{
-				Level: alertsource.Ok,
+				Level: alertstore.Ok,
 			},
 			previous: &alertstore.AlertState{
-				Level: alertsource.Crit,
+				Level: alertstore.Crit,
 			},
 		},
 	}
@@ -118,7 +118,7 @@ func TestRespondToAlert(t *testing.T) {
 						Time:     AlertReceived,
 						Duration: SomeDuration,
 						Message:  "Already crit.",
-						Level:    alertsource.Crit,
+						Level:    alertstore.Crit,
 					},
 				},
 			},
@@ -147,7 +147,7 @@ func TestRespondToAlert(t *testing.T) {
 						Time:     AlertReceived,
 						Duration: SomeDuration,
 						Message:  "New alert message stating crit level.",
-						Level:    alertsource.Crit,
+						Level:    alertstore.Crit,
 					},
 				},
 			},
@@ -169,7 +169,7 @@ func TestRespondToAlert(t *testing.T) {
 						Time:     AlertReceived,
 						Duration: SomeDuration,
 						Message:  "Already crit.",
-						Level:    alertsource.Crit,
+						Level:    alertstore.Crit,
 					},
 				},
 			},
@@ -195,7 +195,7 @@ func TestRespondToAlert(t *testing.T) {
 						Time:     AlertReceived,
 						Duration: SomeDuration,
 						Message:  "Already crit.",
-						Level:    alertsource.Crit,
+						Level:    alertstore.Crit,
 					},
 				},
 			},
@@ -224,7 +224,7 @@ func TestRespondToAlert(t *testing.T) {
 						Time:     AlertReceived,
 						Duration: SomeDuration,
 						Message:  "Status Ok.",
-						Level:    alertsource.Crit,
+						Level:    alertstore.Crit,
 					},
 				},
 			},
@@ -253,7 +253,7 @@ func TestRespondToAlert(t *testing.T) {
 						Time:     AlertReceived,
 						Duration: SomeDuration,
 						Message:  "Status is now crit.",
-						Level:    alertsource.Crit,
+						Level:    alertstore.Crit,
 					},
 				},
 			},
@@ -342,7 +342,7 @@ func TestRespondToAlert(t *testing.T) {
 func TestCreateAlertRule(t *testing.T) {
 	tests := map[string]struct {
 		wantErr                        bool
-		wantResponse                   *struct{ Body alertsource.CreatedRule }
+		wantResponse                   *struct{ Body alertstore.CreatedRule }
 		wantAlertStore, mockAlertStore *alertstore.Schema
 		mockAlertSource                map[any]any
 		alertRule                      alertstore.AlertRule
@@ -369,7 +369,7 @@ func TestCreateAlertRule(t *testing.T) {
 						Usernames:   []string{UserId},
 						DeviceId:    RegisteredDeviceId,
 						QueryField:  RegisteredQueryField,
-						AlertRange:  alertsource.LessThan,
+						AlertRange:  alertstore.LessThan,
 					},
 				},
 			},
@@ -379,10 +379,10 @@ func TestCreateAlertRule(t *testing.T) {
 				Usernames:   []string{UserId},
 				DeviceId:    "device1",
 				QueryField:  "temperature",
-				AlertRange:  alertsource.LessThan,
+				AlertRange:  alertstore.LessThan,
 			},
-			wantResponse: &struct{ Body alertsource.CreatedRule }{
-				Body: alertsource.CreatedRule{
+			wantResponse: &struct{ Body alertstore.CreatedRule }{
+				Body: alertstore.CreatedRule{
 					AlertId: AlertId,
 				},
 			},
@@ -393,7 +393,7 @@ func TestCreateAlertRule(t *testing.T) {
 			wantAlertStore: nil,
 			alertRule: alertstore.AlertRule{
 				RangeValues: []int{5, 10},
-				AlertRange:  alertsource.LessThan,
+				AlertRange:  alertstore.LessThan,
 			},
 		},
 
@@ -402,7 +402,7 @@ func TestCreateAlertRule(t *testing.T) {
 			wantAlertStore: nil,
 			alertRule: alertstore.AlertRule{
 				RangeValues: []int{5},
-				AlertRange:  alertsource.Range,
+				AlertRange:  alertstore.Range,
 			},
 		},
 		"invalid alert rule": {
@@ -411,7 +411,7 @@ func TestCreateAlertRule(t *testing.T) {
 			alertRule: alertstore.AlertRule{
 				Usernames:  []string{},
 				Duration:   "",
-				AlertRange: alertsource.Range,
+				AlertRange: alertstore.Range,
 			},
 		},
 
@@ -436,7 +436,7 @@ func TestCreateAlertRule(t *testing.T) {
 						Usernames:   []string{UserId},
 						DeviceId:    RegisteredDeviceId,
 						QueryField:  RegisteredQueryField,
-						AlertRange:  alertsource.LessThan,
+						AlertRange:  alertstore.LessThan,
 					},
 				},
 			},
@@ -459,7 +459,7 @@ func TestCreateAlertRule(t *testing.T) {
 						Usernames:   []string{UserId},
 						DeviceId:    RegisteredDeviceId,
 						QueryField:  RegisteredQueryField,
-						AlertRange:  alertsource.LessThan,
+						AlertRange:  alertstore.LessThan,
 					},
 				},
 			},
@@ -469,7 +469,7 @@ func TestCreateAlertRule(t *testing.T) {
 				Duration:    "24h",
 				DeviceId:    RegisteredDeviceId,
 				QueryField:  RegisteredQueryField,
-				AlertRange:  alertsource.LessThan,
+				AlertRange:  alertstore.LessThan,
 			},
 		},
 
@@ -494,7 +494,7 @@ func TestCreateAlertRule(t *testing.T) {
 						Usernames:   []string{UserId},
 						DeviceId:    RegisteredDeviceId,
 						QueryField:  RegisteredQueryField,
-						AlertRange:  alertsource.LessThan,
+						AlertRange:  alertstore.LessThan,
 					},
 					{
 						AlertId: "alert2",
@@ -520,7 +520,7 @@ func TestCreateAlertRule(t *testing.T) {
 						Usernames:   []string{UserId},
 						DeviceId:    RegisteredDeviceId,
 						QueryField:  RegisteredQueryField,
-						AlertRange:  alertsource.LessThan,
+						AlertRange:  alertstore.LessThan,
 					},
 				},
 			},
@@ -530,7 +530,7 @@ func TestCreateAlertRule(t *testing.T) {
 				Duration:    "24h",
 				DeviceId:    RegisteredDeviceId,
 				QueryField:  RegisteredQueryField,
-				AlertRange:  alertsource.Range,
+				AlertRange:  alertstore.Range,
 			},
 		},
 	}
@@ -538,7 +538,7 @@ func TestCreateAlertRule(t *testing.T) {
 	var as *alertstore.MockAlertStore
 	var source *alertsource.MockAlertSource
 	var err error
-	var got *struct{ Body alertsource.CreatedRule }
+	var got *struct{ Body alertstore.CreatedRule }
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
 			as = alertstore.NewMockAlertStore(tc.mockAlertStore)
@@ -635,7 +635,7 @@ func TestUpdateAlertRule(t *testing.T) {
 				Duration:    "24h",
 				DeviceId:    RegisteredDeviceId,
 				QueryField:  RegisteredQueryField,
-				AlertRange:  alertsource.Range,
+				AlertRange:  alertstore.Range,
 			},
 			mockAlertStore: &alertstore.Schema{
 				AlertRules: []alertstore.AlertRule{
@@ -645,7 +645,7 @@ func TestUpdateAlertRule(t *testing.T) {
 						Duration:    "24h",
 						DeviceId:    RegisteredDeviceId,
 						QueryField:  RegisteredQueryField,
-						AlertRange:  alertsource.Range,
+						AlertRange:  alertstore.Range,
 					},
 				},
 			},
@@ -657,7 +657,7 @@ func TestUpdateAlertRule(t *testing.T) {
 						Duration:    "24h",
 						DeviceId:    RegisteredDeviceId,
 						QueryField:  RegisteredQueryField,
-						AlertRange:  alertsource.Range,
+						AlertRange:  alertstore.Range,
 					},
 				},
 			},
@@ -672,7 +672,7 @@ func TestUpdateAlertRule(t *testing.T) {
 				Duration:    "24h",
 				DeviceId:    RegisteredDeviceId,
 				QueryField:  RegisteredQueryField,
-				AlertRange:  alertsource.Range,
+				AlertRange:  alertstore.Range,
 			},
 		},
 
@@ -685,7 +685,7 @@ func TestUpdateAlertRule(t *testing.T) {
 				Duration:    "24h",
 				DeviceId:    RegisteredDeviceId,
 				QueryField:  RegisteredQueryField,
-				AlertRange:  alertsource.Range,
+				AlertRange:  alertstore.Range,
 			},
 		},
 
@@ -698,7 +698,7 @@ func TestUpdateAlertRule(t *testing.T) {
 				Duration:    "24h",
 				DeviceId:    RegisteredDeviceId,
 				QueryField:  RegisteredQueryField,
-				AlertRange:  alertsource.LessThan,
+				AlertRange:  alertstore.LessThan,
 			},
 		},
 	}
@@ -731,13 +731,13 @@ func TestGetAlertRule(t *testing.T) {
 	tests := map[string]struct {
 		wantErr        bool
 		want           *struct{ Body alertstore.AlertRule }
-		input          alertsource.CreatedRule
+		input          alertstore.CreatedRule
 		mockAlertStore *alertstore.Schema
 	}{
 
 		"successfully get a stored alert": {
 			wantErr: false,
-			input:   alertsource.CreatedRule{AlertId: AlertId},
+			input:   alertstore.CreatedRule{AlertId: AlertId},
 			mockAlertStore: &alertstore.Schema{
 				AlertRecipients: []alertstore.AlertRecipient{
 					{AlertId: AlertId, UserId: UserId},
@@ -754,7 +754,7 @@ func TestGetAlertRule(t *testing.T) {
 						Id:          AlertId,
 						Duration:    SomeDuration,
 						RangeValues: []int{10, 20},
-						Level:       alertsource.Ok,
+						Level:       alertstore.Ok,
 					},
 				},
 			},
@@ -765,7 +765,7 @@ func TestGetAlertRule(t *testing.T) {
 					Duration:    "24h",
 					DeviceId:    RegisteredDeviceId,
 					QueryField:  RegisteredQueryField,
-					AlertRange:  alertsource.Range,
+					AlertRange:  alertstore.Range,
 				},
 			},
 		},
@@ -777,7 +777,7 @@ func TestGetAlertRule(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			got, err = a.GetAlertRule(
 				context.Background(),
-				&struct{ Body alertsource.CreatedRule }{tc.input},
+				&struct{ Body alertstore.CreatedRule }{tc.input},
 			)
 			if tc.wantErr != (err != nil) {
 				t.Fatalf("wantErr: %v, got: %v", tc.wantErr, err)
