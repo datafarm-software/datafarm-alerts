@@ -90,32 +90,34 @@ func TestNotifyCrit(t *testing.T) {
 
 func TestRespondToAlert(t *testing.T) {
 	tests := map[string]struct {
-		wantUserInboxes                   map[string][]string
-		wantAlertStore                    map[any]any
-		mockNotifierStore, mockAlertStore map[any]any
-		alert                             alertsource.InfluxAlert
+		wantUserInboxes                map[string][]string
+		mockNotifierStore              map[any]any
+		mockAlertStore, wantAlertStore *alertstore.Schema
+		alert                          alertsource.InfluxAlert
 	}{
 		"send alert because still crit after duration": {
 			wantUserInboxes: map[string][]string{
 				UserId: {
-					"Alert message stating crit level.",
+					"New alert message stating crit level.",
 				},
 			},
-			mockAlertStore: map[any]any{
-				"alertRecipients": map[string][]string{
-					AlertId: {UserId},
+			mockAlertStore: &alertstore.Schema{
+				AlertRecipients: []alertstore.AlertRecipient{
+					{AlertId: AlertId, UserId: UserId},
 				},
-				"deviceAlerts": map[string]map[string]string{
-					RegisteredDeviceId: {
-						RegisteredQueryField: AlertId,
+				DeviceAlerts: []alertstore.DeviceAlertRule{
+					{
+						DeviceId:   RegisteredDeviceId,
+						QueryField: RegisteredQueryField,
+						AlertId:    AlertId,
 					},
 				},
-				"alertStore": map[string]alertsource.AlertState{
-					AlertId: {
+				AlertStates: []alertstore.AlertState{
+					{
+						Id:       AlertId,
 						Time:     AlertReceived,
 						Duration: SomeDuration,
 						Message:  "Already crit.",
-						Id:       AlertId,
 						Level:    alertsource.Crit,
 					},
 				},
@@ -123,26 +125,28 @@ func TestRespondToAlert(t *testing.T) {
 			alert: alertsource.InfluxAlert{
 				Id:         AlertId,
 				Level:      "crit",
-				Message:    "Alert message stating crit level.",
+				Message:    "New alert message stating crit level.",
 				Time:       AfterDuration,
 				DeviceId:   RegisteredDeviceId,
 				QueryField: RegisteredQueryField,
 			},
-			wantAlertStore: map[any]any{
-				"alertRecipients": map[string][]string{
-					AlertId: {UserId},
+			wantAlertStore: &alertstore.Schema{
+				AlertRecipients: []alertstore.AlertRecipient{
+					{AlertId: AlertId, UserId: UserId},
 				},
-				"deviceAlerts": map[string]map[string]string{
-					RegisteredDeviceId: {
-						RegisteredQueryField: AlertId,
+				DeviceAlerts: []alertstore.DeviceAlertRule{
+					{
+						DeviceId:   RegisteredDeviceId,
+						QueryField: RegisteredQueryField,
+						AlertId:    AlertId,
 					},
 				},
-				"alertStore": map[string]alertsource.AlertState{
-					AlertId: {
-						Time:     AfterDuration,
-						Duration: SomeDuration,
-						Message:  "Alert message stating crit level.",
+				AlertStates: []alertstore.AlertState{
+					{
 						Id:       AlertId,
+						Time:     AlertReceived,
+						Duration: SomeDuration,
+						Message:  "New alert message stating crit level.",
 						Level:    alertsource.Crit,
 					},
 				},
@@ -151,21 +155,20 @@ func TestRespondToAlert(t *testing.T) {
 
 		"no notification because duration has not elapsed": {
 			wantUserInboxes: EmptyInboxes,
-			mockAlertStore: map[any]any{
-				"alertRecipients": map[string][]string{
-					AlertId: {UserId},
-				},
-				"deviceAlerts": map[string]map[string]string{
-					RegisteredDeviceId: {
-						RegisteredQueryField: AlertId,
+			mockAlertStore: &alertstore.Schema{
+				DeviceAlerts: []alertstore.DeviceAlertRule{
+					{
+						DeviceId:   RegisteredDeviceId,
+						QueryField: RegisteredQueryField,
+						AlertId:    AlertId,
 					},
 				},
-				"alertStore": map[string]alertsource.AlertState{
-					AlertId: {
+				AlertStates: []alertstore.AlertState{
+					{
+						Id:       AlertId,
 						Time:     AlertReceived,
 						Duration: SomeDuration,
 						Message:  "Already crit.",
-						Id:       AlertId,
 						Level:    alertsource.Crit,
 					},
 				},
@@ -178,21 +181,20 @@ func TestRespondToAlert(t *testing.T) {
 				DeviceId:   RegisteredDeviceId,
 				QueryField: RegisteredQueryField,
 			},
-			wantAlertStore: map[any]any{
-				"alertRecipients": map[string][]string{
-					AlertId: {UserId},
-				},
-				"deviceAlerts": map[string]map[string]string{
-					RegisteredDeviceId: {
-						RegisteredQueryField: AlertId,
+			wantAlertStore: &alertstore.Schema{
+				DeviceAlerts: []alertstore.DeviceAlertRule{
+					{
+						DeviceId:   RegisteredDeviceId,
+						QueryField: RegisteredQueryField,
+						AlertId:    AlertId,
 					},
 				},
-				"alertStore": map[string]alertsource.AlertState{
-					AlertId: {
+				AlertStates: []alertstore.AlertState{
+					{
+						Id:       AlertId,
 						Time:     AlertReceived,
 						Duration: SomeDuration,
 						Message:  "Already crit.",
-						Id:       AlertId,
 						Level:    alertsource.Crit,
 					},
 				},
@@ -202,23 +204,27 @@ func TestRespondToAlert(t *testing.T) {
 		"send notification because alert level changing from ok to crit": {
 			wantUserInboxes: map[string][]string{
 				UserId: {
-					"Alert message stating crit level.",
+					"Status is now crit.",
 				},
 			},
-			mockAlertStore: map[any]any{
-				"alertRecipients": map[string][]string{
-					AlertId: {UserId},
+			mockAlertStore: &alertstore.Schema{
+				AlertRecipients: []alertstore.AlertRecipient{
+					{AlertId: AlertId, UserId: UserId},
 				},
-				"deviceAlerts": map[string]map[string]string{
-					RegisteredDeviceId: {
-						RegisteredQueryField: AlertId,
+				DeviceAlerts: []alertstore.DeviceAlertRule{
+					{
+						DeviceId:   RegisteredDeviceId,
+						QueryField: RegisteredQueryField,
+						AlertId:    AlertId,
 					},
 				},
-				"alertStore": map[string]alertsource.AlertState{
-					AlertId: {
-						Time:  AlertReceived,
-						Id:    AlertId,
-						Level: alertsource.Ok,
+				AlertStates: []alertstore.AlertState{
+					{
+						Id:       AlertId,
+						Time:     AlertReceived,
+						Duration: SomeDuration,
+						Message:  "Status Ok.",
+						Level:    alertsource.Crit,
 					},
 				},
 			},
@@ -230,21 +236,24 @@ func TestRespondToAlert(t *testing.T) {
 				DeviceId:   RegisteredDeviceId,
 				QueryField: RegisteredQueryField,
 			},
-			wantAlertStore: map[any]any{
-				"alertRecipients": map[string][]string{
-					AlertId: {UserId},
+			wantAlertStore: &alertstore.Schema{
+				AlertRecipients: []alertstore.AlertRecipient{
+					{AlertId: AlertId, UserId: UserId},
 				},
-				"deviceAlerts": map[string]map[string]string{
-					RegisteredDeviceId: {
-						RegisteredQueryField: AlertId,
+				DeviceAlerts: []alertstore.DeviceAlertRule{
+					{
+						DeviceId:   RegisteredDeviceId,
+						QueryField: RegisteredQueryField,
+						AlertId:    AlertId,
 					},
 				},
-				"alertStore": map[string]alertsource.AlertState{
-					AlertId: {
-						Time:    WithinDuration,
-						Id:      AlertId,
-						Level:   alertsource.Crit,
-						Message: "Alert message stating crit level.",
+				AlertStates: []alertstore.AlertState{
+					{
+						Id:       AlertId,
+						Time:     AlertReceived,
+						Duration: SomeDuration,
+						Message:  "Status is now crit.",
+						Level:    alertsource.Crit,
 					},
 				},
 			},
@@ -252,20 +261,12 @@ func TestRespondToAlert(t *testing.T) {
 
 		"no notification because alert on unregistered queryField": {
 			wantUserInboxes: EmptyInboxes,
-			mockAlertStore: map[any]any{
-				"alertRecipients": map[string][]string{
-					AlertId: {UserId},
-				},
-				"deviceAlerts": map[string]map[string]string{
-					RegisteredDeviceId: {
-						RegisteredQueryField: AlertId,
-					},
-				},
-				"alertStore": map[string]alertsource.AlertState{
-					AlertId: {
-						Time:  AlertReceived,
-						Id:    AlertId,
-						Level: alertsource.Ok,
+			mockAlertStore: &alertstore.Schema{
+				DeviceAlerts: []alertstore.DeviceAlertRule{
+					{
+						DeviceId:   RegisteredDeviceId,
+						QueryField: RegisteredQueryField,
+						AlertId:    AlertId,
 					},
 				},
 			},
@@ -276,20 +277,12 @@ func TestRespondToAlert(t *testing.T) {
 				DeviceId:   RegisteredDeviceId,
 				QueryField: UnregisteredQueryField,
 			},
-			wantAlertStore: map[any]any{
-				"alertRecipients": map[string][]string{
-					AlertId: {UserId},
-				},
-				"deviceAlerts": map[string]map[string]string{
-					RegisteredDeviceId: {
-						RegisteredQueryField: AlertId,
-					},
-				},
-				"alertStore": map[string]alertsource.AlertState{
-					AlertId: {
-						Time:  AlertReceived,
-						Id:    AlertId,
-						Level: alertsource.Ok,
+			wantAlertStore: &alertstore.Schema{
+				DeviceAlerts: []alertstore.DeviceAlertRule{
+					{
+						DeviceId:   RegisteredDeviceId,
+						QueryField: RegisteredQueryField,
+						AlertId:    AlertId,
 					},
 				},
 			},
@@ -297,20 +290,12 @@ func TestRespondToAlert(t *testing.T) {
 
 		"no notification because alert on unregistered deviceId": {
 			wantUserInboxes: EmptyInboxes,
-			mockAlertStore: map[any]any{
-				"alertRecipients": map[string][]string{
-					AlertId: {UserId},
-				},
-				"deviceAlerts": map[string]map[string]string{
-					RegisteredDeviceId: {
-						RegisteredQueryField: AlertId,
-					},
-				},
-				"alertStore": map[string]alertsource.AlertState{
-					AlertId: {
-						Time:  AlertReceived,
-						Id:    AlertId,
-						Level: alertsource.Ok,
+			mockAlertStore: &alertstore.Schema{
+				DeviceAlerts: []alertstore.DeviceAlertRule{
+					{
+						DeviceId:   RegisteredDeviceId,
+						QueryField: RegisteredQueryField,
+						AlertId:    AlertId,
 					},
 				},
 			},
@@ -321,20 +306,12 @@ func TestRespondToAlert(t *testing.T) {
 				DeviceId:   UnregisteredDeviceId,
 				QueryField: RegisteredQueryField,
 			},
-			wantAlertStore: map[any]any{
-				"alertRecipients": map[string][]string{
-					AlertId: {UserId},
-				},
-				"deviceAlerts": map[string]map[string]string{
-					RegisteredDeviceId: {
-						RegisteredQueryField: AlertId,
-					},
-				},
-				"alertStore": map[string]alertsource.AlertState{
-					AlertId: {
-						Time:  AlertReceived,
-						Id:    AlertId,
-						Level: alertsource.Ok,
+			wantAlertStore: &alertstore.Schema{
+				DeviceAlerts: []alertstore.DeviceAlertRule{
+					{
+						DeviceId:   RegisteredDeviceId,
+						QueryField: RegisteredQueryField,
+						AlertId:    AlertId,
 					},
 				},
 			},
@@ -355,7 +332,7 @@ func TestRespondToAlert(t *testing.T) {
 			if diff := cmp.Diff(tc.wantUserInboxes, n.GetUserInboxes()); diff != "" {
 				t.Fatalf("user inboxes mismatch (-want +got):\n%s", diff)
 			}
-			if diff := cmp.Diff(tc.wantAlertStore, as.GetValues()); diff != "" {
+			if diff := cmp.Diff(tc.wantAlertStore, as.GetSnapshot()); diff != "" {
 				t.Fatalf("alertstore mismatch (-want +got):\n%s", diff)
 			}
 		})

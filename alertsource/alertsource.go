@@ -1,7 +1,5 @@
 package alertsource
 
-import "time"
-
 type AlertLevel int
 
 const (
@@ -21,15 +19,6 @@ const (
 
 type CreatedRule struct {
 	AlertId string `json:"alertId" readOnly:"true" doc:"Generated Alert Id."`
-}
-
-type AlertState struct {
-	Time        time.Time
-	Duration    time.Duration
-	RangeValues []int
-	Message     string
-	Id          string
-	Level       AlertLevel
 }
 
 type AlertSource interface {

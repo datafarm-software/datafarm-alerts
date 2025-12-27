@@ -15,10 +15,10 @@ var NoAlert = errors.New("no alert")
 
 type AlertStore interface {
 	//NOTE: could return alertstore.NoAlert
-	GetAlertState(alertId string) (*alertsource.AlertState, error)
+	GetAlertState(alertId string) (*AlertState, error)
 	GetAlertRule(alertId string) (AlertRule, error)
 	GetAlertRecipients(alertId string) ([]string, error)
-	UpdateAlertState(alert *alertsource.AlertState) error
+	UpdateAlertState(alert *AlertState) error
 	StoreAlertRule(alertId string, alert AlertRule) error
 	AddUsersToNotifyList(alertId string, usernames []string) error
 	//NOTE: could return alertstore.AlertExists
@@ -28,6 +28,7 @@ type AlertStore interface {
 type Schema struct {
 	DeviceAlerts    []DeviceAlertRule
 	AlertRecipients []AlertRecipient
+	AlertStates     []AlertState
 	AlertRules      []AlertRule
 }
 
@@ -40,6 +41,15 @@ type DeviceAlertRule struct {
 type AlertRecipient struct {
 	AlertId string
 	UserId  string
+}
+
+type AlertState struct {
+	Time        time.Time
+	Duration    time.Duration
+	RangeValues []int
+	Message     string
+	Id          string
+	Level       alertsource.AlertLevel
 }
 
 type AlertRule struct {
