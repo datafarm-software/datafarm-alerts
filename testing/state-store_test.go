@@ -475,6 +475,9 @@ func TestCreateAlertRule(t *testing.T) {
 
 		"multiple alerts on deviceId and queryField combination": {
 			wantErr: false,
+			wantResponse: &struct{ Body alertstore.CreatedRule }{
+				alertstore.CreatedRule{AlertId: "alert2"},
+			},
 			wantAlertStore: &alertstore.Schema{
 				AlertRecipients: []alertstore.AlertRecipient{
 					{AlertId: AlertId, UserId: UserId},
