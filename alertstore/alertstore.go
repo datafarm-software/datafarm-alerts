@@ -20,7 +20,7 @@ type AlertStore interface {
 	GetAlertRecipients(alertId string) ([]string, error)
 	UpdateAlertState(alert *AlertState) error
 	StoreAlertRule(alertId string, alert AlertRule) error
-	AddUsersToNotifyList(alertId string, usernames []string) error
+	AddUsersToNotifyList(alertId string, userIds []string) error
 	//NOTE: could return alertstore.AlertExists
 	CheckAlertRuleExists(AlertRule) (string, error)
 }

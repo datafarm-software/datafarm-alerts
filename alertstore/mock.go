@@ -62,15 +62,13 @@ func (m *MockAlertStore) StoreAlertRule(alertId string, rule AlertRule) error {
 	return nil
 }
 
-func (m *MockAlertStore) AddUsersToNotifyList(alertId string, usernames []string) error {
-	recipientStore, ok := m.values["alertRecipients"].(map[string][]string)
-	if !ok {
-		return fmt.Errorf("no recipient store")
+func (m *MockAlertStore) AddUsersToNotifyList(alertId string, userIds []string) error {
+	//TODO: deal with uniqueness constraints
+	for _, id := range userIds {
+		m.Db.AlertRecipients = append(m.Db.AlertRecipients, AlertRecipient{
+			AlertId: alertId, UserId: id,
+		})
 	}
-	recipients := recipientStore[alertId]
-	recipients = append(recipients, usernames...)
-	recipientStore[alertId] = recipients
-	m.values["alertRecipients"] = recipientStore
 	return nil
 }
 
