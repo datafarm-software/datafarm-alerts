@@ -20,8 +20,7 @@ func (m *MockAlertStore) GetSnapshot() *Schema {
 	return m.Db
 }
 
-func (m *MockAlertStore) GetAlertState(alertId string) (
-	*AlertState, error) {
+func (m *MockAlertStore) GetAlertState(alertId string) (*AlertState, error) {
 	var state *AlertState
 	for _, as := range m.Db.AlertStates {
 		if as.Id == alertId {
@@ -49,12 +48,11 @@ func (m *MockAlertStore) GetAlertRecipients(alertId string) ([]string, error) {
 }
 
 func (m *MockAlertStore) UpdateAlertLastSeen(alert *AlertState) error {
-	alerts, ok := m.values["alertStore"].(map[string]alertsource.AlertState)
-	if !ok {
-		return fmt.Errorf("no alertstore found")
+	for _, as := range m.Db.AlertStates {
+		if as.Id == alert.Id {
+			as.Time = alert.Time
+		}
 	}
-	alerts[alert.Id] = *alert
-	m.values["alertStore"] = alerts
 	return nil
 }
 

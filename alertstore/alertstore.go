@@ -28,7 +28,7 @@ type AlertStore interface {
 type Schema struct {
 	DeviceAlerts    []DeviceAlertRule
 	AlertRecipients []AlertRecipient
-	AlertStates     []AlertState
+	AlertStates     []*AlertState
 	AlertRules      []AlertRule
 }
 
