@@ -25,6 +25,22 @@ type AlertStore interface {
 	CheckAlertRuleExists(alertsource.AlertRule) (string, error)
 }
 
+type AlertStoreSchema struct {
+	DeviceAlerts    []DeviceAlert
+	AlertRecipients []AlertRecipient
+}
+
+type DeviceAlert struct {
+	DeviceId   string
+	QueryField string
+	AlertId    string
+}
+
+type AlertRecipient struct {
+	AlertId string
+	UserId  string
+}
+
 func ParseDuration(d string) (time.Duration, error) {
 	var num int
 	var err error
