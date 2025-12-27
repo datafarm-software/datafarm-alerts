@@ -623,13 +623,13 @@ func TestUpdateAlertRule(t *testing.T) {
 	tests := map[string]struct {
 		wantErr                        bool
 		alertId                        string
-		input                          alertsource.AlertRule
-		mockAlertStore, wantAlertStore map[any]any
+		input                          alertstore.AlertRule
+		mockAlertStore, wantAlertStore *alertstore.Schema
 	}{
 		"update the range values of an alert": {
 			wantErr: false,
 			alertId: AlertId,
-			input: alertsource.AlertRule{
+			input: alertstore.AlertRule{
 				Usernames:   []string{UserId},
 				RangeValues: []int{10, 20},
 				Duration:    "24h",
@@ -637,39 +637,27 @@ func TestUpdateAlertRule(t *testing.T) {
 				QueryField:  RegisteredQueryField,
 				AlertRange:  alertsource.Range,
 			},
-			mockAlertStore: map[any]any{
-				"alertRecipients": map[string][]string{
-					AlertId: {UserId},
-				},
-				"deviceAlerts": map[string]map[string]string{
-					RegisteredDeviceId: {
-						RegisteredQueryField: AlertId,
-					},
-				},
-				"alertStore": map[string]alertsource.AlertState{
-					AlertId: {
-						Duration:    SomeDuration,
+			mockAlertStore: &alertstore.Schema{
+				AlertRules: []alertstore.AlertRule{
+					{
+						Usernames:   []string{UserId},
 						RangeValues: []int{43, 90},
-						Id:          AlertId,
-						Level:       alertsource.Ok,
+						Duration:    "24h",
+						DeviceId:    RegisteredDeviceId,
+						QueryField:  RegisteredQueryField,
+						AlertRange:  alertsource.Range,
 					},
 				},
 			},
-			wantAlertStore: map[any]any{
-				"alertRecipients": map[string][]string{
-					AlertId: {UserId},
-				},
-				"deviceAlerts": map[string]map[string]string{
-					RegisteredDeviceId: {
-						RegisteredQueryField: AlertId,
-					},
-				},
-				"alertStore": map[string]alertsource.AlertState{
-					AlertId: {
-						Duration:    SomeDuration,
+			wantAlertStore: &alertstore.Schema{
+				AlertRules: []alertstore.AlertRule{
+					{
+						Usernames:   []string{UserId},
 						RangeValues: []int{10, 20},
-						Id:          AlertId,
-						Level:       alertsource.Ok,
+						Duration:    "24h",
+						DeviceId:    RegisteredDeviceId,
+						QueryField:  RegisteredQueryField,
+						AlertRange:  alertsource.Range,
 					},
 				},
 			},
@@ -678,7 +666,7 @@ func TestUpdateAlertRule(t *testing.T) {
 		"error when trying to update non existent alert rule": {
 			wantErr: true,
 			alertId: AlertId,
-			input: alertsource.AlertRule{
+			input: alertstore.AlertRule{
 				Usernames:   []string{UserId},
 				RangeValues: []int{10, 20},
 				Duration:    "24h",
@@ -691,7 +679,7 @@ func TestUpdateAlertRule(t *testing.T) {
 		"invalid: 1 range value on a range type alert check": {
 			wantErr: true,
 			alertId: AlertId,
-			input: alertsource.AlertRule{
+			input: alertstore.AlertRule{
 				Usernames:   []string{UserId},
 				RangeValues: []int{10},
 				Duration:    "24h",
@@ -700,10 +688,11 @@ func TestUpdateAlertRule(t *testing.T) {
 				AlertRange:  alertsource.Range,
 			},
 		},
+
 		"invalid: 2 range values on a less than type alert check": {
 			wantErr: true,
 			alertId: AlertId,
-			input: alertsource.AlertRule{
+			input: alertstore.AlertRule{
 				Usernames:   []string{UserId},
 				RangeValues: []int{50, 90},
 				Duration:    "24h",
@@ -723,14 +712,14 @@ func TestUpdateAlertRule(t *testing.T) {
 				context.Background(),
 				&struct {
 					AlertId string `path:"alertId"`
-					Body    alertsource.AlertRule
+					Body    alertstore.AlertRule
 				}{tc.alertId, tc.input},
 			)
 			if tc.wantErr != (err != nil) {
 				t.Fatalf("wantErr: %v, got: %v", tc.wantErr, err)
 			}
 			if !tc.wantErr {
-				if diff := cmp.Diff(tc.wantAlertStore, as.GetValues()); diff != "" {
+				if diff := cmp.Diff(tc.wantAlertStore, as.GetSnapshot()); diff != "" {
 					t.Fatalf("alertstore mismatch (-want +got):\n%s", diff)
 				}
 			}
