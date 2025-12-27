@@ -390,8 +390,8 @@ func TestCreateAlertRule(t *testing.T) {
 						RangeValues: []int{5},
 						Duration:    "24h",
 						Usernames:   []string{UserId},
-						DeviceId:    "device1",
-						QueryField:  "temperature",
+						DeviceId:    RegisteredDeviceId,
+						QueryField:  RegisteredQueryField,
 						AlertRange:  alertsource.LessThan,
 					},
 				},
@@ -412,38 +412,26 @@ func TestCreateAlertRule(t *testing.T) {
 		},
 
 		"invalid range on less than alert": {
-			wantErr: true,
-			wantAlertStore: map[any]any{
-				"alertRecipients": map[string][]string{},
-				"deviceAlerts":    map[string]map[string][]string{},
-				"alertRules":      map[string]alertsource.AlertRule{},
-			},
-			alertRule: alertsource.AlertRule{
+			wantErr:        true,
+			wantAlertStore: nil,
+			alertRule: alertstore.AlertRule{
 				RangeValues: []int{5, 10},
 				AlertRange:  alertsource.LessThan,
 			},
 		},
 
 		"invalid range on range alert": {
-			wantErr: true,
-			wantAlertStore: map[any]any{
-				"alertRecipients": map[string][]string{},
-				"deviceAlerts":    map[string]map[string][]string{},
-				"alertRules":      map[string]alertsource.AlertRule{},
-			},
-			alertRule: alertsource.AlertRule{
+			wantErr:        true,
+			wantAlertStore: nil,
+			alertRule: alertstore.AlertRule{
 				RangeValues: []int{5},
 				AlertRange:  alertsource.Range,
 			},
 		},
 		"invalid alert rule": {
-			wantErr: true,
-			wantAlertStore: map[any]any{
-				"alertRecipients": map[string][]string{},
-				"deviceAlerts":    map[string]map[string][]string{},
-				"alertRules":      map[string]alertsource.AlertRule{},
-			},
-			alertRule: alertsource.AlertRule{
+			wantErr:        true,
+			wantAlertStore: nil,
+			alertRule: alertstore.AlertRule{
 				Usernames:  []string{},
 				Duration:   "",
 				AlertRange: alertsource.Range,
@@ -452,43 +440,53 @@ func TestCreateAlertRule(t *testing.T) {
 
 		"identical alert already exists": {
 			wantErr: true,
-			wantAlertStore: map[any]any{
-				"alertRecipients": map[string][]string{AlertId: {UserId}},
-				"deviceAlerts": map[string]map[string][]string{
-					RegisteredDeviceId: {
-						RegisteredQueryField: {AlertId},
+			wantAlertStore: &alertstore.Schema{
+				AlertRecipients: []alertstore.AlertRecipient{
+					{AlertId: AlertId, UserId: UserId},
+				},
+				DeviceAlerts: []alertstore.DeviceAlertRule{
+					{
+						DeviceId:   RegisteredDeviceId,
+						QueryField: RegisteredQueryField,
+						AlertId:    AlertId,
 					},
 				},
-				"alertRules": map[string]alertsource.AlertRule{
-					AlertId: {
-						Usernames:   []string{UserId},
+				AlertRules: []alertstore.AlertRule{
+					{
+						AlertId:     AlertId,
 						RangeValues: []int{5},
 						Duration:    "24h",
+						Usernames:   []string{UserId},
 						DeviceId:    RegisteredDeviceId,
 						QueryField:  RegisteredQueryField,
 						AlertRange:  alertsource.LessThan,
 					},
 				},
 			},
-			mockAlertStore: map[any]any{
-				"alertRecipients": map[string][]string{AlertId: {UserId}},
-				"deviceAlerts": map[string]map[string][]string{
-					RegisteredDeviceId: {
-						RegisteredQueryField: {AlertId},
+			mockAlertStore: &alertstore.Schema{
+				AlertRecipients: []alertstore.AlertRecipient{
+					{AlertId: AlertId, UserId: UserId},
+				},
+				DeviceAlerts: []alertstore.DeviceAlertRule{
+					{
+						DeviceId:   RegisteredDeviceId,
+						QueryField: RegisteredQueryField,
+						AlertId:    AlertId,
 					},
 				},
-				"alertRules": map[string]alertsource.AlertRule{
-					AlertId: {
-						Usernames:   []string{UserId},
+				AlertRules: []alertstore.AlertRule{
+					{
+						AlertId:     AlertId,
 						RangeValues: []int{5},
 						Duration:    "24h",
+						Usernames:   []string{UserId},
 						DeviceId:    RegisteredDeviceId,
 						QueryField:  RegisteredQueryField,
 						AlertRange:  alertsource.LessThan,
 					},
 				},
 			},
-			alertRule: alertsource.AlertRule{
+			alertRule: alertstore.AlertRule{
 				Usernames:   []string{UserId},
 				RangeValues: []int{5},
 				Duration:    "24h",
@@ -500,50 +498,62 @@ func TestCreateAlertRule(t *testing.T) {
 
 		"multiple alerts on deviceId and queryField combination": {
 			wantErr: false,
-			wantAlertStore: map[any]any{
-				"alertRecipients": map[string][]string{AlertId: {UserId}},
-				"deviceAlerts": map[string]map[string][]string{
-					RegisteredDeviceId: {
-						RegisteredQueryField: {AlertId},
+			wantAlertStore: &alertstore.Schema{
+				AlertRecipients: []alertstore.AlertRecipient{
+					{AlertId: AlertId, UserId: UserId},
+				},
+				DeviceAlerts: []alertstore.DeviceAlertRule{
+					{
+						DeviceId:   RegisteredDeviceId,
+						QueryField: RegisteredQueryField,
+						AlertId:    AlertId,
 					},
 				},
-				"alertRules": map[string]alertsource.AlertRule{
-					AlertId: {
-						Usernames:   []string{UserId},
+				AlertRules: []alertstore.AlertRule{
+					{
+						AlertId:     AlertId,
 						RangeValues: []int{5},
 						Duration:    "24h",
+						Usernames:   []string{UserId},
 						DeviceId:    RegisteredDeviceId,
 						QueryField:  RegisteredQueryField,
 						AlertRange:  alertsource.LessThan,
 					},
-					"alert2": {},
-				},
-			},
-			mockAlertStore: map[any]any{
-				"alertRecipients": map[string][]string{AlertId: {UserId}},
-				"deviceAlerts": map[string]map[string][]string{
-					RegisteredDeviceId: {
-						RegisteredQueryField: {AlertId},
+					{
+						AlertId: "alert2",
 					},
 				},
-				"alertRules": map[string]alertsource.AlertRule{
-					AlertId: {
-						Usernames:   []string{UserId},
+			},
+			mockAlertStore: &alertstore.Schema{
+				AlertRecipients: []alertstore.AlertRecipient{
+					{AlertId: AlertId, UserId: UserId},
+				},
+				DeviceAlerts: []alertstore.DeviceAlertRule{
+					{
+						DeviceId:   RegisteredDeviceId,
+						QueryField: RegisteredQueryField,
+						AlertId:    AlertId,
+					},
+				},
+				AlertRules: []alertstore.AlertRule{
+					{
+						AlertId:     AlertId,
 						RangeValues: []int{5},
 						Duration:    "24h",
+						Usernames:   []string{UserId},
 						DeviceId:    RegisteredDeviceId,
 						QueryField:  RegisteredQueryField,
 						AlertRange:  alertsource.LessThan,
 					},
 				},
 			},
-			alertRule: alertsource.AlertRule{
-				Usernames:   []string{UserId},
-				RangeValues: []int{5},
+			alertRule: alertstore.AlertRule{
+				Usernames:   []string{UserId, "user2"},
+				RangeValues: []int{10, 20},
 				Duration:    "24h",
 				DeviceId:    RegisteredDeviceId,
 				QueryField:  RegisteredQueryField,
-				AlertRange:  alertsource.LessThan,
+				AlertRange:  alertsource.Range,
 			},
 		},
 	}
