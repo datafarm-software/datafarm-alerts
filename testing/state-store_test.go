@@ -31,16 +31,16 @@ func TestNotifyCrit(t *testing.T) {
 	var got bool
 	tests := map[string]struct {
 		want            bool
-		alert, previous *alertsource.AlertState
+		alert, previous *alertstore.AlertState
 	}{
 		"no change within duration, so do nothing": {
 			want: false,
-			alert: &alertsource.AlertState{
+			alert: &alertstore.AlertState{
 				Level:    alertsource.Crit,
 				Time:     WithinDuration,
 				Duration: SomeDuration,
 			},
-			previous: &alertsource.AlertState{
+			previous: &alertstore.AlertState{
 				Level:    alertsource.Crit,
 				Time:     AlertReceived,
 				Duration: SomeDuration,
@@ -48,12 +48,12 @@ func TestNotifyCrit(t *testing.T) {
 		},
 		"still crit after duration, so notify": {
 			want: true,
-			alert: &alertsource.AlertState{
+			alert: &alertstore.AlertState{
 				Level:    alertsource.Crit,
 				Time:     AfterDuration,
 				Duration: SomeDuration,
 			},
-			previous: &alertsource.AlertState{
+			previous: &alertstore.AlertState{
 				Level:    alertsource.Crit,
 				Time:     AlertReceived,
 				Duration: SomeDuration,
@@ -61,19 +61,19 @@ func TestNotifyCrit(t *testing.T) {
 		},
 		"change to crit, so notify": {
 			want: true,
-			alert: &alertsource.AlertState{
+			alert: &alertstore.AlertState{
 				Level: alertsource.Crit,
 			},
-			previous: &alertsource.AlertState{
+			previous: &alertstore.AlertState{
 				Level: alertsource.Ok,
 			},
 		},
 		"change from crit to ok, so do nothing": {
 			want: false,
-			alert: &alertsource.AlertState{
+			alert: &alertstore.AlertState{
 				Level: alertsource.Ok,
 			},
-			previous: &alertsource.AlertState{
+			previous: &alertstore.AlertState{
 				Level: alertsource.Crit,
 			},
 		},
