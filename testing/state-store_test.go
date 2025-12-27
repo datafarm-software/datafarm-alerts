@@ -366,24 +366,27 @@ func TestCreateAlertRule(t *testing.T) {
 	tests := map[string]struct {
 		wantErr                         bool
 		wantResponse                    *struct{ Body alertsource.CreatedRule }
-		wantAlertStore                  map[any]any
+		wantAlertStore                  alertstore.Schema
 		mockAlertStore, mockAlertSource map[any]any
-		alertRule                       alertsource.AlertRule
+		alertRule                       alertstore.AlertRule
 	}{
 
 		"successfully create a less than alert rule": {
 			wantErr: false,
-			wantAlertStore: map[any]any{
-				"alertRecipients": map[string][]string{
-					AlertId: {UserId},
+			wantAlertStore: alertstore.Schema{
+				AlertRecipients: []alertstore.AlertRecipient{
+					{AlertId: AlertId, UserId: UserId},
 				},
-				"deviceAlerts": map[string]map[string][]string{
-					RegisteredDeviceId: {
-						RegisteredQueryField: {AlertId},
+				DeviceAlerts: []alertstore.DeviceAlertRule{
+					{
+						DeviceId:   RegisteredDeviceId,
+						QueryField: RegisteredQueryField,
+						AlertId:    AlertId,
 					},
 				},
-				"alertRules": map[string]alertsource.AlertRule{
-					AlertId: {
+				AlertRules: []alertstore.AlertRule{
+					{
+						AlertId:     AlertId,
 						RangeValues: []int{5},
 						Duration:    "24h",
 						Usernames:   []string{UserId},
@@ -393,7 +396,7 @@ func TestCreateAlertRule(t *testing.T) {
 					},
 				},
 			},
-			alertRule: alertsource.AlertRule{
+			alertRule: alertstore.AlertRule{
 				RangeValues: []int{5},
 				Duration:    "24h",
 				Usernames:   []string{UserId},
