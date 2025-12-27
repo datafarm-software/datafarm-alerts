@@ -7,32 +7,17 @@ import (
 )
 
 type MockAlertStore struct {
-	values map[any]any
+	Db *Schema
 }
 
-func NewMockAlertStore(values map[any]any) *MockAlertStore {
-	if values == nil {
-		values = make(map[any]any)
-	}
-	if _, ok := values["alertRecipients"].(map[string][]string); !ok {
-		values["alertRecipients"] = make(map[string][]string)
-	}
-	// if _, ok := values["alertStore"].(map[string]alertsource.AlertState); !ok {
-	// 	values["alertStore"] = make(map[string]alertsource.AlertState)
-	// }
-	if _, ok := values["alertRules"].(map[string]alertsource.AlertRule); !ok {
-		values["alertRules"] = make(map[string]alertsource.AlertRule)
-	}
-	if _, ok := values["deviceAlerts"].(map[string]map[string][]string); !ok {
-		values["deviceAlerts"] = make(map[string]map[string][]string)
-	}
+func NewMockAlertStore(db *Schema) *MockAlertStore {
 	return &MockAlertStore{
-		values: values,
+		Db: db,
 	}
 }
 
-func (m *MockAlertStore) GetValues() map[any]any {
-	return m.values
+func (m *MockAlertStore) GetSnapshot() *Schema {
+	return m.Db
 }
 
 func (m *MockAlertStore) GetAlertState(alertId string) (

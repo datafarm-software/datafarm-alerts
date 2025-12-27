@@ -364,16 +364,16 @@ func TestRespondToAlert(t *testing.T) {
 
 func TestCreateAlertRule(t *testing.T) {
 	tests := map[string]struct {
-		wantErr                         bool
-		wantResponse                    *struct{ Body alertsource.CreatedRule }
-		wantAlertStore                  alertstore.Schema
-		mockAlertStore, mockAlertSource map[any]any
-		alertRule                       alertstore.AlertRule
+		wantErr                        bool
+		wantResponse                   *struct{ Body alertsource.CreatedRule }
+		wantAlertStore, mockAlertStore *alertstore.Schema
+		mockAlertSource                map[any]any
+		alertRule                      alertstore.AlertRule
 	}{
 
 		"successfully create a less than alert rule": {
 			wantErr: false,
-			wantAlertStore: alertstore.Schema{
+			wantAlertStore: &alertstore.Schema{
 				AlertRecipients: []alertstore.AlertRecipient{
 					{AlertId: AlertId, UserId: UserId},
 				},
@@ -559,7 +559,7 @@ func TestCreateAlertRule(t *testing.T) {
 			source = alertsource.NewMockAlertSource(tc.mockAlertSource)
 			a.AlertSource = source
 			got, err = a.CreateAlertRule(context.Background(),
-				&struct{ Body alertsource.AlertRule }{tc.alertRule})
+				&struct{ Body alertstore.AlertRule }{tc.alertRule})
 			if tc.wantErr != (err != nil) {
 				t.Fatalf("wantErr: %v, got: %v", tc.wantErr, err)
 			}
@@ -568,7 +568,7 @@ func TestCreateAlertRule(t *testing.T) {
 					t.Fatalf("response mismatch (-want +got):\n%s", diff)
 				}
 			}
-			if diff := cmp.Diff(tc.wantAlertStore, as.GetValues()); diff != "" {
+			if diff := cmp.Diff(tc.wantAlertStore, as.GetSnapshot()); diff != "" {
 				t.Fatalf("alertstore mismatch (-want +got):\n%s", diff)
 			}
 		})
