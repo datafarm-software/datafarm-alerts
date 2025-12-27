@@ -38,14 +38,12 @@ func (m *MockAlertStore) GetAlertRule(alertId string) (AlertRule, error) {
 	return AlertRule{}, nil
 }
 
-func (m *MockAlertStore) GetAlertRecipients(id string) ([]string, error) {
-	recipientStore, ok := m.values["alertRecipients"].(map[string][]string)
-	if !ok {
-		return nil, fmt.Errorf("no recipient store")
-	}
-	recipients, ok := recipientStore[id]
-	if !ok {
-		return nil, fmt.Errorf("no recipients for: %s", id)
+func (m *MockAlertStore) GetAlertRecipients(alertId string) ([]string, error) {
+	recipients := make([]string, 0, len(m.Db.AlertRecipients))
+	for _, ar := range m.Db.AlertRecipients {
+		if ar.AlertId == alertId {
+			recipients = append(recipients, ar.UserId)
+		}
 	}
 	return recipients, nil
 }
