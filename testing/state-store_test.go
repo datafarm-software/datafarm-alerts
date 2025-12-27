@@ -730,34 +730,36 @@ func TestUpdateAlertRule(t *testing.T) {
 func TestGetAlertRule(t *testing.T) {
 	tests := map[string]struct {
 		wantErr        bool
-		want           *struct{ Body alertsource.AlertRule }
+		want           *struct{ Body alertstore.AlertRule }
 		input          alertsource.CreatedRule
-		mockAlertStore map[any]any
+		mockAlertStore *alertstore.Schema
 	}{
 
 		"successfully get a stored alert": {
 			wantErr: false,
 			input:   alertsource.CreatedRule{AlertId: AlertId},
-			mockAlertStore: map[any]any{
-				"alertRecipients": map[string][]string{
-					AlertId: {UserId},
+			mockAlertStore: &alertstore.Schema{
+				AlertRecipients: []alertstore.AlertRecipient{
+					{AlertId: AlertId, UserId: UserId},
 				},
-				"deviceAlerts": map[string]map[string]string{
-					RegisteredDeviceId: {
-						RegisteredQueryField: AlertId,
+				DeviceAlerts: []alertstore.DeviceAlertRule{
+					{
+						DeviceId:   RegisteredDeviceId,
+						QueryField: RegisteredQueryField,
+						AlertId:    AlertId,
 					},
 				},
-				"alertStore": map[string]alertsource.AlertState{
-					AlertId: {
+				AlertStates: []alertstore.AlertState{
+					{
+						Id:          AlertId,
 						Duration:    SomeDuration,
 						RangeValues: []int{10, 20},
-						Id:          AlertId,
 						Level:       alertsource.Ok,
 					},
 				},
 			},
-			want: &struct{ Body alertsource.AlertRule }{
-				alertsource.AlertRule{
+			want: &struct{ Body alertstore.AlertRule }{
+				alertstore.AlertRule{
 					Usernames:   []string{UserId},
 					RangeValues: []int{10, 20},
 					Duration:    "24h",
@@ -770,7 +772,7 @@ func TestGetAlertRule(t *testing.T) {
 	}
 
 	var err error
-	var got *struct{ Body alertsource.AlertRule }
+	var got *struct{ Body alertstore.AlertRule }
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
 			got, err = a.GetAlertRule(
