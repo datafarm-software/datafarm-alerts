@@ -22,16 +22,16 @@ func (m *MockAlertStore) GetSnapshot() *Schema {
 
 func (m *MockAlertStore) GetAlertState(alertId string) (
 	*AlertState, error) {
-	alertStore, ok := m.values["alertStore"].(map[string]alertsource.AlertState)
-	if !ok {
-		return nil, fmt.Errorf("no alertstore found")
+	var state *AlertState
+	for _, as := range m.Db.AlertStates {
+		if as.Id == alertId {
+			state = &as
+		}
 	}
-	previousAlert, ok := alertStore[alertId]
-	if !ok {
-		return nil, fmt.Errorf(
-			"no found alert in store for id: %s", alertId)
+	if state == nil {
+		return nil, NoAlert
 	}
-	return &previousAlert, nil
+	return state, nil
 }
 
 func (m *MockAlertStore) GetAlertRule(alertId string) (AlertRule, error) {
