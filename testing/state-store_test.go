@@ -112,7 +112,7 @@ func TestRespondToAlert(t *testing.T) {
 						AlertId:    AlertId,
 					},
 				},
-				AlertStates: []alertstore.AlertState{
+				AlertStates: []*alertstore.AlertState{
 					{
 						Id:       AlertId,
 						Time:     AlertReceived,
@@ -141,7 +141,7 @@ func TestRespondToAlert(t *testing.T) {
 						AlertId:    AlertId,
 					},
 				},
-				AlertStates: []alertstore.AlertState{
+				AlertStates: []*alertstore.AlertState{
 					{
 						Id:       AlertId,
 						Time:     AlertReceived,
@@ -163,7 +163,7 @@ func TestRespondToAlert(t *testing.T) {
 						AlertId:    AlertId,
 					},
 				},
-				AlertStates: []alertstore.AlertState{
+				AlertStates: []*alertstore.AlertState{
 					{
 						Id:       AlertId,
 						Time:     AlertReceived,
@@ -189,7 +189,7 @@ func TestRespondToAlert(t *testing.T) {
 						AlertId:    AlertId,
 					},
 				},
-				AlertStates: []alertstore.AlertState{
+				AlertStates: []*alertstore.AlertState{
 					{
 						Id:       AlertId,
 						Time:     AlertReceived,
@@ -218,7 +218,7 @@ func TestRespondToAlert(t *testing.T) {
 						AlertId:    AlertId,
 					},
 				},
-				AlertStates: []alertstore.AlertState{
+				AlertStates: []*alertstore.AlertState{
 					{
 						Id:       AlertId,
 						Time:     AlertReceived,
@@ -247,7 +247,7 @@ func TestRespondToAlert(t *testing.T) {
 						AlertId:    AlertId,
 					},
 				},
-				AlertStates: []alertstore.AlertState{
+				AlertStates: []*alertstore.AlertState{
 					{
 						Id:       AlertId,
 						Time:     AlertReceived,
@@ -749,7 +749,7 @@ func TestGetAlertRule(t *testing.T) {
 						AlertId:    AlertId,
 					},
 				},
-				AlertStates: []alertstore.AlertState{
+				AlertStates: []*alertstore.AlertState{
 					{
 						Id:          AlertId,
 						Duration:    SomeDuration,

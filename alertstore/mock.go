@@ -57,24 +57,8 @@ func (m *MockAlertStore) UpdateAlertLastSeen(alert *AlertState) error {
 }
 
 func (m *MockAlertStore) StoreAlertRule(alertId string, rule AlertRule) error {
-	deviceAlerts, ok := m.values["deviceAlerts"].(map[string]map[string][]string)
-	if !ok {
-		deviceAlerts = make(map[string]map[string][]string)
-	}
-	deviceQueryFieldAlerts, ok := deviceAlerts[rule.DeviceId]
-	if !ok {
-		deviceQueryFieldAlerts = make(map[string][]string)
-	}
-	deviceQueryFieldAlerts[rule.QueryField] = append(deviceQueryFieldAlerts[rule.QueryField], alertId)
-	deviceAlerts[rule.DeviceId] = deviceQueryFieldAlerts
-	m.values["deviceAlerts"] = deviceAlerts
-
-	alertRules, ok := m.values["alertRules"].(map[string]alertsource.AlertRule)
-	if !ok {
-		alertRules = make(map[string]alertsource.AlertRule)
-	}
-	alertRules[alertId] = rule
-	m.values["alertRules"] = alertRules
+	//TODO: deal with uniqueness constraints
+	m.Db.AlertRules = append(m.Db.AlertRules, rule)
 	return nil
 }
 
