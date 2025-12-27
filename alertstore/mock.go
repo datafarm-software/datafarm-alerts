@@ -3,7 +3,7 @@ package alertstore
 import (
 	"fmt"
 
-	"github.com/geraud22/sensordata-alerts/alertsource"
+	"github.com/google/go-cmp/cmp"
 )
 
 type MockAlertStore struct {
@@ -73,30 +73,20 @@ func (m *MockAlertStore) AddUsersToNotifyList(alertId string, userIds []string) 
 }
 
 func (m *MockAlertStore) CheckAlertRuleExists(ar AlertRule) (string, error) {
-	deviceAlerts, ok := m.values["deviceAlerts"].(map[string]map[string][]string)
-	if !ok {
-		m.values["deviceAlerts"] = make(map[string]map[string][]string)
-		return "", nil
-	}
-	deviceQueryFieldAlerts, ok := deviceAlerts[ar.DeviceId]
-	if !ok {
-		return "", nil
-	}
-	alertIds, ok := deviceQueryFieldAlerts[ar.QueryField]
-	if !ok {
-		return "", nil
-	}
-	alertRules, ok := m.values["alertRules"].(map[string]alertsource.AlertRule)
-	if !ok {
-		m.values["alertRules"] = make(map[string]alertsource.AlertRule)
-		return "", fmt.Errorf("alertrules was empty")
-	}
-	for _, alertId := range alertIds {
-		if _, ok := alertRules[alertId]; ok {
-			return alertId, AlertExists
+	//TODO: should this function just return a bool
+	var exists bool
+	for _, rule := range m.Db.AlertRules {
+		if diff := cmp.Diff(rule, ar); diff == "" {
+			exists = true
 		}
 	}
-	return "", nil
+	var id string
+	var err error
+	if exists {
+		id = ar.AlertId
+		err = AlertExists
+	}
+	return id, err
 }
 
 func (m *MockAlertStore) UpdateAlertState(alert *AlertState) error {
