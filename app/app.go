@@ -219,7 +219,7 @@ func (a *App) RespondToAlert(
 	}
 	return nil, nil
 }
-func (a *App) ShouldNotifyCrit(alert *alertsource.AlertState, previous *alertsource.AlertState) bool {
+func (a *App) ShouldNotifyCrit(alert *alertstore.AlertState, previous *alertstore.AlertState) bool {
 	if alert.Level != alertsource.Crit {
 		return false
 	}
@@ -235,7 +235,7 @@ func (a *App) ShouldNotifyCrit(alert *alertsource.AlertState, previous *alertsou
 func (a *App) CreateAlertRule(
 	ctx context.Context,
 	in *struct {
-		Body alertsource.AlertRule
+		Body alertstore.AlertRule
 	}) (*struct{ Body alertsource.CreatedRule }, error) {
 	if in.Body.AlertRange < alertsource.Range && len(in.Body.RangeValues) > 1 {
 		log.Printf("can't have more than one range value on greater or less than alert.")
@@ -283,7 +283,7 @@ func (a *App) UpdateAlertRule(
 	ctx context.Context,
 	in *struct {
 		AlertId string `path:"alertId"`
-		Body    alertsource.AlertRule
+		Body    alertstore.AlertRule
 	},
 ) (*struct{}, error) {
 	if in.Body.AlertRange < alertsource.Range && len(in.Body.RangeValues) > 1 {
@@ -317,7 +317,7 @@ func (a *App) UpdateAlertRule(
 func (a *App) GetAlertRule(
 	ctx context.Context,
 	in *struct{ Body alertsource.CreatedRule },
-) (*struct{ Body alertsource.AlertRule }, error) {
+) (*struct{ Body alertstore.AlertRule }, error) {
 	alert, err := a.AlertStore.GetAlertRule(in.Body.AlertId)
 	if err != nil {
 		if !errors.Is(err, alertstore.NoAlert) {
@@ -327,5 +327,5 @@ func (a *App) GetAlertRule(
 		}
 		return nil, huma.Error404NotFound("No alert rule found.")
 	}
-	return &struct{ Body alertsource.AlertRule }{alert}, nil
+	return &struct{ Body alertstore.AlertRule }{alert}, nil
 }
