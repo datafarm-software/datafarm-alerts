@@ -11,6 +11,10 @@ type MockAlertSource struct {
 }
 
 func NewMockAlertSource(values map[any]any) *MockAlertSource {
+	if values == nil {
+		values = make(map[any]any)
+		values["alertsCount"] = 1
+	}
 	return &MockAlertSource{values: values}
 }
 
@@ -27,5 +31,7 @@ func (m *MockAlertSource) UpdateAlertRule(ar alertstore.AlertRule) error {
 }
 
 func (m *MockAlertSource) RegisterAlertRule(ar alertstore.AlertRule) (string, error) {
-	return "alert1", nil
+	alertsCount, _ := m.values["alertsCount"].(int)
+	m.values["alertsCount"] = alertsCount + 1
+	return fmt.Sprintf("alert%d", alertsCount), nil
 }

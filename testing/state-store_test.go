@@ -479,13 +479,19 @@ func TestCreateAlertRule(t *testing.T) {
 			wantAlertStore: &alertstore.Schema{
 				AlertRecipients: []alertstore.AlertRecipient{
 					{AlertId: AlertId, Email: UserEmail},
-					{AlertId: AlertId, Email: "user2@alert.com"},
+					{AlertId: "alert2", Email: UserEmail},
+					{AlertId: "alert2", Email: "user2@alert.com"},
 				},
 				DeviceAlerts: []alertstore.DeviceAlertRule{
 					{
 						DeviceId:   RegisteredDeviceId,
 						QueryField: RegisteredQueryField,
 						AlertId:    AlertId,
+					},
+					{
+						DeviceId:   RegisteredDeviceId,
+						QueryField: RegisteredQueryField,
+						AlertId:    "alert2",
 					},
 				},
 				AlertRules: []alertstore.AlertRule{
@@ -520,15 +526,17 @@ func TestCreateAlertRule(t *testing.T) {
 				},
 				AlertRules: []alertstore.AlertRule{
 					{
-						AlertId:        AlertId,
-						RangeValues:    []int{5},
-						Duration:       "24h",
-						EmailAddresses: []string{UserEmail},
-						DeviceId:       RegisteredDeviceId,
-						QueryField:     RegisteredQueryField,
-						AlertRange:     alertstore.LessThan,
+						AlertId:     AlertId,
+						RangeValues: []int{5},
+						Duration:    "24h",
+						DeviceId:    RegisteredDeviceId,
+						QueryField:  RegisteredQueryField,
+						AlertRange:  alertstore.LessThan,
 					},
 				},
+			},
+			mockAlertSource: map[any]any{
+				"alertsCount": 2,
 			},
 			alertRule: alertstore.AlertRule{
 				EmailAddresses: []string{UserEmail, "user2@alert.com"},
