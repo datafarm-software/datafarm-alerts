@@ -559,9 +559,9 @@ func TestCreateAlertRule(t *testing.T) {
 				if diff := cmp.Diff(tc.wantResponse.Body, got.Body); diff != "" {
 					t.Fatalf("response mismatch (-want +got):\n%s", diff)
 				}
-			}
-			if diff := cmp.Diff(tc.wantAlertStore, as.GetSnapshot()); diff != "" {
-				t.Fatalf("alertstore mismatch (-want +got):\n%s", diff)
+				if diff := cmp.Diff(tc.wantAlertStore, as.GetSnapshot()); diff != "" {
+					t.Fatalf("alertstore mismatch (-want +got):\n%s", diff)
+				}
 			}
 		})
 	}

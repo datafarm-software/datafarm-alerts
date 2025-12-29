@@ -78,10 +78,11 @@ func (m *MockAlertStore) AddEmailsToNotifyList(alertId string, emailAdresses []s
 func (m *MockAlertStore) CheckAlertRuleExists(ar AlertRule) (string, error) {
 	//TODO: should this function just return a bool
 	var exists bool
+	ar.EmailAddresses = nil
+	ar.AlertId = ""
 	for _, rule := range m.Db.AlertRules {
-		if ar.AlertId == "" {
-			rule.AlertId = ""
-		}
+		rule.EmailAddresses = nil
+		rule.AlertId = ""
 		if diff := cmp.Diff(rule, ar); diff == "" {
 			exists = true
 		}
