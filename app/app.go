@@ -268,9 +268,9 @@ func (a *App) CreateAlertRule(
 		log.Printf("storing alert: %v", err)
 		return nil, huma.Error500InternalServerError("internal error storing the alert rule")
 	}
-	if err := a.AlertStore.AddUsersToNotifyList(alertId, in.Body.Usernames); err != nil {
-		log.Printf("add usernames to alert: %s notify list: %v", alertId, err)
-		return nil, huma.Error500InternalServerError("internal error adding user to notify list.")
+	if err := a.AlertStore.AddEmailsToNotifyList(alertId, in.Body.EmailAddresses); err != nil {
+		log.Printf("add emails to alert: %s notify list: %v", alertId, err)
+		return nil, huma.Error500InternalServerError("internal error adding emails to notify list.")
 	}
 	return &struct{ Body alertstore.CreatedRule }{
 		Body: alertstore.CreatedRule{

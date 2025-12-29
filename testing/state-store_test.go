@@ -14,6 +14,7 @@ import (
 
 var a = &app.App{}
 var EmptyInboxes = map[string][]string{}
+var EmptyAlertStore = &alertstore.Schema{}
 
 const UnregisteredQueryField = "humidity"
 const RegisteredQueryField = "temperature"
@@ -21,7 +22,7 @@ const UnregisteredDeviceId = "device2"
 const RegisteredDeviceId = "device1"
 const SomeDuration = (24 * time.Hour)
 const AlertId = "alert1"
-const UserId = "user1"
+const UserEmail = "user1@alert.com"
 
 var AlertReceived = time.Now()
 var AfterDuration = time.Now().Add(25 * time.Hour)
@@ -97,13 +98,13 @@ func TestRespondToAlert(t *testing.T) {
 	}{
 		"send alert because still crit after duration": {
 			wantUserInboxes: map[string][]string{
-				UserId: {
+				UserEmail: {
 					"New alert message stating crit level.",
 				},
 			},
 			mockAlertStore: &alertstore.Schema{
 				AlertRecipients: []alertstore.AlertRecipient{
-					{AlertId: AlertId, UserId: UserId},
+					{AlertId: AlertId, Email: UserEmail},
 				},
 				DeviceAlerts: []alertstore.DeviceAlertRule{
 					{
@@ -132,7 +133,7 @@ func TestRespondToAlert(t *testing.T) {
 			},
 			wantAlertStore: &alertstore.Schema{
 				AlertRecipients: []alertstore.AlertRecipient{
-					{AlertId: AlertId, UserId: UserId},
+					{AlertId: AlertId, Email: UserEmail},
 				},
 				DeviceAlerts: []alertstore.DeviceAlertRule{
 					{
@@ -203,13 +204,13 @@ func TestRespondToAlert(t *testing.T) {
 
 		"send notification because alert level changing from ok to crit": {
 			wantUserInboxes: map[string][]string{
-				UserId: {
+				UserEmail: {
 					"Status is now crit.",
 				},
 			},
 			mockAlertStore: &alertstore.Schema{
 				AlertRecipients: []alertstore.AlertRecipient{
-					{AlertId: AlertId, UserId: UserId},
+					{AlertId: AlertId, Email: UserEmail},
 				},
 				DeviceAlerts: []alertstore.DeviceAlertRule{
 					{
@@ -238,7 +239,7 @@ func TestRespondToAlert(t *testing.T) {
 			},
 			wantAlertStore: &alertstore.Schema{
 				AlertRecipients: []alertstore.AlertRecipient{
-					{AlertId: AlertId, UserId: UserId},
+					{AlertId: AlertId, Email: UserEmail},
 				},
 				DeviceAlerts: []alertstore.DeviceAlertRule{
 					{
@@ -352,7 +353,7 @@ func TestCreateAlertRule(t *testing.T) {
 			wantErr: false,
 			wantAlertStore: &alertstore.Schema{
 				AlertRecipients: []alertstore.AlertRecipient{
-					{AlertId: AlertId, UserId: UserId},
+					{AlertId: AlertId, Email: UserEmail},
 				},
 				DeviceAlerts: []alertstore.DeviceAlertRule{
 					{
@@ -363,23 +364,23 @@ func TestCreateAlertRule(t *testing.T) {
 				},
 				AlertRules: []alertstore.AlertRule{
 					{
-						AlertId:     AlertId,
-						RangeValues: []int{5},
-						Duration:    "24h",
-						Usernames:   []string{UserId},
-						DeviceId:    RegisteredDeviceId,
-						QueryField:  RegisteredQueryField,
-						AlertRange:  alertstore.LessThan,
+						AlertId:        AlertId,
+						RangeValues:    []int{5},
+						Duration:       "24h",
+						EmailAddresses: []string{UserEmail},
+						DeviceId:       RegisteredDeviceId,
+						QueryField:     RegisteredQueryField,
+						AlertRange:     alertstore.LessThan,
 					},
 				},
 			},
 			alertRule: alertstore.AlertRule{
-				RangeValues: []int{5},
-				Duration:    "24h",
-				Usernames:   []string{UserId},
-				DeviceId:    "device1",
-				QueryField:  "temperature",
-				AlertRange:  alertstore.LessThan,
+				RangeValues:    []int{5},
+				Duration:       "24h",
+				EmailAddresses: []string{UserEmail},
+				DeviceId:       "device1",
+				QueryField:     "temperature",
+				AlertRange:     alertstore.LessThan,
 			},
 			wantResponse: &struct{ Body alertstore.CreatedRule }{
 				Body: alertstore.CreatedRule{
@@ -390,7 +391,7 @@ func TestCreateAlertRule(t *testing.T) {
 
 		"invalid range on less than alert": {
 			wantErr:        true,
-			wantAlertStore: nil,
+			wantAlertStore: EmptyAlertStore,
 			alertRule: alertstore.AlertRule{
 				RangeValues: []int{5, 10},
 				AlertRange:  alertstore.LessThan,
@@ -399,7 +400,7 @@ func TestCreateAlertRule(t *testing.T) {
 
 		"invalid range on range alert": {
 			wantErr:        true,
-			wantAlertStore: nil,
+			wantAlertStore: EmptyAlertStore,
 			alertRule: alertstore.AlertRule{
 				RangeValues: []int{5},
 				AlertRange:  alertstore.Range,
@@ -407,11 +408,11 @@ func TestCreateAlertRule(t *testing.T) {
 		},
 		"invalid alert rule": {
 			wantErr:        true,
-			wantAlertStore: nil,
+			wantAlertStore: EmptyAlertStore,
 			alertRule: alertstore.AlertRule{
-				Usernames:  []string{},
-				Duration:   "",
-				AlertRange: alertstore.Range,
+				EmailAddresses: []string{},
+				Duration:       "",
+				AlertRange:     alertstore.Range,
 			},
 		},
 
@@ -419,7 +420,7 @@ func TestCreateAlertRule(t *testing.T) {
 			wantErr: true,
 			wantAlertStore: &alertstore.Schema{
 				AlertRecipients: []alertstore.AlertRecipient{
-					{AlertId: AlertId, UserId: UserId},
+					{AlertId: AlertId, Email: UserEmail},
 				},
 				DeviceAlerts: []alertstore.DeviceAlertRule{
 					{
@@ -430,19 +431,19 @@ func TestCreateAlertRule(t *testing.T) {
 				},
 				AlertRules: []alertstore.AlertRule{
 					{
-						AlertId:     AlertId,
-						RangeValues: []int{5},
-						Duration:    "24h",
-						Usernames:   []string{UserId},
-						DeviceId:    RegisteredDeviceId,
-						QueryField:  RegisteredQueryField,
-						AlertRange:  alertstore.LessThan,
+						AlertId:        AlertId,
+						RangeValues:    []int{5},
+						Duration:       "24h",
+						EmailAddresses: []string{UserEmail},
+						DeviceId:       RegisteredDeviceId,
+						QueryField:     RegisteredQueryField,
+						AlertRange:     alertstore.LessThan,
 					},
 				},
 			},
 			mockAlertStore: &alertstore.Schema{
 				AlertRecipients: []alertstore.AlertRecipient{
-					{AlertId: AlertId, UserId: UserId},
+					{AlertId: AlertId, Email: UserEmail},
 				},
 				DeviceAlerts: []alertstore.DeviceAlertRule{
 					{
@@ -453,23 +454,23 @@ func TestCreateAlertRule(t *testing.T) {
 				},
 				AlertRules: []alertstore.AlertRule{
 					{
-						AlertId:     AlertId,
-						RangeValues: []int{5},
-						Duration:    "24h",
-						Usernames:   []string{UserId},
-						DeviceId:    RegisteredDeviceId,
-						QueryField:  RegisteredQueryField,
-						AlertRange:  alertstore.LessThan,
+						RangeValues:    []int{5},
+						Duration:       "24h",
+						EmailAddresses: []string{UserEmail},
+						DeviceId:       RegisteredDeviceId,
+						QueryField:     RegisteredQueryField,
+						AlertRange:     alertstore.LessThan,
 					},
 				},
 			},
 			alertRule: alertstore.AlertRule{
-				Usernames:   []string{UserId},
-				RangeValues: []int{5},
-				Duration:    "24h",
-				DeviceId:    RegisteredDeviceId,
-				QueryField:  RegisteredQueryField,
-				AlertRange:  alertstore.LessThan,
+				AlertId:        AlertId,
+				EmailAddresses: []string{UserEmail},
+				RangeValues:    []int{5},
+				Duration:       "24h",
+				DeviceId:       RegisteredDeviceId,
+				QueryField:     RegisteredQueryField,
+				AlertRange:     alertstore.LessThan,
 			},
 		},
 
@@ -480,7 +481,8 @@ func TestCreateAlertRule(t *testing.T) {
 			},
 			wantAlertStore: &alertstore.Schema{
 				AlertRecipients: []alertstore.AlertRecipient{
-					{AlertId: AlertId, UserId: UserId},
+					{AlertId: AlertId, Email: UserEmail},
+					{AlertId: AlertId, Email: "user2@alert.com"},
 				},
 				DeviceAlerts: []alertstore.DeviceAlertRule{
 					{
@@ -491,13 +493,13 @@ func TestCreateAlertRule(t *testing.T) {
 				},
 				AlertRules: []alertstore.AlertRule{
 					{
-						AlertId:     AlertId,
-						RangeValues: []int{5},
-						Duration:    "24h",
-						Usernames:   []string{UserId},
-						DeviceId:    RegisteredDeviceId,
-						QueryField:  RegisteredQueryField,
-						AlertRange:  alertstore.LessThan,
+						AlertId:        AlertId,
+						RangeValues:    []int{5},
+						Duration:       "24h",
+						EmailAddresses: []string{UserEmail},
+						DeviceId:       RegisteredDeviceId,
+						QueryField:     RegisteredQueryField,
+						AlertRange:     alertstore.LessThan,
 					},
 					{
 						AlertId: "alert2",
@@ -506,7 +508,7 @@ func TestCreateAlertRule(t *testing.T) {
 			},
 			mockAlertStore: &alertstore.Schema{
 				AlertRecipients: []alertstore.AlertRecipient{
-					{AlertId: AlertId, UserId: UserId},
+					{AlertId: AlertId, Email: UserEmail},
 				},
 				DeviceAlerts: []alertstore.DeviceAlertRule{
 					{
@@ -517,23 +519,23 @@ func TestCreateAlertRule(t *testing.T) {
 				},
 				AlertRules: []alertstore.AlertRule{
 					{
-						AlertId:     AlertId,
-						RangeValues: []int{5},
-						Duration:    "24h",
-						Usernames:   []string{UserId},
-						DeviceId:    RegisteredDeviceId,
-						QueryField:  RegisteredQueryField,
-						AlertRange:  alertstore.LessThan,
+						AlertId:        AlertId,
+						RangeValues:    []int{5},
+						Duration:       "24h",
+						EmailAddresses: []string{UserEmail},
+						DeviceId:       RegisteredDeviceId,
+						QueryField:     RegisteredQueryField,
+						AlertRange:     alertstore.LessThan,
 					},
 				},
 			},
 			alertRule: alertstore.AlertRule{
-				Usernames:   []string{UserId, "user2"},
-				RangeValues: []int{10, 20},
-				Duration:    "24h",
-				DeviceId:    RegisteredDeviceId,
-				QueryField:  RegisteredQueryField,
-				AlertRange:  alertstore.Range,
+				EmailAddresses: []string{UserEmail, "user2@alert.com"},
+				RangeValues:    []int{10, 20},
+				Duration:       "24h",
+				DeviceId:       RegisteredDeviceId,
+				QueryField:     RegisteredQueryField,
+				AlertRange:     alertstore.Range,
 			},
 		},
 	}
@@ -633,34 +635,34 @@ func TestUpdateAlertRule(t *testing.T) {
 			wantErr: false,
 			alertId: AlertId,
 			input: alertstore.AlertRule{
-				Usernames:   []string{UserId},
-				RangeValues: []int{10, 20},
-				Duration:    "24h",
-				DeviceId:    RegisteredDeviceId,
-				QueryField:  RegisteredQueryField,
-				AlertRange:  alertstore.Range,
+				EmailAddresses: []string{UserEmail},
+				RangeValues:    []int{10, 20},
+				Duration:       "24h",
+				DeviceId:       RegisteredDeviceId,
+				QueryField:     RegisteredQueryField,
+				AlertRange:     alertstore.Range,
 			},
 			mockAlertStore: &alertstore.Schema{
 				AlertRules: []alertstore.AlertRule{
 					{
-						Usernames:   []string{UserId},
-						RangeValues: []int{43, 90},
-						Duration:    "24h",
-						DeviceId:    RegisteredDeviceId,
-						QueryField:  RegisteredQueryField,
-						AlertRange:  alertstore.Range,
+						EmailAddresses: []string{UserEmail},
+						RangeValues:    []int{43, 90},
+						Duration:       "24h",
+						DeviceId:       RegisteredDeviceId,
+						QueryField:     RegisteredQueryField,
+						AlertRange:     alertstore.Range,
 					},
 				},
 			},
 			wantAlertStore: &alertstore.Schema{
 				AlertRules: []alertstore.AlertRule{
 					{
-						Usernames:   []string{UserId},
-						RangeValues: []int{10, 20},
-						Duration:    "24h",
-						DeviceId:    RegisteredDeviceId,
-						QueryField:  RegisteredQueryField,
-						AlertRange:  alertstore.Range,
+						EmailAddresses: []string{UserEmail},
+						RangeValues:    []int{10, 20},
+						Duration:       "24h",
+						DeviceId:       RegisteredDeviceId,
+						QueryField:     RegisteredQueryField,
+						AlertRange:     alertstore.Range,
 					},
 				},
 			},
@@ -670,12 +672,12 @@ func TestUpdateAlertRule(t *testing.T) {
 			wantErr: true,
 			alertId: AlertId,
 			input: alertstore.AlertRule{
-				Usernames:   []string{UserId},
-				RangeValues: []int{10, 20},
-				Duration:    "24h",
-				DeviceId:    RegisteredDeviceId,
-				QueryField:  RegisteredQueryField,
-				AlertRange:  alertstore.Range,
+				EmailAddresses: []string{UserEmail},
+				RangeValues:    []int{10, 20},
+				Duration:       "24h",
+				DeviceId:       RegisteredDeviceId,
+				QueryField:     RegisteredQueryField,
+				AlertRange:     alertstore.Range,
 			},
 		},
 
@@ -683,12 +685,12 @@ func TestUpdateAlertRule(t *testing.T) {
 			wantErr: true,
 			alertId: AlertId,
 			input: alertstore.AlertRule{
-				Usernames:   []string{UserId},
-				RangeValues: []int{10},
-				Duration:    "24h",
-				DeviceId:    RegisteredDeviceId,
-				QueryField:  RegisteredQueryField,
-				AlertRange:  alertstore.Range,
+				EmailAddresses: []string{UserEmail},
+				RangeValues:    []int{10},
+				Duration:       "24h",
+				DeviceId:       RegisteredDeviceId,
+				QueryField:     RegisteredQueryField,
+				AlertRange:     alertstore.Range,
 			},
 		},
 
@@ -696,12 +698,12 @@ func TestUpdateAlertRule(t *testing.T) {
 			wantErr: true,
 			alertId: AlertId,
 			input: alertstore.AlertRule{
-				Usernames:   []string{UserId},
-				RangeValues: []int{50, 90},
-				Duration:    "24h",
-				DeviceId:    RegisteredDeviceId,
-				QueryField:  RegisteredQueryField,
-				AlertRange:  alertstore.LessThan,
+				EmailAddresses: []string{UserEmail},
+				RangeValues:    []int{50, 90},
+				Duration:       "24h",
+				DeviceId:       RegisteredDeviceId,
+				QueryField:     RegisteredQueryField,
+				AlertRange:     alertstore.LessThan,
 			},
 		},
 	}
@@ -743,7 +745,7 @@ func TestGetAlertRule(t *testing.T) {
 			input:   alertstore.CreatedRule{AlertId: AlertId},
 			mockAlertStore: &alertstore.Schema{
 				AlertRecipients: []alertstore.AlertRecipient{
-					{AlertId: AlertId, UserId: UserId},
+					{AlertId: AlertId, Email: UserEmail},
 				},
 				DeviceAlerts: []alertstore.DeviceAlertRule{
 					{
@@ -763,12 +765,12 @@ func TestGetAlertRule(t *testing.T) {
 			},
 			want: &struct{ Body alertstore.AlertRule }{
 				alertstore.AlertRule{
-					Usernames:   []string{UserId},
-					RangeValues: []int{10, 20},
-					Duration:    "24h",
-					DeviceId:    RegisteredDeviceId,
-					QueryField:  RegisteredQueryField,
-					AlertRange:  alertstore.Range,
+					EmailAddresses: []string{UserEmail},
+					RangeValues:    []int{10, 20},
+					Duration:       "24h",
+					DeviceId:       RegisteredDeviceId,
+					QueryField:     RegisteredQueryField,
+					AlertRange:     alertstore.Range,
 				},
 			},
 		},

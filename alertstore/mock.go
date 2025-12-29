@@ -44,7 +44,7 @@ func (m *MockAlertStore) GetAlertRecipients(alertId string) ([]string, error) {
 	recipients := make([]string, 0, len(m.Db.AlertRecipients))
 	for _, ar := range m.Db.AlertRecipients {
 		if ar.AlertId == alertId {
-			recipients = append(recipients, ar.UserId)
+			recipients = append(recipients, ar.Email)
 		}
 	}
 	return recipients, nil
@@ -65,11 +65,11 @@ func (m *MockAlertStore) StoreAlertRule(alertId string, rule AlertRule) error {
 	return nil
 }
 
-func (m *MockAlertStore) AddUsersToNotifyList(alertId string, userIds []string) error {
+func (m *MockAlertStore) AddEmailsToNotifyList(alertId string, emailAdresses []string) error {
 	//TODO: deal with uniqueness constraints
-	for _, id := range userIds {
+	for _, email := range emailAdresses {
 		m.Db.AlertRecipients = append(m.Db.AlertRecipients, AlertRecipient{
-			AlertId: alertId, UserId: id,
+			AlertId: alertId, Email: email,
 		})
 	}
 	return nil
@@ -79,6 +79,9 @@ func (m *MockAlertStore) CheckAlertRuleExists(ar AlertRule) (string, error) {
 	//TODO: should this function just return a bool
 	var exists bool
 	for _, rule := range m.Db.AlertRules {
+		if ar.AlertId == "" {
+			rule.AlertId = ""
+		}
 		if diff := cmp.Diff(rule, ar); diff == "" {
 			exists = true
 		}
