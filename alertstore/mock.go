@@ -64,6 +64,7 @@ func (m *MockAlertStore) StoreAlertRule(alertId string, rule AlertRule) error {
 	if rule.AlertId == "" {
 		rule.AlertId = alertId
 	}
+	rule.EmailAddresses = nil
 	m.Db.AlertRules = append(m.Db.AlertRules, rule)
 	m.Db.DeviceAlerts = append(m.Db.DeviceAlerts, DeviceAlertRule{
 		DeviceId:   rule.DeviceId,
