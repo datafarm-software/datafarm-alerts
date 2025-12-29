@@ -61,7 +61,15 @@ func (m *MockAlertStore) UpdateAlertLastSeen(alert *AlertState) error {
 
 func (m *MockAlertStore) StoreAlertRule(alertId string, rule AlertRule) error {
 	//TODO: deal with uniqueness constraints
+	if rule.AlertId == "" {
+		rule.AlertId = alertId
+	}
 	m.Db.AlertRules = append(m.Db.AlertRules, rule)
+	m.Db.DeviceAlerts = append(m.Db.DeviceAlerts, DeviceAlertRule{
+		DeviceId:   rule.DeviceId,
+		QueryField: rule.QueryField,
+		AlertId:    rule.AlertId,
+	})
 	return nil
 }
 
