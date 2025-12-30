@@ -134,6 +134,11 @@ func (a *App) RegisterHumaOperations(api huma.API) {
 	}
 	huma.Register(api, operation, a.CreateAlertRule)
 	operation = huma.Operation{
+		Method: "GET",
+		Path:   "/alerts/{alertId}",
+	}
+	huma.Register(api, operation, a.GetAlertRule)
+	operation = huma.Operation{
 		Method: "PUT",
 		Path:   "/alerts/{alertId}",
 		Parameters: []*huma.Param{
@@ -339,12 +344,14 @@ func (a *App) UpdateAlertRule(
 
 func (a *App) GetAlertRule(
 	ctx context.Context,
-	in *struct{ Body alertstore.CreatedRule },
+	in *struct {
+		AlertId string `path:"alertId"`
+	},
 ) (*struct{ Body alertstore.AlertRule }, error) {
-	alert, err := a.AlertStore.GetAlertRule(in.Body.AlertId)
+	alert, err := a.AlertStore.GetAlertRule(in.AlertId)
 	if err != nil {
 		if !errors.Is(err, alertstore.NoAlert) {
-			log.Printf("GetAlertRule(%s): %v", in.Body.AlertId, err)
+			log.Printf("GetAlertRule(%s): %v", in.AlertId, err)
 			return nil, huma.Error500InternalServerError(
 				"Unexpected area retrieving alert.")
 		}

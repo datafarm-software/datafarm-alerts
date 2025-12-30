@@ -797,13 +797,13 @@ func TestGetAlertRule(t *testing.T) {
 	tests := map[string]struct {
 		wantErr        bool
 		want           *struct{ Body alertstore.AlertRule }
-		input          alertstore.CreatedRule
+		alertId        string
 		mockAlertStore *alertstore.Schema
 	}{
 
 		"successfully get a stored alert": {
 			wantErr: false,
-			input:   alertstore.CreatedRule{AlertId: AlertId},
+			alertId: AlertId,
 			mockAlertStore: &alertstore.Schema{
 				AlertRecipients: []alertstore.AlertRecipient{
 					{AlertId: AlertId, Email: UserEmail},
@@ -843,7 +843,9 @@ func TestGetAlertRule(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			got, err = a.GetAlertRule(
 				context.Background(),
-				&struct{ Body alertstore.CreatedRule }{tc.input},
+				&struct {
+					AlertId string `path:"alertId"`
+				}{tc.alertId},
 			)
 			if tc.wantErr != (err != nil) {
 				t.Fatalf("wantErr: %v, got: %v", tc.wantErr, err)
@@ -853,7 +855,6 @@ func TestGetAlertRule(t *testing.T) {
 					t.Fatalf("response mismatch (-want +got):\n%s", diff)
 				}
 			}
-
 		})
 	}
 }
