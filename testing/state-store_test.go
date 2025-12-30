@@ -815,17 +815,18 @@ func TestGetAlertRule(t *testing.T) {
 						AlertId:    AlertId,
 					},
 				},
-				AlertStates: []alertstore.AlertState{
+				AlertRules: []alertstore.StoredAlertRule{
 					{
-						Id:          AlertId,
-						Duration:    SomeDuration,
+						AlertId:     AlertId,
+						Duration:    "24h",
 						RangeValues: []int{10, 20},
-						Level:       alertstore.Ok,
+						AlertRange:  alertstore.Range,
 					},
 				},
 			},
 			want: &struct{ Body alertstore.AlertRule }{
 				alertstore.AlertRule{
+					AlertId:        AlertId,
 					EmailAddresses: []string{UserEmail},
 					RangeValues:    []int{10, 20},
 					Duration:       "24h",
@@ -841,6 +842,7 @@ func TestGetAlertRule(t *testing.T) {
 	var got *struct{ Body alertstore.AlertRule }
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
+			a.AlertStore = alertstore.NewMockAlertStore(tc.mockAlertStore)
 			got, err = a.GetAlertRule(
 				context.Background(),
 				&struct {

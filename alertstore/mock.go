@@ -37,7 +37,31 @@ func (m *MockAlertStore) GetAlertState(alertId string) (*AlertState, error) {
 }
 
 func (m *MockAlertStore) GetAlertRule(alertId string) (AlertRule, error) {
-	return AlertRule{}, nil
+	ar := AlertRule{
+		AlertId: alertId,
+	}
+	for _, da := range m.Db.DeviceAlerts {
+		if ar.AlertId != da.AlertId {
+			continue
+		}
+		ar.DeviceId = da.DeviceId
+		ar.QueryField = da.QueryField
+	}
+	for _, recipient := range m.Db.AlertRecipients {
+		if ar.AlertId != recipient.AlertId {
+			continue
+		}
+		ar.EmailAddresses = append(ar.EmailAddresses, recipient.Email)
+	}
+	for _, rule := range m.Db.AlertRules {
+		if ar.AlertId != rule.AlertId {
+			continue
+		}
+		ar.RangeValues = append(ar.RangeValues, rule.RangeValues...)
+		ar.AlertRange = rule.AlertRange
+		ar.Duration = rule.Duration
+	}
+	return ar, nil
 }
 
 func (m *MockAlertStore) GetAlertRecipients(alertId string) ([]string, error) {
