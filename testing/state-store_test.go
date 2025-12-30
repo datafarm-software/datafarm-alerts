@@ -836,6 +836,12 @@ func TestGetAlertRule(t *testing.T) {
 				},
 			},
 		},
+		"alert doesn't exist": {
+			wantErr:        true,
+			want:           &struct{ Body alertstore.AlertRule }{},
+			alertId:        "alert2",
+			mockAlertStore: &alertstore.Schema{},
+		},
 	}
 
 	var err error
