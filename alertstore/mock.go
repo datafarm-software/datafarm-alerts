@@ -70,15 +70,23 @@ func (m *MockAlertStore) StoreAlertRule(alertId string, dbRecord Schema) error {
 func (m *MockAlertStore) CheckAlertRuleExists(ar AlertRule) (string, error) {
 	//TODO: should this function just return a bool
 	var exists bool
-	storedAlert := StoredAlertRule{
-		RangeValues: ar.RangeValues,
-		Duration:    ar.Duration,
-		AlertRange:  ar.AlertRange,
-	}
-	for _, rule := range m.Db.AlertRules {
-		rule.AlertId = ""
-		if diff := cmp.Diff(rule, storedAlert); diff == "" {
+	for _, deviceAlert := range m.Db.DeviceAlerts {
+		if deviceAlert.DeviceId == ar.DeviceId &&
+			deviceAlert.QueryField == ar.QueryField {
 			exists = true
+		}
+	}
+	if exists {
+		storedAlert := StoredAlertRule{
+			RangeValues: ar.RangeValues,
+			Duration:    ar.Duration,
+			AlertRange:  ar.AlertRange,
+		}
+		for _, rule := range m.Db.AlertRules {
+			rule.AlertId = ""
+			if diff := cmp.Diff(rule, storedAlert); diff != "" {
+				exists = false
+			}
 		}
 	}
 	var id string

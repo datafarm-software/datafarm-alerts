@@ -465,6 +465,11 @@ func TestCreateAlertRule(t *testing.T) {
 
 		"similar alert rule exists, but new one on different deviceId queryField combination": {
 			wantErr: false,
+			wantResponse: &struct{ Body alertstore.CreatedRule }{
+				Body: alertstore.CreatedRule{
+					AlertId: "alert2",
+				},
+			},
 			wantAlertStore: &alertstore.Schema{
 				AlertRecipients: []alertstore.AlertRecipient{
 					{AlertId: AlertId, Email: UserEmail},
@@ -521,11 +526,12 @@ func TestCreateAlertRule(t *testing.T) {
 				},
 			},
 			alertRule: alertstore.AlertRule{
-				RangeValues: []int{5},
-				Duration:    "24h",
-				DeviceId:    RegisteredDeviceId,
-				QueryField:  "humidity",
-				AlertRange:  alertstore.LessThan,
+				RangeValues:    []int{5},
+				EmailAddresses: []string{UserEmail},
+				Duration:       "24h",
+				DeviceId:       RegisteredDeviceId,
+				QueryField:     "humidity",
+				AlertRange:     alertstore.LessThan,
 			},
 		},
 
