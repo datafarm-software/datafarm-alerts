@@ -463,6 +463,72 @@ func TestCreateAlertRule(t *testing.T) {
 			},
 		},
 
+		"similar alert rule exists, but new one on different deviceId queryField combination": {
+			wantErr: false,
+			wantAlertStore: &alertstore.Schema{
+				AlertRecipients: []alertstore.AlertRecipient{
+					{AlertId: AlertId, Email: UserEmail},
+					{AlertId: "alert2", Email: UserEmail},
+				},
+				DeviceAlerts: []alertstore.DeviceAlertRule{
+					{
+						DeviceId:   RegisteredDeviceId,
+						QueryField: RegisteredQueryField,
+						AlertId:    AlertId,
+					},
+					{
+						DeviceId:   RegisteredDeviceId,
+						QueryField: "humidity",
+						AlertId:    "alert2",
+					},
+				},
+				AlertRules: []alertstore.StoredAlertRule{
+					{
+						AlertId:     AlertId,
+						RangeValues: []int{5},
+						Duration:    "24h",
+						AlertRange:  alertstore.LessThan,
+					},
+					{
+						AlertId:     "alert2",
+						RangeValues: []int{5},
+						Duration:    "24h",
+						AlertRange:  alertstore.LessThan,
+					},
+				},
+			},
+			mockAlertSource: map[any]any{
+				"alertsCount": 1,
+			},
+			mockAlertStore: &alertstore.Schema{
+				AlertRecipients: []alertstore.AlertRecipient{
+					{AlertId: AlertId, Email: UserEmail},
+				},
+				DeviceAlerts: []alertstore.DeviceAlertRule{
+					{
+						DeviceId:   RegisteredDeviceId,
+						QueryField: RegisteredQueryField,
+						AlertId:    AlertId,
+					},
+				},
+				AlertRules: []alertstore.StoredAlertRule{
+					{
+						AlertId:     AlertId,
+						RangeValues: []int{5},
+						Duration:    "24h",
+						AlertRange:  alertstore.LessThan,
+					},
+				},
+			},
+			alertRule: alertstore.AlertRule{
+				RangeValues: []int{5},
+				Duration:    "24h",
+				DeviceId:    RegisteredDeviceId,
+				QueryField:  "humidity",
+				AlertRange:  alertstore.LessThan,
+			},
+		},
+
 		"multiple alerts on deviceId and queryField combination": {
 			wantErr: false,
 			wantResponse: &struct{ Body alertstore.CreatedRule }{
@@ -522,7 +588,7 @@ func TestCreateAlertRule(t *testing.T) {
 				},
 			},
 			mockAlertSource: map[any]any{
-				"alertsCount": 2,
+				"alertsCount": 1,
 			},
 			alertRule: alertstore.AlertRule{
 				EmailAddresses: []string{UserEmail, "user2@alert.com"},
