@@ -27,7 +27,7 @@ func (m *MockAlertStore) GetAlertState(alertId string) (*AlertState, error) {
 	var state *AlertState
 	for _, as := range m.Db.AlertStates {
 		if as.Id == alertId {
-			state = as
+			state = &as
 		}
 	}
 	if state == nil {
@@ -59,28 +59,11 @@ func (m *MockAlertStore) UpdateAlertLastSeen(alert *AlertState) error {
 	return nil
 }
 
-func (m *MockAlertStore) StoreAlertRule(alertId string, rule AlertRule) error {
+func (m *MockAlertStore) StoreAlertRule(alertId string, dbRecord Schema) error {
 	//TODO: deal with uniqueness constraints
-	if rule.AlertId == "" {
-		rule.AlertId = alertId
-	}
-	rule.EmailAddresses = nil
-	m.Db.AlertRules = append(m.Db.AlertRules, rule)
-	m.Db.DeviceAlerts = append(m.Db.DeviceAlerts, DeviceAlertRule{
-		DeviceId:   rule.DeviceId,
-		QueryField: rule.QueryField,
-		AlertId:    rule.AlertId,
-	})
-	return nil
-}
-
-func (m *MockAlertStore) AddEmailsToNotifyList(alertId string, emailAdresses []string) error {
-	//TODO: deal with uniqueness constraints
-	for _, email := range emailAdresses {
-		m.Db.AlertRecipients = append(m.Db.AlertRecipients, AlertRecipient{
-			AlertId: alertId, Email: email,
-		})
-	}
+	m.Db.DeviceAlerts = append(m.Db.DeviceAlerts, dbRecord.DeviceAlerts...)
+	m.Db.AlertRecipients = append(m.Db.AlertRecipients, dbRecord.AlertRecipients...)
+	m.Db.AlertRules = append(m.Db.AlertRules, dbRecord.AlertRules...)
 	return nil
 }
 
@@ -90,7 +73,6 @@ func (m *MockAlertStore) CheckAlertRuleExists(ar AlertRule) (string, error) {
 	ar.EmailAddresses = nil
 	ar.AlertId = ""
 	for _, rule := range m.Db.AlertRules {
-		rule.EmailAddresses = nil
 		rule.AlertId = ""
 		if diff := cmp.Diff(rule, ar); diff == "" {
 			exists = true

@@ -264,13 +264,36 @@ func (a *App) CreateAlertRule(
 		log.Printf("registering alert: %v", err)
 		return nil, huma.Error500InternalServerError("Internal error while registering the alert.")
 	}
-	if err := a.AlertStore.StoreAlertRule(alertId, in.Body); err != nil {
+	alertRecipients := make([]alertstore.AlertRecipient, 0, len(in.Body.EmailAddresses))
+	var ar alertstore.AlertRecipient
+	for _, email := range in.Body.EmailAddresses {
+		ar = alertstore.AlertRecipient{
+			AlertId: alertId,
+			Email:   email,
+		}
+		alertRecipients = append(alertRecipients, ar)
+	}
+	dbRecord := alertstore.Schema{
+		DeviceAlerts: []alertstore.DeviceAlertRule{
+			{
+				AlertId:    alertId,
+				DeviceId:   in.Body.DeviceId,
+				QueryField: in.Body.QueryField,
+			},
+		},
+		AlertRecipients: alertRecipients,
+		AlertRules: []alertstore.StoredAlertRule{
+			{
+				AlertId:     alertId,
+				RangeValues: in.Body.RangeValues,
+				Duration:    in.Body.Duration,
+				AlertRange:  in.Body.AlertRange,
+			},
+		},
+	}
+	if err := a.AlertStore.StoreAlertRule(alertId, dbRecord); err != nil {
 		log.Printf("storing alert: %v", err)
 		return nil, huma.Error500InternalServerError("internal error storing the alert rule")
-	}
-	if err := a.AlertStore.AddEmailsToNotifyList(alertId, in.Body.EmailAddresses); err != nil {
-		log.Printf("add emails to alert: %s notify list: %v", alertId, err)
-		return nil, huma.Error500InternalServerError("internal error adding emails to notify list.")
 	}
 	return &struct{ Body alertstore.CreatedRule }{
 		Body: alertstore.CreatedRule{
@@ -306,11 +329,11 @@ func (a *App) UpdateAlertRule(
 		return nil,
 			huma.Error500InternalServerError("Internal error checking if alert exists.")
 	}
-	if err := a.AlertStore.StoreAlertRule(existingAlertId, in.Body); err != nil {
-		log.Printf("updating alert rule for id: %s, error: %v", in.AlertId, err)
-		return nil, huma.Error500InternalServerError(
-			"Internal error while storing the updated alert rule.")
-	}
+	// if err := a.AlertStore.StoreAlertRule(existingAlertId, in.Body); err != nil {
+	// 	log.Printf("updating alert rule for id: %s, error: %v", in.AlertId, err)
+	// 	return nil, huma.Error500InternalServerError(
+	// 		"Internal error while storing the updated alert rule.")
+	// }
 	return nil, nil
 }
 

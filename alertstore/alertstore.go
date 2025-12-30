@@ -34,8 +34,8 @@ type AlertStore interface {
 	GetAlertRule(alertId string) (AlertRule, error)
 	GetAlertRecipients(alertId string) ([]string, error)
 	UpdateAlertState(alert *AlertState) error
-	StoreAlertRule(alertId string, alert AlertRule) error
-	AddEmailsToNotifyList(alertId string, emails []string) error
+	StoreAlertRule(alertId string, dbRecord Schema) error
+	// AddEmailsToNotifyList(alertId string, emails []string) error
 	//NOTE: could return alertstore.AlertExists
 	CheckAlertRuleExists(AlertRule) (string, error)
 }
@@ -43,8 +43,8 @@ type AlertStore interface {
 type Schema struct {
 	DeviceAlerts    []DeviceAlertRule
 	AlertRecipients []AlertRecipient
-	AlertStates     []*AlertState
-	AlertRules      []AlertRule
+	AlertStates     []AlertState
+	AlertRules      []StoredAlertRule
 }
 
 type DeviceAlertRule struct {
@@ -65,6 +65,13 @@ type AlertState struct {
 	Message     string
 	Id          string
 	Level       AlertLevel
+}
+
+type StoredAlertRule struct {
+	AlertId     string
+	RangeValues []int
+	Duration    string
+	AlertRange  AlertRange
 }
 
 type AlertRule struct {
