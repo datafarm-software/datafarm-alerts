@@ -61,7 +61,11 @@ func (m *MockAlertStore) GetAlertRule(alertId string) (AlertRule, error) {
 		ar.AlertRange = rule.AlertRange
 		ar.Duration = rule.Duration
 	}
-	return ar, nil
+	var err error
+	if ar.DeviceId == "" {
+		err = NoAlert
+	}
+	return ar, err
 }
 
 func (m *MockAlertStore) GetAlertRecipients(alertId string) ([]string, error) {
