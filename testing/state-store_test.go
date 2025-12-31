@@ -2,9 +2,12 @@ package testing
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
 	"testing"
 	"time"
 
+	"github.com/danielgtaylor/huma/v2/humatest"
 	"github.com/geraud22/sensordata-alerts/alertsource"
 	"github.com/geraud22/sensordata-alerts/alertstore"
 	"github.com/geraud22/sensordata-alerts/app"
@@ -796,14 +799,16 @@ func TestUpdateAlertRule(t *testing.T) {
 func TestGetAlertRule(t *testing.T) {
 	tests := map[string]struct {
 		wantErr        bool
-		want           *struct{ Body alertstore.AlertRule }
+		want           alertstore.AlertRule
+		wantStatus     int
 		alertId        string
 		mockAlertStore *alertstore.Schema
 	}{
 
 		"successfully get a stored alert": {
-			wantErr: false,
-			alertId: AlertId,
+			wantErr:    false,
+			wantStatus: 200,
+			alertId:    AlertId,
 			mockAlertStore: &alertstore.Schema{
 				AlertRecipients: []alertstore.AlertRecipient{
 					{AlertId: AlertId, Email: UserEmail},
@@ -824,41 +829,40 @@ func TestGetAlertRule(t *testing.T) {
 					},
 				},
 			},
-			want: &struct{ Body alertstore.AlertRule }{
-				alertstore.AlertRule{
-					AlertId:        AlertId,
-					EmailAddresses: []string{UserEmail},
-					RangeValues:    []int{10, 20},
-					Duration:       "24h",
-					DeviceId:       RegisteredDeviceId,
-					QueryField:     RegisteredQueryField,
-					AlertRange:     alertstore.Range,
-				},
+			want: alertstore.AlertRule{
+				AlertId:        AlertId,
+				EmailAddresses: []string{UserEmail},
+				RangeValues:    []int{10, 20},
+				Duration:       "24h",
+				DeviceId:       RegisteredDeviceId,
+				QueryField:     RegisteredQueryField,
+				AlertRange:     alertstore.Range,
 			},
 		},
 		"alert doesn't exist": {
 			wantErr:        true,
-			want:           &struct{ Body alertstore.AlertRule }{},
+			want:           alertstore.AlertRule{},
+			wantStatus:     404,
 			alertId:        "alert2",
 			mockAlertStore: &alertstore.Schema{},
 		},
 	}
 
 	var err error
-	var got *struct{ Body alertstore.AlertRule }
+	var got alertstore.AlertRule
+	_, api := humatest.New(t)
+	a.RegisterHumaOperations(api)
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
 			a.AlertStore = alertstore.NewMockAlertStore(tc.mockAlertStore)
-			got, err = a.GetAlertRule(
-				context.Background(),
-				&struct {
-					AlertId string `path:"alertId"`
-				}{tc.alertId},
-			)
-			if tc.wantErr != (err != nil) {
-				t.Fatalf("wantErr: %v, got: %v", tc.wantErr, err)
+			resp := api.Get(fmt.Sprintf("/alerts/%s", tc.alertId))
+			if tc.wantStatus != resp.Code {
+				t.Fatalf("wantStatusCode: %d, response code: %d", tc.wantStatus, resp.Code)
 			}
 			if !tc.wantErr {
+				if err = json.Unmarshal(resp.Body.Bytes(), &got); err != nil {
+					t.Fatalf("unmarshalling: %s", err)
+				}
 				if diff := cmp.Diff(tc.want, got); diff != "" {
 					t.Fatalf("response mismatch (-want +got):\n%s", diff)
 				}

@@ -347,7 +347,9 @@ func (a *App) GetAlertRule(
 	in *struct {
 		AlertId string `path:"alertId"`
 	},
-) (*struct{ Body alertstore.AlertRule }, error) {
+) (*struct {
+	Body alertstore.AlertRule
+}, error) {
 	alert, err := a.AlertStore.GetAlertRule(in.AlertId)
 	if err != nil {
 		if !errors.Is(err, alertstore.NoAlert) {
