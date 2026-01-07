@@ -323,11 +323,12 @@ func (a *App) UpdateAlertRule(
 		log.Printf("Need 2 range values for range alert.")
 		return nil, huma.Error400BadRequest("Need 2 range values for range alert.")
 	}
+	in.Body.AlertId = in.AlertId
 	existingAlertId, err := a.AlertStore.CheckAlertRuleExists(in.Body)
 	if existingAlertId == "" && err == nil {
 		log.Printf("tried to update an alert that does not exist.")
 		return nil,
-			huma.Error400BadRequest("Tried to update an alert that does not exist.")
+			huma.Error404NotFound("Tried to update an alert that does not exist.")
 	}
 	if err != nil && !errors.Is(err, alertstore.AlertExists) {
 		log.Printf("checking alert exists: %v", err)

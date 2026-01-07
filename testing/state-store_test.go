@@ -721,6 +721,16 @@ func TestUpdateAlertRule(t *testing.T) {
 				AlertRange:     alertstore.Range,
 			},
 			mockAlertStore: &alertstore.Schema{
+				AlertRecipients: []alertstore.AlertRecipient{
+					{AlertId: AlertId, Email: UserEmail},
+				},
+				DeviceAlerts: []alertstore.DeviceAlertRule{
+					{
+						DeviceId:   RegisteredDeviceId,
+						QueryField: RegisteredQueryField,
+						AlertId:    AlertId,
+					},
+				},
 				AlertRules: []alertstore.StoredAlertRule{
 					{
 						RangeValues: []int{43, 90},
@@ -730,6 +740,16 @@ func TestUpdateAlertRule(t *testing.T) {
 				},
 			},
 			wantAlertStore: &alertstore.Schema{
+				AlertRecipients: []alertstore.AlertRecipient{
+					{AlertId: AlertId, Email: UserEmail},
+				},
+				DeviceAlerts: []alertstore.DeviceAlertRule{
+					{
+						DeviceId:   RegisteredDeviceId,
+						QueryField: RegisteredQueryField,
+						AlertId:    AlertId,
+					},
+				},
 				AlertRules: []alertstore.StoredAlertRule{
 					{
 						RangeValues: []int{10, 20},

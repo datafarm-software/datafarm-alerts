@@ -106,11 +106,11 @@ func (m *MockAlertStore) CheckAlertRuleExists(ar AlertRule) (string, error) {
 	}
 	if exists {
 		storedAlert := StoredAlertRule{
-			RangeValues: ar.RangeValues,
-			Duration:    ar.Duration,
-			AlertRange:  ar.AlertRange,
+			Duration:   ar.Duration,
+			AlertRange: ar.AlertRange,
 		}
 		for _, rule := range m.Db.AlertRules {
+			rule.RangeValues = nil
 			rule.AlertId = ""
 			if diff := cmp.Diff(rule, storedAlert); diff != "" {
 				exists = false
