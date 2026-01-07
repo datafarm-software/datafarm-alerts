@@ -702,6 +702,7 @@ func TestParseDuration(t *testing.T) {
 
 func TestUpdateAlertRule(t *testing.T) {
 	tests := map[string]struct {
+		wantErr                        bool
 		wantStatus                     int
 		alertId                        string
 		alertRule                      alertstore.AlertRule
@@ -745,6 +746,7 @@ func TestUpdateAlertRule(t *testing.T) {
 
 		"error when trying to update non existent alert rule": {
 			wantStatus: http.StatusNotFound,
+			wantErr:    true,
 			alertId:    AlertId,
 			alertRule: alertstore.AlertRule{
 				EmailAddresses: []string{UserEmail},
@@ -758,6 +760,7 @@ func TestUpdateAlertRule(t *testing.T) {
 
 		"invalid: 1 range value on a range type alert check": {
 			wantStatus: http.StatusBadRequest,
+			wantErr:    true,
 			alertId:    AlertId,
 			alertRule: alertstore.AlertRule{
 				EmailAddresses: []string{UserEmail},
@@ -771,6 +774,7 @@ func TestUpdateAlertRule(t *testing.T) {
 
 		"invalid: 2 range values on a less than type alert check": {
 			wantStatus: http.StatusBadRequest,
+			wantErr:    true,
 			alertId:    AlertId,
 			alertRule: alertstore.AlertRule{
 				EmailAddresses: []string{UserEmail},
@@ -784,6 +788,8 @@ func TestUpdateAlertRule(t *testing.T) {
 	}
 
 	var as *alertstore.MockAlertStore
+	var err error
+	var got alertstore.AlertRule
 	_, api := humatest.New(t)
 	a.RegisterHumaOperations(api)
 	for name, tc := range tests {
@@ -794,8 +800,16 @@ func TestUpdateAlertRule(t *testing.T) {
 			if tc.wantStatus != resp.Code {
 				t.Fatalf("wantStatusCode: %d, response code: %d", tc.wantStatus, resp.Code)
 			}
-			if diff := cmp.Diff(tc.wantAlertStore, as.GetSnapshot()); diff != "" {
-				t.Fatalf("alertstore mismatch (-want +got):\n%s", diff)
+			if !tc.wantErr {
+				if err = json.Unmarshal(resp.Body.Bytes(), &got); err != nil {
+					t.Fatalf("unmarshalling: %s", err)
+				}
+				if diff := cmp.Diff(tc.alertRule, got); diff != "" {
+					t.Fatalf("response mismatch (-want +got):\n%s", diff)
+				}
+				if diff := cmp.Diff(tc.wantAlertStore, as.GetSnapshot()); diff != "" {
+					t.Fatalf("alertstore mismatch (-want +got):\n%s", diff)
+				}
 			}
 		})
 	}
