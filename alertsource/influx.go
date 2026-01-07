@@ -23,7 +23,7 @@ type InfluxAlert struct {
 	Stop                     string    `json:"_stop"`
 	StatusTimestamp          int       `json:"_status_timestamp"`
 	Time                     time.Time `json:"_time" required:"true"`
-	Type                     string    `json:"_type" format:"date-time"`
+	Type                     string    `json:"_type"`
 	// Value                    float64  `json:"_value"`
 	Version    int      `json:"_version"`
 	DeviceId   string   `json:"deviceID" required:"true"`

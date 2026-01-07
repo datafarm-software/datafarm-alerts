@@ -118,6 +118,12 @@ func TestRespondToAlert(t *testing.T) {
 						AlertId:    AlertId,
 					},
 				},
+				AlertRules: []alertstore.StoredAlertRule{
+					{
+						AlertId:  AlertId,
+						Duration: "24h",
+					},
+				},
 				AlertStates: []alertstore.AlertState{
 					{
 						Id:       AlertId,
@@ -147,6 +153,12 @@ func TestRespondToAlert(t *testing.T) {
 						AlertId:    AlertId,
 					},
 				},
+				AlertRules: []alertstore.StoredAlertRule{
+					{
+						AlertId:  AlertId,
+						Duration: "24h",
+					},
+				},
 				AlertStates: []alertstore.AlertState{
 					{
 						Id:       AlertId,
@@ -167,6 +179,12 @@ func TestRespondToAlert(t *testing.T) {
 						DeviceId:   RegisteredDeviceId,
 						QueryField: RegisteredQueryField,
 						AlertId:    AlertId,
+					},
+				},
+				AlertRules: []alertstore.StoredAlertRule{
+					{
+						AlertId:  AlertId,
+						Duration: "24h",
 					},
 				},
 				AlertStates: []alertstore.AlertState{
@@ -195,6 +213,12 @@ func TestRespondToAlert(t *testing.T) {
 						AlertId:    AlertId,
 					},
 				},
+				AlertRules: []alertstore.StoredAlertRule{
+					{
+						AlertId:  AlertId,
+						Duration: "24h",
+					},
+				},
 				AlertStates: []alertstore.AlertState{
 					{
 						Id:       AlertId,
@@ -210,7 +234,7 @@ func TestRespondToAlert(t *testing.T) {
 		"send notification because alert level changing from ok to crit": {
 			wantUserInboxes: map[string][]string{
 				UserEmail: {
-					"Status is now crit.",
+					"Alert message stating crit level.",
 				},
 			},
 			mockAlertStore: &alertstore.Schema{
@@ -222,6 +246,12 @@ func TestRespondToAlert(t *testing.T) {
 						DeviceId:   RegisteredDeviceId,
 						QueryField: RegisteredQueryField,
 						AlertId:    AlertId,
+					},
+				},
+				AlertRules: []alertstore.StoredAlertRule{
+					{
+						AlertId:  AlertId,
+						Duration: "24h",
 					},
 				},
 				AlertStates: []alertstore.AlertState{
@@ -253,12 +283,18 @@ func TestRespondToAlert(t *testing.T) {
 						AlertId:    AlertId,
 					},
 				},
+				AlertRules: []alertstore.StoredAlertRule{
+					{
+						AlertId:  AlertId,
+						Duration: "24h",
+					},
+				},
 				AlertStates: []alertstore.AlertState{
 					{
 						Id:       AlertId,
 						Time:     AlertReceived,
 						Duration: SomeDuration,
-						Message:  "Status is now crit.",
+						Message:  "Alert message stating crit level.",
 						Level:    alertstore.Crit,
 					},
 				},
@@ -273,6 +309,12 @@ func TestRespondToAlert(t *testing.T) {
 						DeviceId:   RegisteredDeviceId,
 						QueryField: RegisteredQueryField,
 						AlertId:    AlertId,
+					},
+				},
+				AlertRules: []alertstore.StoredAlertRule{
+					{
+						AlertId:  AlertId,
+						Duration: "24h",
 					},
 				},
 			},
@@ -291,6 +333,12 @@ func TestRespondToAlert(t *testing.T) {
 						AlertId:    AlertId,
 					},
 				},
+				AlertRules: []alertstore.StoredAlertRule{
+					{
+						AlertId:  AlertId,
+						Duration: "24h",
+					},
+				},
 			},
 		},
 
@@ -302,6 +350,12 @@ func TestRespondToAlert(t *testing.T) {
 						DeviceId:   RegisteredDeviceId,
 						QueryField: RegisteredQueryField,
 						AlertId:    AlertId,
+					},
+				},
+				AlertRules: []alertstore.StoredAlertRule{
+					{
+						AlertId:  AlertId,
+						Duration: "24h",
 					},
 				},
 			},
@@ -318,6 +372,12 @@ func TestRespondToAlert(t *testing.T) {
 						DeviceId:   RegisteredDeviceId,
 						QueryField: RegisteredQueryField,
 						AlertId:    AlertId,
+					},
+				},
+				AlertRules: []alertstore.StoredAlertRule{
+					{
+						AlertId:  AlertId,
+						Duration: "24h",
 					},
 				},
 			},
