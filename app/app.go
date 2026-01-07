@@ -313,7 +313,7 @@ func (a *App) UpdateAlertRule(
 		AlertId string `path:"alertId"`
 		Body    alertstore.AlertRule
 	},
-) (*struct{}, error) {
+) (*struct{ Body alertstore.AlertRule }, error) {
 	if in.Body.AlertRange < alertstore.Range && len(in.Body.RangeValues) > 1 {
 		log.Printf("can't have more than one range value on greater or less than alert.")
 		return nil,
@@ -335,12 +335,38 @@ func (a *App) UpdateAlertRule(
 		return nil,
 			huma.Error500InternalServerError("Internal error checking if alert exists.")
 	}
-	// if err := a.AlertStore.StoreAlertRule(existingAlertId, in.Body); err != nil {
-	// 	log.Printf("updating alert rule for id: %s, error: %v", in.AlertId, err)
-	// 	return nil, huma.Error500InternalServerError(
-	// 		"Internal error while storing the updated alert rule.")
-	// }
-	return nil, nil
+	recipients := make([]alertstore.AlertRecipient, 0, len(in.Body.EmailAddresses))
+	for _, email := range in.Body.EmailAddresses {
+		recipients = append(recipients, alertstore.AlertRecipient{
+			AlertId: in.AlertId,
+			Email:   email,
+		})
+	}
+	dbRecord := alertstore.Schema{
+		DeviceAlerts: []alertstore.DeviceAlertRule{
+			{
+				DeviceId:   in.Body.DeviceId,
+				QueryField: in.Body.QueryField,
+				AlertId:    in.AlertId,
+			},
+		},
+		AlertRecipients: recipients,
+		AlertRules: []alertstore.StoredAlertRule{
+			{
+				AlertId:     in.AlertId,
+				RangeValues: in.Body.RangeValues,
+				Duration:    in.Body.Duration,
+				AlertRange:  in.Body.AlertRange,
+			},
+		},
+	}
+	alertRule, err := a.AlertStore.StoreAlertRule(existingAlertId, dbRecord)
+	if err != nil {
+		log.Printf("updating alert rule for id: %s, error: %v", in.AlertId, err)
+		return nil, huma.Error500InternalServerError(
+			"Internal error while storing the updated alert rule.")
+	}
+	return &struct{ Body alertstore.AlertRule }{alertRule}, nil
 }
 
 func (a *App) GetAlertRule(
