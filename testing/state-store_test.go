@@ -702,15 +702,16 @@ func TestParseDuration(t *testing.T) {
 
 func TestUpdateAlertRule(t *testing.T) {
 	tests := map[string]struct {
-		wantErr                        bool
+		wantStatus                     int
 		alertId                        string
-		input                          alertstore.AlertRule
+		alertRule                      alertstore.AlertRule
 		mockAlertStore, wantAlertStore *alertstore.Schema
 	}{
+
 		"update the range values of an alert": {
-			wantErr: false,
-			alertId: AlertId,
-			input: alertstore.AlertRule{
+			wantStatus: http.StatusOK,
+			alertId:    AlertId,
+			alertRule: alertstore.AlertRule{
 				EmailAddresses: []string{UserEmail},
 				RangeValues:    []int{10, 20},
 				Duration:       "24h",
@@ -738,10 +739,14 @@ func TestUpdateAlertRule(t *testing.T) {
 			},
 		},
 
+		"update deviceId ": {
+			wantStatus: http.StatusOK,
+		},
+
 		"error when trying to update non existent alert rule": {
-			wantErr: true,
-			alertId: AlertId,
-			input: alertstore.AlertRule{
+			wantStatus: http.StatusNotFound,
+			alertId:    AlertId,
+			alertRule: alertstore.AlertRule{
 				EmailAddresses: []string{UserEmail},
 				RangeValues:    []int{10, 20},
 				Duration:       "24h",
@@ -752,9 +757,9 @@ func TestUpdateAlertRule(t *testing.T) {
 		},
 
 		"invalid: 1 range value on a range type alert check": {
-			wantErr: true,
-			alertId: AlertId,
-			input: alertstore.AlertRule{
+			wantStatus: http.StatusBadRequest,
+			alertId:    AlertId,
+			alertRule: alertstore.AlertRule{
 				EmailAddresses: []string{UserEmail},
 				RangeValues:    []int{10},
 				Duration:       "24h",
@@ -765,9 +770,9 @@ func TestUpdateAlertRule(t *testing.T) {
 		},
 
 		"invalid: 2 range values on a less than type alert check": {
-			wantErr: true,
-			alertId: AlertId,
-			input: alertstore.AlertRule{
+			wantStatus: http.StatusBadRequest,
+			alertId:    AlertId,
+			alertRule: alertstore.AlertRule{
 				EmailAddresses: []string{UserEmail},
 				RangeValues:    []int{50, 90},
 				Duration:       "24h",
@@ -777,26 +782,20 @@ func TestUpdateAlertRule(t *testing.T) {
 			},
 		},
 	}
-	var err error
+
 	var as *alertstore.MockAlertStore
+	_, api := humatest.New(t)
+	a.RegisterHumaOperations(api)
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
 			as = alertstore.NewMockAlertStore(tc.mockAlertStore)
 			a.AlertStore = as
-			_, err = a.UpdateAlertRule(
-				context.Background(),
-				&struct {
-					AlertId string `path:"alertId"`
-					Body    alertstore.AlertRule
-				}{tc.alertId, tc.input},
-			)
-			if tc.wantErr != (err != nil) {
-				t.Fatalf("wantErr: %v, got: %v", tc.wantErr, err)
+			resp := api.Put(fmt.Sprintf("/alerts/%s", tc.alertId), tc.alertRule)
+			if tc.wantStatus != resp.Code {
+				t.Fatalf("wantStatusCode: %d, response code: %d", tc.wantStatus, resp.Code)
 			}
-			if !tc.wantErr {
-				if diff := cmp.Diff(tc.wantAlertStore, as.GetSnapshot()); diff != "" {
-					t.Fatalf("alertstore mismatch (-want +got):\n%s", diff)
-				}
+			if diff := cmp.Diff(tc.wantAlertStore, as.GetSnapshot()); diff != "" {
+				t.Fatalf("alertstore mismatch (-want +got):\n%s", diff)
 			}
 		})
 	}
