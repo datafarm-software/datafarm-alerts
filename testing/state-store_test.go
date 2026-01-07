@@ -798,7 +798,61 @@ func TestUpdateAlertRule(t *testing.T) {
 			wantAlertStore: &alertstore.Schema{
 				AlertRecipients: []alertstore.AlertRecipient{
 					{AlertId: AlertId, Email: UserEmail},
-					// {AlertId: AlertId, Email: "user2@alert.com"},
+					{AlertId: AlertId, Email: "user2@alert.com"},
+				},
+				DeviceAlerts: []alertstore.DeviceAlertRule{
+					{
+						DeviceId:   RegisteredDeviceId,
+						QueryField: RegisteredQueryField,
+						AlertId:    AlertId,
+					},
+				},
+				AlertRules: []alertstore.StoredAlertRule{
+					{
+						AlertId:     AlertId,
+						RangeValues: []int{10, 20},
+						Duration:    "24h",
+						AlertRange:  alertstore.Range,
+					},
+				},
+			},
+		},
+
+		"ignore duplicate emails in recipient list": {
+			wantStatus: http.StatusOK,
+			alertId:    AlertId,
+			alertRule: alertstore.AlertRule{
+				AlertId:        AlertId,
+				EmailAddresses: []string{UserEmail, UserEmail},
+				RangeValues:    []int{10, 20},
+				Duration:       "24h",
+				DeviceId:       RegisteredDeviceId,
+				QueryField:     RegisteredQueryField,
+				AlertRange:     alertstore.Range,
+			},
+			mockAlertStore: &alertstore.Schema{
+				AlertRecipients: []alertstore.AlertRecipient{
+					{AlertId: AlertId, Email: UserEmail},
+				},
+				DeviceAlerts: []alertstore.DeviceAlertRule{
+					{
+						DeviceId:   RegisteredDeviceId,
+						QueryField: RegisteredQueryField,
+						AlertId:    AlertId,
+					},
+				},
+				AlertRules: []alertstore.StoredAlertRule{
+					{
+						AlertId:     AlertId,
+						RangeValues: []int{10, 20},
+						Duration:    "24h",
+						AlertRange:  alertstore.Range,
+					},
+				},
+			},
+			wantAlertStore: &alertstore.Schema{
+				AlertRecipients: []alertstore.AlertRecipient{
+					{AlertId: AlertId, Email: UserEmail},
 				},
 				DeviceAlerts: []alertstore.DeviceAlertRule{
 					{

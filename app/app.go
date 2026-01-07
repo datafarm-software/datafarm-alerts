@@ -336,11 +336,15 @@ func (a *App) UpdateAlertRule(
 			huma.Error500InternalServerError("Internal error checking if alert exists.")
 	}
 	recipients := make([]alertstore.AlertRecipient, 0, len(in.Body.EmailAddresses))
+	emailExists := make(map[string]bool, len(in.Body.EmailAddresses))
 	for _, email := range in.Body.EmailAddresses {
-		recipients = append(recipients, alertstore.AlertRecipient{
-			AlertId: in.AlertId,
-			Email:   email,
-		})
+		if !emailExists[email] {
+			recipients = append(recipients, alertstore.AlertRecipient{
+				AlertId: in.AlertId,
+				Email:   email,
+			})
+			emailExists[email] = true
+		}
 	}
 	dbRecord := alertstore.Schema{
 		DeviceAlerts: []alertstore.DeviceAlertRule{
