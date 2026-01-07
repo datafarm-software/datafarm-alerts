@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/http"
 	"testing"
 	"time"
 
@@ -355,7 +356,7 @@ func TestCreateAlertRule(t *testing.T) {
 
 		"successfully create a less than alert rule": {
 			wantErr:    false,
-			wantStatus: 200,
+			wantStatus: http.StatusOK,
 			wantAlertStore: &alertstore.Schema{
 				AlertRecipients: []alertstore.AlertRecipient{
 					{AlertId: AlertId, Email: UserEmail},
@@ -391,6 +392,7 @@ func TestCreateAlertRule(t *testing.T) {
 
 		"invalid range on less than alert": {
 			wantErr:        true,
+			wantStatus:     http.StatusUnprocessableEntity,
 			wantAlertStore: EmptyAlertStore,
 			alertRule: alertstore.AlertRule{
 				RangeValues: []int{5, 10},
@@ -400,6 +402,7 @@ func TestCreateAlertRule(t *testing.T) {
 
 		"invalid range on range alert": {
 			wantErr:        true,
+			wantStatus:     http.StatusUnprocessableEntity,
 			wantAlertStore: EmptyAlertStore,
 			alertRule: alertstore.AlertRule{
 				RangeValues: []int{5},
@@ -408,6 +411,7 @@ func TestCreateAlertRule(t *testing.T) {
 		},
 		"invalid alert rule": {
 			wantErr:        true,
+			wantStatus:     http.StatusUnprocessableEntity,
 			wantAlertStore: EmptyAlertStore,
 			alertRule: alertstore.AlertRule{
 				EmailAddresses: []string{},
@@ -417,7 +421,8 @@ func TestCreateAlertRule(t *testing.T) {
 		},
 
 		"identical alert already exists": {
-			wantErr: true,
+			wantErr:    true,
+			wantStatus: http.StatusConflict,
 			wantAlertStore: &alertstore.Schema{
 				AlertRecipients: []alertstore.AlertRecipient{
 					{AlertId: AlertId, Email: UserEmail},
@@ -467,7 +472,8 @@ func TestCreateAlertRule(t *testing.T) {
 		},
 
 		"similar alert rule exists, but new one on different deviceId queryField combination": {
-			wantErr: false,
+			wantErr:    false,
+			wantStatus: http.StatusOK,
 			wantResponse: alertstore.CreatedRule{
 				AlertId: "alert2",
 			},
@@ -537,7 +543,8 @@ func TestCreateAlertRule(t *testing.T) {
 		},
 
 		"multiple alerts on deviceId and queryField combination": {
-			wantErr: false,
+			wantErr:    false,
+			wantStatus: http.StatusOK,
 			wantResponse: alertstore.CreatedRule{
 				AlertId: "alert2",
 			},
@@ -806,7 +813,7 @@ func TestGetAlertRule(t *testing.T) {
 
 		"successfully get a stored alert": {
 			wantErr:    false,
-			wantStatus: 200,
+			wantStatus: http.StatusOK,
 			alertId:    AlertId,
 			mockAlertStore: &alertstore.Schema{
 				AlertRecipients: []alertstore.AlertRecipient{
