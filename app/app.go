@@ -360,7 +360,7 @@ func (a *App) UpdateAlertRule(
 			},
 		},
 	}
-	if err := a.AlertStore.StoreAlertRule(existingAlertId, dbRecord); err != nil {
+	if err := a.AlertStore.UpdateAlertRule(existingAlertId, dbRecord); err != nil {
 		log.Printf("updating alert rule for id: %s, error: %v", in.AlertId, err)
 		return nil, huma.Error500InternalServerError(
 			"Internal error while storing the updated alert rule.")

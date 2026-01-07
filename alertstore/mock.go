@@ -95,6 +95,10 @@ func (m *MockAlertStore) StoreAlertRule(alertId string, dbRecord Schema) error {
 	return nil
 }
 
+func (m *MockAlertStore) UpdateAlertRule(alertId string, dbRecord Schema) error {
+	return nil
+}
+
 func (m *MockAlertStore) CheckAlertRuleExists(ar AlertRule) (string, error) {
 	//TODO: should this function just return a bool
 	var exists bool
