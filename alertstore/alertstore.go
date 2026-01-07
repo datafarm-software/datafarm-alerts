@@ -34,7 +34,7 @@ type AlertStore interface {
 	GetAlertRule(alertId string) (AlertRule, error)
 	GetAlertRecipients(alertId string) ([]string, error)
 	UpdateAlertState(alert *AlertState) error
-	StoreAlertRule(alertId string, dbRecord Schema) (AlertRule, error)
+	StoreAlertRule(alertId string, dbRecord Schema) error
 	//NOTE: could return alertstore.AlertExists
 	CheckAlertRuleExists(AlertRule) (string, error)
 }

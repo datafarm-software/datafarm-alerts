@@ -713,6 +713,7 @@ func TestUpdateAlertRule(t *testing.T) {
 			wantStatus: http.StatusOK,
 			alertId:    AlertId,
 			alertRule: alertstore.AlertRule{
+				AlertId:        AlertId,
 				EmailAddresses: []string{UserEmail},
 				RangeValues:    []int{10, 20},
 				Duration:       "24h",
