@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"reflect"
 	"testing"
 	"time"
 
@@ -695,6 +696,39 @@ func TestParseDuration(t *testing.T) {
 				if tc.want != got {
 					t.Fatalf("want: %v, got: %v", tc.want, got)
 				}
+			}
+		})
+	}
+}
+
+func TestConvertToRecipients(t *testing.T) {
+	tests := map[string]struct {
+		emails         []string
+		alertId        string
+		wantRecipients []alertstore.AlertRecipient
+	}{
+		"convert emails to slice of AlertRecipient": {
+			emails:  []string{UserEmail, "user2@alert.com"},
+			alertId: AlertId,
+			wantRecipients: []alertstore.AlertRecipient{
+				{AlertId: AlertId, Email: UserEmail},
+				{AlertId: AlertId, Email: "user2@alert.com"},
+			},
+		},
+		"ignore duplicate emails": {
+			emails:  []string{UserEmail, UserEmail},
+			alertId: AlertId,
+			wantRecipients: []alertstore.AlertRecipient{
+				{AlertId: AlertId, Email: UserEmail},
+			},
+		},
+	}
+	var recipients []alertstore.AlertRecipient
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+			recipients = a.ConvertToRecipients(tc.alertId, tc.emails)
+			if !reflect.DeepEqual(tc.wantRecipients, recipients) {
+				t.Fatalf("wantRecipients: %v, got: %v", tc.wantRecipients, recipients)
 			}
 		})
 	}

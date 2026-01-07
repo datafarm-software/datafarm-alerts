@@ -269,15 +269,7 @@ func (a *App) CreateAlertRule(
 		log.Printf("registering alert: %v", err)
 		return nil, huma.Error500InternalServerError("Internal error while registering the alert.")
 	}
-	alertRecipients := make([]alertstore.AlertRecipient, 0, len(in.Body.EmailAddresses))
-	var ar alertstore.AlertRecipient
-	for _, email := range in.Body.EmailAddresses {
-		ar = alertstore.AlertRecipient{
-			AlertId: alertId,
-			Email:   email,
-		}
-		alertRecipients = append(alertRecipients, ar)
-	}
+	recipients := a.ConvertToRecipients(alertId, in.Body.EmailAddresses)
 	dbRecord := alertstore.Schema{
 		DeviceAlerts: []alertstore.DeviceAlertRule{
 			{
@@ -286,7 +278,7 @@ func (a *App) CreateAlertRule(
 				QueryField: in.Body.QueryField,
 			},
 		},
-		AlertRecipients: alertRecipients,
+		AlertRecipients: recipients,
 		AlertRules: []alertstore.StoredAlertRule{
 			{
 				AlertId:     alertId,
@@ -335,17 +327,7 @@ func (a *App) UpdateAlertRule(
 		return nil,
 			huma.Error500InternalServerError("Internal error checking if alert exists.")
 	}
-	recipients := make([]alertstore.AlertRecipient, 0, len(in.Body.EmailAddresses))
-	emailExists := make(map[string]bool, len(in.Body.EmailAddresses))
-	for _, email := range in.Body.EmailAddresses {
-		if !emailExists[email] {
-			recipients = append(recipients, alertstore.AlertRecipient{
-				AlertId: in.AlertId,
-				Email:   email,
-			})
-			emailExists[email] = true
-		}
-	}
+	recipients := a.ConvertToRecipients(in.AlertId, in.Body.EmailAddresses)
 	dbRecord := alertstore.Schema{
 		DeviceAlerts: []alertstore.DeviceAlertRule{
 			{
@@ -370,6 +352,21 @@ func (a *App) UpdateAlertRule(
 			"Internal error while storing the updated alert rule.")
 	}
 	return &struct{ Body alertstore.AlertRule }{in.Body}, nil
+}
+
+func (a *App) ConvertToRecipients(alertId string, emails []string) []alertstore.AlertRecipient {
+	recipients := make([]alertstore.AlertRecipient, 0, len(emails))
+	emailExists := make(map[string]bool, len(emails))
+	for _, email := range emails {
+		if !emailExists[email] {
+			recipients = append(recipients, alertstore.AlertRecipient{
+				AlertId: alertId,
+				Email:   email,
+			})
+			emailExists[email] = true
+		}
+	}
+	return recipients
 }
 
 func (a *App) GetAlertRule(
