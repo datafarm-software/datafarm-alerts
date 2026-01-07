@@ -260,7 +260,7 @@ func TestRespondToAlert(t *testing.T) {
 						Time:     AlertReceived,
 						Duration: SomeDuration,
 						Message:  "Status Ok.",
-						Level:    alertstore.Crit,
+						Level:    alertstore.Ok,
 					},
 				},
 			},

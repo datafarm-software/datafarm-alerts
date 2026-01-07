@@ -216,11 +216,15 @@ func (a *App) RespondToAlert(
 	users, err := a.AlertStore.GetAlertRecipients(alert.Id)
 	if err != nil {
 		log.Printf("GetAlertRecipients: %v", err)
-		return nil, nil
+		return nil, huma.Error500InternalServerError("Internal error getting alert recipients.")
 	}
 	if err = a.Notifier.Notify(users, alert.Message); err != nil {
 		log.Printf("notifying users: %v", err)
-		return nil, nil
+		return nil, huma.Error500InternalServerError("Could not notify users.")
+	}
+	if err = a.AlertStore.UpdateAlertState(alert); err != nil {
+		log.Printf("updating alert state for id: %s, err: %v", alert.Id, err)
+		return nil, huma.Error500InternalServerError("Internal error updating alert state.")
 	}
 	return nil, nil
 }
