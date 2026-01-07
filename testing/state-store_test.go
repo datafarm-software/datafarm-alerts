@@ -1,7 +1,6 @@
 package testing
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -101,6 +100,7 @@ func TestRespondToAlert(t *testing.T) {
 		mockAlertStore, wantAlertStore *alertstore.Schema
 		alert                          alertsource.InfluxAlert
 	}{
+
 		"send alert because still crit after duration": {
 			wantUserInboxes: map[string][]string{
 				UserEmail: {
@@ -323,18 +323,18 @@ func TestRespondToAlert(t *testing.T) {
 			},
 		},
 	}
+
 	var n *notifier.MockNotifier
 	var as *alertstore.MockAlertStore
+	_, api := humatest.New(t)
+	a.RegisterHumaOperations(api)
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
 			n = notifier.NewMockNotifier(tc.mockNotifierStore)
 			as = alertstore.NewMockAlertStore(tc.mockAlertStore)
 			a.AlertStore = as
 			a.Notifier = n
-			a.RespondToAlert(
-				context.Background(),
-				&struct{ Body alertsource.InfluxAlert }{tc.alert},
-			)
+			_ = api.Post("/alert/notify", tc.alert)
 			if diff := cmp.Diff(tc.wantUserInboxes, n.GetUserInboxes()); diff != "" {
 				t.Fatalf("user inboxes mismatch (-want +got):\n%s", diff)
 			}
@@ -628,7 +628,7 @@ func TestCreateAlertRule(t *testing.T) {
 			a.AlertStore = as
 			source = alertsource.NewMockAlertSource(tc.mockAlertSource)
 			a.AlertSource = source
-			resp := api.Post("/alerts", tc.alertRule)
+			resp := api.Post("/alert", tc.alertRule)
 			if tc.wantStatus != resp.Code {
 				t.Fatalf("wantStatusCode: %d, response code: %d", tc.wantStatus, resp.Code)
 			}
@@ -958,7 +958,7 @@ func TestUpdateAlertRule(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			as = alertstore.NewMockAlertStore(tc.mockAlertStore)
 			a.AlertStore = as
-			resp := api.Put(fmt.Sprintf("/alerts/%s", tc.alertId), tc.alertRule)
+			resp := api.Put(fmt.Sprintf("/alert/%s", tc.alertId), tc.alertRule)
 			if tc.wantStatus != resp.Code {
 				t.Fatalf("wantStatusCode: %d, response code: %d", tc.wantStatus, resp.Code)
 			}
@@ -1036,7 +1036,7 @@ func TestGetAlertRule(t *testing.T) {
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
 			a.AlertStore = alertstore.NewMockAlertStore(tc.mockAlertStore)
-			resp := api.Get(fmt.Sprintf("/alerts/%s", tc.alertId))
+			resp := api.Get(fmt.Sprintf("/alert/%s", tc.alertId))
 			if tc.wantStatus != resp.Code {
 				t.Fatalf("wantStatusCode: %d, response code: %d", tc.wantStatus, resp.Code)
 			}

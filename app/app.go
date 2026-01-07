@@ -85,7 +85,7 @@ func (a *App) RegisterHumaOperations(api huma.API) {
 	huma.Register(api, operation, a.RespondToAlert)
 	operation = huma.Operation{
 		Method:      "POST",
-		Path:        "/alerts",
+		Path:        "/alert",
 		Tags:        []string{"Create"},
 		Summary:     "Create an alert rule.",
 		Description: "Clients can use this route to setup a new sensordata check, which will alert them according to the provided AlertRule request body.",
@@ -135,12 +135,12 @@ func (a *App) RegisterHumaOperations(api huma.API) {
 	huma.Register(api, operation, a.CreateAlertRule)
 	operation = huma.Operation{
 		Method: "GET",
-		Path:   "/alerts/{alertId}",
+		Path:   "/alert/{alertId}",
 	}
 	huma.Register(api, operation, a.GetAlertRule)
 	operation = huma.Operation{
 		Method: "PUT",
-		Path:   "/alerts/{alertId}",
+		Path:   "/alert/{alertId}",
 		Parameters: []*huma.Param{
 			{
 				Name:            "alertId",
