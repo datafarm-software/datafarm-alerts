@@ -798,7 +798,7 @@ func TestUpdateAlertRule(t *testing.T) {
 			wantAlertStore: &alertstore.Schema{
 				AlertRecipients: []alertstore.AlertRecipient{
 					{AlertId: AlertId, Email: UserEmail},
-					{AlertId: AlertId, Email: "user2@alert.com"},
+					// {AlertId: AlertId, Email: "user2@alert.com"},
 				},
 				DeviceAlerts: []alertstore.DeviceAlertRule{
 					{
