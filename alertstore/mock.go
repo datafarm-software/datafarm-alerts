@@ -96,6 +96,19 @@ func (m *MockAlertStore) StoreAlertRule(alertId string, dbRecord Schema) error {
 }
 
 func (m *MockAlertStore) UpdateAlertRule(alertId string, dbRecord Schema) error {
+	for i, storedDa := range m.Db.DeviceAlerts {
+		for _, currentDa := range dbRecord.DeviceAlerts {
+			if currentDa.AlertId != storedDa.AlertId {
+				continue
+			}
+			m.Db.DeviceAlerts[i] = DeviceAlertRule{
+				AlertId:    currentDa.AlertId,
+				DeviceId:   currentDa.DeviceId,
+				QueryField: currentDa.QueryField,
+			}
+		}
+	}
+	for _, storedRecipients := range m.Db.StoredReci
 	return nil
 }
 
