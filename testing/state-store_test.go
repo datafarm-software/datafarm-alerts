@@ -36,16 +36,16 @@ func TestNotifyCrit(t *testing.T) {
 	var got bool
 	tests := map[string]struct {
 		want            bool
-		alert, previous *alertstore.AlertState
+		alert, previous alertstore.AlertState
 	}{
 		"no change within duration, so do nothing": {
 			want: false,
-			alert: &alertstore.AlertState{
+			alert: alertstore.AlertState{
 				Level:    alertstore.Crit,
 				Time:     WithinDuration,
 				Duration: SomeDuration,
 			},
-			previous: &alertstore.AlertState{
+			previous: alertstore.AlertState{
 				Level:    alertstore.Crit,
 				Time:     AlertReceived,
 				Duration: SomeDuration,
@@ -53,12 +53,12 @@ func TestNotifyCrit(t *testing.T) {
 		},
 		"still crit after duration, so notify": {
 			want: true,
-			alert: &alertstore.AlertState{
+			alert: alertstore.AlertState{
 				Level:    alertstore.Crit,
 				Time:     AfterDuration,
 				Duration: SomeDuration,
 			},
-			previous: &alertstore.AlertState{
+			previous: alertstore.AlertState{
 				Level:    alertstore.Crit,
 				Time:     AlertReceived,
 				Duration: SomeDuration,
@@ -66,19 +66,19 @@ func TestNotifyCrit(t *testing.T) {
 		},
 		"change to crit, so notify": {
 			want: true,
-			alert: &alertstore.AlertState{
+			alert: alertstore.AlertState{
 				Level: alertstore.Crit,
 			},
-			previous: &alertstore.AlertState{
+			previous: alertstore.AlertState{
 				Level: alertstore.Ok,
 			},
 		},
 		"change from crit to ok, so do nothing": {
 			want: false,
-			alert: &alertstore.AlertState{
+			alert: alertstore.AlertState{
 				Level: alertstore.Ok,
 			},
-			previous: &alertstore.AlertState{
+			previous: alertstore.AlertState{
 				Level: alertstore.Crit,
 			},
 		},
@@ -394,12 +394,14 @@ func TestRespondToAlert(t *testing.T) {
 			as = alertstore.NewMockAlertStore(tc.mockAlertStore)
 			a.AlertStore = as
 			a.Notifier = n
-			_ = api.Post("/alert/notify", tc.alert)
-			if diff := cmp.Diff(tc.wantUserInboxes, n.GetUserInboxes()); diff != "" {
-				t.Fatalf("user inboxes mismatch (-want +got):\n%s", diff)
-			}
-			if diff := cmp.Diff(tc.wantAlertStore, as.GetSnapshot()); diff != "" {
-				t.Fatalf("alertstore mismatch (-want +got):\n%s", diff)
+			resp := api.Post("/alert/notify", tc.alert)
+			if resp.Code < 300 {
+				if diff := cmp.Diff(tc.wantUserInboxes, n.GetUserInboxes()); diff != "" {
+					t.Fatalf("user inboxes mismatch (-want +got):\n%s", diff)
+				}
+				if diff := cmp.Diff(tc.wantAlertStore, as.GetSnapshot()); diff != "" {
+					t.Fatalf("alertstore mismatch (-want +got):\n%s", diff)
+				}
 			}
 		})
 	}

@@ -18,8 +18,8 @@ func NewMockAlertSource(values map[any]any) *MockAlertSource {
 	return &MockAlertSource{values: values}
 }
 
-func (m *MockAlertSource) GetAlertState() *alertstore.AlertState {
-	return nil
+func (m *MockAlertSource) GetAlertState() alertstore.AlertState {
+	return alertstore.AlertState{}
 }
 
 func (m *MockAlertSource) GetAlertLevel() alertstore.AlertLevel {

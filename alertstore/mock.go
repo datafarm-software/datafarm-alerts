@@ -1,8 +1,6 @@
 package alertstore
 
 import (
-	"fmt"
-
 	"github.com/google/go-cmp/cmp"
 )
 
@@ -23,17 +21,18 @@ func (m *MockAlertStore) GetSnapshot() *Schema {
 	return m.Db
 }
 
-func (m *MockAlertStore) GetAlertState(alertId string) (*AlertState, error) {
-	var state *AlertState
+func (m *MockAlertStore) GetAlertState(alertId string) (AlertState, error) {
+	var state, emptyState AlertState
 	for _, as := range m.Db.AlertStates {
 		if as.Id == alertId {
-			state = &as
+			state = as
 		}
 	}
-	if state == nil {
-		return nil, NoAlert
+	var err error
+	if diff := cmp.Diff(state, emptyState); diff == "" {
+		err = NoAlert
 	}
-	return state, nil
+	return state, err
 }
 
 func (m *MockAlertStore) GetAlertRule(alertId string) (AlertRule, error) {
@@ -172,6 +171,12 @@ func (m *MockAlertStore) CheckAlertRuleExists(ar AlertRule) (string, error) {
 	return id, err
 }
 
-func (m *MockAlertStore) UpdateAlertState(alert *AlertState) error {
-	return fmt.Errorf("not implemented")
+func (m *MockAlertStore) UpdateAlertState(alert AlertState) error {
+	for i, state := range m.Db.AlertStates {
+		if state.Id != alert.Id {
+			continue
+		}
+		m.Db.AlertStates[i] = state
+	}
+	return nil
 }

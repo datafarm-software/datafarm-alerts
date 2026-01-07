@@ -46,8 +46,8 @@ func (i *InfluxAlert) GetAlertLevel() alertstore.AlertLevel {
 	return al
 }
 
-func (i *InfluxAlert) GetAlertState() *alertstore.AlertState {
-	return &alertstore.AlertState{
+func (i *InfluxAlert) GetAlertState() alertstore.AlertState {
+	return alertstore.AlertState{
 		Time:    i.Time,
 		Message: i.Message,
 		Id:      i.Id,

@@ -30,10 +30,10 @@ const (
 
 type AlertStore interface {
 	//NOTE: could return alertstore.NoAlert
-	GetAlertState(alertId string) (*AlertState, error)
+	GetAlertState(alertId string) (AlertState, error)
 	GetAlertRule(alertId string) (AlertRule, error)
 	GetAlertRecipients(alertId string) ([]string, error)
-	UpdateAlertState(alert *AlertState) error
+	UpdateAlertState(alert AlertState) error
 	StoreAlertRule(alertId string, dbRecord Schema) error
 	UpdateAlertRule(alertId string, dbRecord Schema) error
 	//NOTE: could return alertstore.AlertExists
