@@ -97,18 +97,47 @@ func (m *MockAlertStore) StoreAlertRule(alertId string, dbRecord Schema) error {
 
 func (m *MockAlertStore) UpdateAlertRule(alertId string, dbRecord Schema) error {
 	for i, storedDa := range m.Db.DeviceAlerts {
+		var modified bool
 		for _, currentDa := range dbRecord.DeviceAlerts {
 			if currentDa.AlertId != storedDa.AlertId {
 				continue
 			}
-			m.Db.DeviceAlerts[i] = DeviceAlertRule{
-				AlertId:    currentDa.AlertId,
-				DeviceId:   currentDa.DeviceId,
-				QueryField: currentDa.QueryField,
+			if !modified {
+				m.Db.DeviceAlerts[i] = currentDa
+				modified = true
+			} else {
+				m.Db.DeviceAlerts = append(m.Db.DeviceAlerts, currentDa)
 			}
 		}
 	}
-	for _, storedRecipients := range m.Db.StoredReci
+	for i, storedRec := range m.Db.AlertRecipients {
+		var modified bool
+		for _, currentRec := range dbRecord.AlertRecipients {
+			if currentRec.AlertId != storedRec.AlertId {
+				continue
+			}
+			if !modified {
+				m.Db.AlertRecipients[i] = currentRec
+				modified = true
+			} else {
+				m.Db.AlertRecipients = append(m.Db.AlertRecipients, currentRec)
+			}
+		}
+	}
+	for i, storedAr := range m.Db.AlertRules {
+		var modified bool
+		for _, currentAr := range dbRecord.AlertRules {
+			if currentAr.AlertId != storedAr.AlertId {
+				continue
+			}
+			if !modified {
+				m.Db.AlertRules[i] = currentAr
+				modified = true
+			} else {
+				m.Db.AlertRules = append(m.Db.AlertRules, currentAr)
+			}
+		}
+	}
 	return nil
 }
 

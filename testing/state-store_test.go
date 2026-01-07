@@ -734,6 +734,7 @@ func TestUpdateAlertRule(t *testing.T) {
 				},
 				AlertRules: []alertstore.StoredAlertRule{
 					{
+						AlertId:     AlertId,
 						RangeValues: []int{43, 90},
 						Duration:    "24h",
 						AlertRange:  alertstore.Range,
@@ -753,6 +754,7 @@ func TestUpdateAlertRule(t *testing.T) {
 				},
 				AlertRules: []alertstore.StoredAlertRule{
 					{
+						AlertId:     AlertId,
 						RangeValues: []int{10, 20},
 						Duration:    "24h",
 						AlertRange:  alertstore.Range,
@@ -765,6 +767,7 @@ func TestUpdateAlertRule(t *testing.T) {
 			wantStatus: http.StatusOK,
 			alertId:    AlertId,
 			alertRule: alertstore.AlertRule{
+				AlertId:        AlertId,
 				EmailAddresses: []string{UserEmail, "user2@alert.com"},
 				RangeValues:    []int{10, 20},
 				Duration:       "24h",
@@ -785,6 +788,7 @@ func TestUpdateAlertRule(t *testing.T) {
 				},
 				AlertRules: []alertstore.StoredAlertRule{
 					{
+						AlertId:     AlertId,
 						RangeValues: []int{10, 20},
 						Duration:    "24h",
 						AlertRange:  alertstore.Range,
@@ -805,6 +809,7 @@ func TestUpdateAlertRule(t *testing.T) {
 				},
 				AlertRules: []alertstore.StoredAlertRule{
 					{
+						AlertId:     AlertId,
 						RangeValues: []int{10, 20},
 						Duration:    "24h",
 						AlertRange:  alertstore.Range,
