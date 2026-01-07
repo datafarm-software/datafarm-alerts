@@ -346,14 +346,16 @@ func TestRespondToAlert(t *testing.T) {
 func TestCreateAlertRule(t *testing.T) {
 	tests := map[string]struct {
 		wantErr                        bool
-		wantResponse                   *struct{ Body alertstore.CreatedRule }
+		wantResponse                   alertstore.CreatedRule
+		wantStatus                     int
 		wantAlertStore, mockAlertStore *alertstore.Schema
 		mockAlertSource                map[any]any
 		alertRule                      alertstore.AlertRule
 	}{
 
 		"successfully create a less than alert rule": {
-			wantErr: false,
+			wantErr:    false,
+			wantStatus: 200,
 			wantAlertStore: &alertstore.Schema{
 				AlertRecipients: []alertstore.AlertRecipient{
 					{AlertId: AlertId, Email: UserEmail},
@@ -382,10 +384,8 @@ func TestCreateAlertRule(t *testing.T) {
 				QueryField:     "temperature",
 				AlertRange:     alertstore.LessThan,
 			},
-			wantResponse: &struct{ Body alertstore.CreatedRule }{
-				Body: alertstore.CreatedRule{
-					AlertId: AlertId,
-				},
+			wantResponse: alertstore.CreatedRule{
+				AlertId: AlertId,
 			},
 		},
 
@@ -468,10 +468,8 @@ func TestCreateAlertRule(t *testing.T) {
 
 		"similar alert rule exists, but new one on different deviceId queryField combination": {
 			wantErr: false,
-			wantResponse: &struct{ Body alertstore.CreatedRule }{
-				Body: alertstore.CreatedRule{
-					AlertId: "alert2",
-				},
+			wantResponse: alertstore.CreatedRule{
+				AlertId: "alert2",
 			},
 			wantAlertStore: &alertstore.Schema{
 				AlertRecipients: []alertstore.AlertRecipient{
@@ -540,8 +538,8 @@ func TestCreateAlertRule(t *testing.T) {
 
 		"multiple alerts on deviceId and queryField combination": {
 			wantErr: false,
-			wantResponse: &struct{ Body alertstore.CreatedRule }{
-				alertstore.CreatedRule{AlertId: "alert2"},
+			wantResponse: alertstore.CreatedRule{
+				AlertId: "alert2",
 			},
 			wantAlertStore: &alertstore.Schema{
 				AlertRecipients: []alertstore.AlertRecipient{
@@ -613,24 +611,25 @@ func TestCreateAlertRule(t *testing.T) {
 	var as *alertstore.MockAlertStore
 	var source *alertsource.MockAlertSource
 	var err error
-	var got *struct{ Body alertstore.CreatedRule }
+	var got alertstore.CreatedRule
+	_, api := humatest.New(t)
+	a.RegisterHumaOperations(api)
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
 			as = alertstore.NewMockAlertStore(tc.mockAlertStore)
 			a.AlertStore = as
 			source = alertsource.NewMockAlertSource(tc.mockAlertSource)
 			a.AlertSource = source
-			got, err = a.CreateAlertRule(context.Background(),
-				&struct{ Body alertstore.AlertRule }{tc.alertRule})
-			if tc.wantErr != (err != nil) {
-				t.Fatalf("wantErr: %v, got: %v", tc.wantErr, err)
+			resp := api.Post("/alerts", tc.alertRule)
+			if tc.wantStatus != resp.Code {
+				t.Fatalf("wantStatusCode: %d, response code: %d", tc.wantStatus, resp.Code)
 			}
 			if !tc.wantErr {
-				if diff := cmp.Diff(tc.wantResponse.Body, got.Body); diff != "" {
-					t.Fatalf("response mismatch (-want +got):\n%s", diff)
+				if err = json.Unmarshal(resp.Body.Bytes(), &got); err != nil {
+					t.Fatalf("unmarshalling: %s", err)
 				}
-				if diff := cmp.Diff(tc.wantAlertStore, as.GetSnapshot()); diff != "" {
-					t.Fatalf("alertstore mismatch (-want +got):\n%s", diff)
+				if diff := cmp.Diff(tc.wantResponse, got); diff != "" {
+					t.Fatalf("response mismatch (-want +got):\n%s", diff)
 				}
 			}
 		})
