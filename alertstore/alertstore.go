@@ -38,6 +38,8 @@ type AlertStore interface {
 	UpdateAlertRule(alertId string, dbRecord Schema) error
 	//NOTE: could return alertstore.AlertExists
 	CheckAlertRuleExists(AlertRule) (string, error)
+	DeleteAlertState(alertId string) error
+	DeleteAlertRule(alertId string) (AlertRule, error)
 }
 
 type Schema struct {

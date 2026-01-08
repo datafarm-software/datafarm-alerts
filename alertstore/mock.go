@@ -1,6 +1,7 @@
 package alertstore
 
 import (
+	"slices"
 	"time"
 
 	"github.com/google/go-cmp/cmp"
@@ -173,4 +174,20 @@ func (m *MockAlertStore) UpdateAlertState(alert AlertState) error {
 		m.Db.AlertStates[i] = alert
 	}
 	return nil
+}
+
+func (m *MockAlertStore) DeleteAlertState(alertId string) error {
+	var deleted bool
+	for i, state := range m.Db.AlertStates {
+		if state.Id != alertId {
+			continue
+		}
+		m.Db.AlertStates = slices.Delete(m.Db.AlertStates, i, i+1)
+		deleted = true
+	}
+	var err error
+	if !deleted {
+		err = NoAlert
+	}
+	return err
 }
