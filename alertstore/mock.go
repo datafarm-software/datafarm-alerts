@@ -191,3 +191,42 @@ func (m *MockAlertStore) DeleteAlertState(alertId string) error {
 	}
 	return err
 }
+
+func (m *MockAlertStore) DeleteAlertRule(alertId string) (AlertRule, error) {
+	var rule AlertRule
+	var deleted bool
+	var err error
+	for i, da := range m.Db.DeviceAlerts {
+		if da.AlertId != alertId {
+			continue
+		}
+		rule.DeviceId = da.DeviceId
+		rule.QueryField = da.QueryField
+		m.Db.DeviceAlerts = slices.Delete(m.Db.DeviceAlerts, i, i+1)
+		deleted = true
+	}
+	if !deleted {
+		err = NoAlert
+	}
+
+	var emails []string
+	for i, ar := range m.Db.AlertRecipients {
+		if ar.AlertId != alertId {
+			continue
+		}
+		emails = append(emails, ar.Email)
+		m.Db.AlertRecipients = slices.Delete(m.Db.AlertRecipients, i, i+1)
+	}
+	rule.EmailAddresses = emails
+
+	for i, r := range m.Db.AlertRules {
+		if r.AlertId != alertId {
+			continue
+		}
+		rule.RangeValues = r.RangeValues
+		rule.Duration = r.Duration
+		rule.AlertRange = r.AlertRange
+		m.Db.AlertRules = slices.Delete(m.Db.AlertRules, i, i+1)
+	}
+	return rule, err
+}

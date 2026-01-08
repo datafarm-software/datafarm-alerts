@@ -1159,6 +1159,15 @@ func TestDeleteAlert(t *testing.T) {
 				AlertRange:     alertstore.Range,
 			},
 		},
+
+		"try to delete non existent alert": {
+			wantErr:        true,
+			wantStatus:     404,
+			alertId:        "alert2",
+			wantAlertRule:  alertstore.AlertRule{},
+			mockAlertStore: &alertstore.Schema{},
+			wantAlertStore: &alertstore.Schema{},
+		},
 	}
 
 	var got alertstore.AlertRule
