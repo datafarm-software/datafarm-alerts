@@ -1114,3 +1114,77 @@ func TestGetAlertRule(t *testing.T) {
 		})
 	}
 }
+
+func TestDeleteAlert(t *testing.T) {
+	tests := map[string]struct {
+		wantErr                        bool
+		wantStatus                     int
+		alertId                        string
+		wantAlertRule                  alertstore.AlertRule
+		mockAlertStore, wantAlertStore *alertstore.Schema
+	}{
+
+		"successfully delete an alert": {
+			wantErr:    false,
+			wantStatus: 200,
+			alertId:    AlertId,
+			mockAlertStore: &alertstore.Schema{
+				AlertRecipients: []alertstore.AlertRecipient{
+					{AlertId: AlertId, Email: UserEmail},
+				},
+				DeviceAlerts: []alertstore.DeviceAlertRule{
+					{
+						DeviceId:   RegisteredDeviceId,
+						QueryField: RegisteredQueryField,
+						AlertId:    AlertId,
+					},
+				},
+				AlertRules: []alertstore.StoredAlertRule{
+					{
+						AlertId:     AlertId,
+						Duration:    "24h",
+						RangeValues: []int{10, 20},
+						AlertRange:  alertstore.Range,
+					},
+				},
+			},
+			wantAlertStore: &alertstore.Schema{},
+			wantAlertRule: alertstore.AlertRule{
+				AlertId:        AlertId,
+				EmailAddresses: []string{UserEmail},
+				RangeValues:    []int{10, 20},
+				Duration:       "24h",
+				DeviceId:       RegisteredDeviceId,
+				QueryField:     RegisteredQueryField,
+				AlertRange:     alertstore.Range,
+			},
+		},
+	}
+
+	var got alertstore.AlertRule
+	var err error
+	var as *alertstore.MockAlertStore
+	_, api := humatest.New(t)
+	a.RegisterHumaOperations(api)
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+			as = alertstore.NewMockAlertStore(tc.mockAlertStore)
+			a.AlertStore = as
+			resp := api.Delete(fmt.Sprintf("/alert/%s", tc.alertId))
+			if tc.wantStatus != resp.Code {
+				t.Fatalf("wantStatus: %d, response Code: %v", tc.wantStatus, resp.Code)
+			}
+			if !tc.wantErr {
+				if err = json.Unmarshal(resp.Body.Bytes(), &got); err != nil {
+					t.Fatalf("unmarshalling: %v", err)
+				}
+				if diff := cmp.Diff(tc.wantAlertRule, got); err != nil {
+					t.Fatalf("alertRule mismatch (-want +got):\n%s", diff)
+				}
+				if diff := cmp.Diff(tc.wantAlertStore, as.GetSnapshot()); diff != "" {
+					t.Fatalf("alertStore mismatch (-want +got):\n%s", diff)
+				}
+			}
+		})
+	}
+}
