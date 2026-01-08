@@ -136,6 +136,37 @@ func (a *App) RegisterHumaOperations(api huma.API) {
 	operation = huma.Operation{
 		Method: "GET",
 		Path:   "/alert/{alertId}",
+		Parameters: []*huma.Param{
+			{
+				Name:            "alertId",
+				In:              "path",
+				Description:     "Alert Id to get.",
+				Required:        true,
+				AllowEmptyValue: false,
+				Schema: &huma.Schema{
+					Type:    "string",
+					Pattern: "^[a-zA-Z0-9]+$",
+				},
+			},
+		},
+		Tags:        []string{"Get"},
+		Summary:     "Get an alert rule.",
+		Description: "Clients can use this route to get an existing sensordata check in the form of an AlertRule.",
+		RequestBody: &huma.RequestBody{},
+		Responses: map[string]*huma.Response{
+			"500": {
+				Description: "Internal Server Error",
+				Content: map[string]*huma.MediaType{
+					"application/json": {
+						Schema: huma.SchemaFromType(registry, reflect.TypeOf(HumaError{})),
+						Example: HumaError{
+							Schema: "http://localhost:3030/schemas/ErrorModel.json",
+							Title:  "Internal Server Error",
+							Status: 500,
+							Detail: "Internal error while retrieving the alert.",
+						},
+					}}},
+		},
 	}
 	huma.Register(api, operation, a.GetAlertRule)
 	operation = huma.Operation{
@@ -188,6 +219,56 @@ func (a *App) RegisterHumaOperations(api huma.API) {
 		},
 	}
 	huma.Register(api, operation, a.UpdateAlertRule)
+	operation = huma.Operation{
+		Method: "DELETE",
+		Path:   "/alert/{alertId}",
+		Parameters: []*huma.Param{
+			{
+				Name:            "alertId",
+				In:              "path",
+				Description:     "Alert Id to be deleted.",
+				Required:        true,
+				AllowEmptyValue: false,
+				Schema: &huma.Schema{
+					Type:    "string",
+					Pattern: "^[a-zA-Z0-9]+$",
+				},
+			},
+		},
+		Tags:        []string{"Delete"},
+		Summary:     "Delete an alert rule.",
+		Description: "Clients can use this route to delete a sensordata check. The deleted check will be returned in the response as an AlertRule.",
+		RequestBody: &huma.RequestBody{},
+		Responses: map[string]*huma.Response{
+			"500": {
+				Description: "Internal Server Error",
+				Content: map[string]*huma.MediaType{
+					"application/json": {
+						Schema: huma.SchemaFromType(registry, reflect.TypeOf(HumaError{})),
+						Example: HumaError{
+							Schema: "http://localhost:3030/schemas/ErrorModel.json",
+							Title:  "Internal Server Error",
+							Status: 500,
+							Detail: "Internal error while deleting the alert.",
+						},
+					}}},
+			"400": {
+				Description: "Bad Request",
+				Content: map[string]*huma.MediaType{
+					"application/json": {
+						Schema: huma.SchemaFromType(registry, reflect.TypeOf(HumaError{})),
+						Example: HumaError{
+							Schema: "http://localhost:3030/schemas/ErrorModel.json",
+							Title:  "Bad Request",
+							Status: 400,
+							Detail: "Provided AlertId is invalid.",
+						},
+					},
+				},
+			},
+		},
+	}
+	huma.Register(api, operation, a.DeleteAlertRule)
 }
 
 func (a *App) RespondToAlert(
@@ -391,4 +472,14 @@ func (a *App) GetAlertRule(
 		return nil, huma.Error404NotFound("No alert rule found.")
 	}
 	return &struct{ Body alertstore.AlertRule }{alert}, nil
+}
+
+func (a *App) DeleteAlertRule(ctx context.Context,
+	in *struct {
+		AlertId string `path:"alertId"`
+	},
+) (*struct {
+	Body alertstore.AlertRule
+}, error) {
+	return nil, nil
 }
