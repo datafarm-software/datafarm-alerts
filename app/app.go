@@ -198,7 +198,7 @@ func (a *App) RespondToAlert(
 	previousAlert, err := a.AlertStore.GetAlertState(alert.Id)
 	if err != nil {
 		log.Printf("getting previous alert for %s: %v", alert.Id, err)
-		return nil, huma.Error500InternalServerError("no alert configured")
+		return nil, huma.Error404NotFound("no alert configured")
 	}
 	alertRule, err := a.AlertStore.GetAlertRule(alert.Id)
 	if err != nil {

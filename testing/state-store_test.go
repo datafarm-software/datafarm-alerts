@@ -32,7 +32,7 @@ var AlertReceived = time.Now()
 var AfterDuration = time.Now().Add(25 * time.Hour)
 var WithinDuration = time.Now().Add(6 * time.Hour)
 
-func TestNotifyCrit(t *testing.T) {
+func TestShouldNotifyCrit(t *testing.T) {
 	var got bool
 	tests := map[string]struct {
 		want            bool
@@ -394,14 +394,15 @@ func TestRespondToAlert(t *testing.T) {
 			as = alertstore.NewMockAlertStore(tc.mockAlertStore)
 			a.AlertStore = as
 			a.Notifier = n
-			resp := api.Post("/alert/notify", tc.alert)
-			if resp.Code < 300 {
-				if diff := cmp.Diff(tc.wantUserInboxes, n.GetUserInboxes()); diff != "" {
-					t.Fatalf("user inboxes mismatch (-want +got):\n%s", diff)
-				}
-				if diff := cmp.Diff(tc.wantAlertStore, as.GetSnapshot()); diff != "" {
-					t.Fatalf("alertstore mismatch (-want +got):\n%s", diff)
-				}
+			api.Post("/alert/notify", tc.alert)
+			if diff := cmp.Diff(tc.wantUserInboxes, n.GetUserInboxes()); diff != "" {
+				t.Fatalf("user inboxes mismatch (-want +got):\n%s", diff)
+			}
+			if diff := cmp.Diff(tc.wantAlertStore, as.GetSnapshot(),
+				cmp.Comparer(func(a, b time.Time) bool {
+					return a.Sub(b) < 10*time.Millisecond
+				})); diff != "" {
+				t.Fatalf("alertstore mismatch (-want +got):\n%s", diff)
 			}
 		})
 	}

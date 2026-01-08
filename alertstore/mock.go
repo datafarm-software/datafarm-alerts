@@ -1,6 +1,8 @@
 package alertstore
 
 import (
+	"time"
+
 	"github.com/google/go-cmp/cmp"
 )
 
@@ -75,15 +77,6 @@ func (m *MockAlertStore) GetAlertRecipients(alertId string) ([]string, error) {
 		}
 	}
 	return recipients, nil
-}
-
-func (m *MockAlertStore) UpdateAlertLastSeen(alert *AlertState) error {
-	for _, as := range m.Db.AlertStates {
-		if as.Id == alert.Id {
-			as.Time = alert.Time
-		}
-	}
-	return nil
 }
 
 func (m *MockAlertStore) StoreAlertRule(alertId string, dbRecord Schema) error {
@@ -176,7 +169,8 @@ func (m *MockAlertStore) UpdateAlertState(alert AlertState) error {
 		if state.Id != alert.Id {
 			continue
 		}
-		m.Db.AlertStates[i] = state
+		alert.Time = time.Now()
+		m.Db.AlertStates[i] = alert
 	}
 	return nil
 }
