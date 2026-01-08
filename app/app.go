@@ -481,5 +481,20 @@ func (a *App) DeleteAlertRule(ctx context.Context,
 ) (*struct {
 	Body alertstore.AlertRule
 }, error) {
-	return nil, nil
+	if err := a.AlertStore.DeleteAlertState(in.AlertId); err != nil {
+		if errors.Is(err, alertstore.NoAlert) {
+			return nil, huma.Error404NotFound("Alert with given id does not exist.")
+		}
+		log.Printf("deleting alert state: %s: %v", in.AlertId, err)
+		return nil, huma.Error500InternalServerError("Internal error while deleting alert state.")
+	}
+	alertRule, err := a.AlertStore.DeleteAlertRule(in.AlertId)
+	if err != nil {
+		if errors.Is(err, alertstore.NoAlert) {
+			return nil, huma.Error404NotFound("Alert with given id does not exist.")
+		}
+		log.Printf("deleting alert rule: %s: %v", in.AlertId, err)
+		return nil, huma.Error500InternalServerError("Internal error while deleting alert rule.")
+	}
+	return &struct{ Body alertstore.AlertRule }{alertRule}, nil
 }
