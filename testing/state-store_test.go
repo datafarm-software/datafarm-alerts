@@ -1147,8 +1147,18 @@ func TestDeleteAlert(t *testing.T) {
 						AlertRange:  alertstore.Range,
 					},
 				},
+				AlertStates: []alertstore.AlertState{
+					{
+						Id: AlertId,
+					},
+				},
 			},
-			wantAlertStore: &alertstore.Schema{},
+			wantAlertStore: &alertstore.Schema{
+				DeviceAlerts:    []alertstore.DeviceAlertRule{},
+				AlertRecipients: []alertstore.AlertRecipient{},
+				AlertStates:     []alertstore.AlertState{},
+				AlertRules:      []alertstore.StoredAlertRule{},
+			},
 			wantAlertRule: alertstore.AlertRule{
 				AlertId:        AlertId,
 				EmailAddresses: []string{UserEmail},
