@@ -29,6 +29,8 @@ const (
 )
 
 type AlertStore interface {
+	Close() error
+	GetSnapshot() *Schema
 	//NOTE: could return alertstore.NoAlert
 	GetAlertState(alertId string) (AlertState, error)
 	GetAlertRule(alertId string) (AlertRule, error)

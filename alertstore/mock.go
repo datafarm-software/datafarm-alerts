@@ -20,6 +20,10 @@ func NewMockAlertStore(db *Schema) *MockAlertStore {
 	}
 }
 
+func (m *MockAlertStore) Close() error {
+	return nil
+}
+
 func (m *MockAlertStore) GetSnapshot() *Schema {
 	return m.Db
 }

@@ -392,6 +392,7 @@ func TestRespondToAlert(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			n = notifier.NewMockNotifier(tc.mockNotifierStore)
 			as = alertstore.NewMockAlertStore(tc.mockAlertStore)
+			defer as.Close()
 			a.AlertStore = as
 			a.Notifier = n
 			api.Post("/alert/notify", tc.alert)
@@ -688,6 +689,7 @@ func TestCreateAlertRule(t *testing.T) {
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
 			as = alertstore.NewMockAlertStore(tc.mockAlertStore)
+			defer as.Close()
 			a.AlertStore = as
 			source = alertsource.NewMockAlertSource(tc.mockAlertSource)
 			a.AlertSource = source
@@ -1020,6 +1022,7 @@ func TestUpdateAlertRule(t *testing.T) {
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
 			as = alertstore.NewMockAlertStore(tc.mockAlertStore)
+			defer as.Close()
 			a.AlertStore = as
 			resp := api.Put(fmt.Sprintf("/alert/%s", tc.alertId), tc.alertRule)
 			if tc.wantStatus != resp.Code {
@@ -1195,6 +1198,7 @@ func TestDeleteAlert(t *testing.T) {
 			m = alertsource.NewMockAlertSource(tc.mockAlertSource)
 			a.AlertSource = m
 			as = alertstore.NewMockAlertStore(tc.mockAlertStore)
+			defer as.Close()
 			a.AlertStore = as
 			resp := api.Delete(fmt.Sprintf("/alert/%s", tc.alertId))
 			if tc.wantStatus != resp.Code {
