@@ -422,6 +422,12 @@ func TestCreateAlertRule(t *testing.T) {
 		"successfully create a less than alert rule": {
 			wantErr:    false,
 			wantStatus: http.StatusOK,
+			mockAlertStore: &alertstore.Schema{
+				DeviceAlerts:    []alertstore.DeviceAlertRule{},
+				AlertRecipients: []alertstore.AlertRecipient{},
+				AlertStates:     []alertstore.AlertState{},
+				AlertRules:      []alertstore.StoredAlertRule{},
+			},
 			wantAlertStore: &alertstore.Schema{
 				AlertRecipients: []alertstore.AlertRecipient{
 					{AlertId: AlertId, Email: UserEmail},
@@ -456,8 +462,14 @@ func TestCreateAlertRule(t *testing.T) {
 		},
 
 		"invalid range on less than alert": {
-			wantErr:        true,
-			wantStatus:     http.StatusUnprocessableEntity,
+			wantErr:    true,
+			wantStatus: http.StatusUnprocessableEntity,
+			mockAlertStore: &alertstore.Schema{
+				DeviceAlerts:    []alertstore.DeviceAlertRule{},
+				AlertRecipients: []alertstore.AlertRecipient{},
+				AlertStates:     []alertstore.AlertState{},
+				AlertRules:      []alertstore.StoredAlertRule{},
+			},
 			wantAlertStore: EmptyAlertStore,
 			alertRule: alertstore.AlertRule{
 				RangeValues: []int{5, 10},
@@ -466,8 +478,14 @@ func TestCreateAlertRule(t *testing.T) {
 		},
 
 		"invalid range on range alert": {
-			wantErr:        true,
-			wantStatus:     http.StatusUnprocessableEntity,
+			wantErr:    true,
+			wantStatus: http.StatusUnprocessableEntity,
+			mockAlertStore: &alertstore.Schema{
+				DeviceAlerts:    []alertstore.DeviceAlertRule{},
+				AlertRecipients: []alertstore.AlertRecipient{},
+				AlertStates:     []alertstore.AlertState{},
+				AlertRules:      []alertstore.StoredAlertRule{},
+			},
 			wantAlertStore: EmptyAlertStore,
 			alertRule: alertstore.AlertRule{
 				RangeValues: []int{5},
@@ -478,6 +496,12 @@ func TestCreateAlertRule(t *testing.T) {
 			wantErr:        true,
 			wantStatus:     http.StatusUnprocessableEntity,
 			wantAlertStore: EmptyAlertStore,
+			mockAlertStore: &alertstore.Schema{
+				DeviceAlerts:    []alertstore.DeviceAlertRule{},
+				AlertRecipients: []alertstore.AlertRecipient{},
+				AlertStates:     []alertstore.AlertState{},
+				AlertRules:      []alertstore.StoredAlertRule{},
+			},
 			alertRule: alertstore.AlertRule{
 				EmailAddresses: []string{},
 				Duration:       "",
@@ -693,7 +717,7 @@ func TestCreateAlertRule(t *testing.T) {
 				t.Fatalf("init gorm: %v", err)
 			}
 			defer as.Close()
-			if err = as.PrepareDb(tc.mockAlertStore); err != nil {
+			if err = as.PrepareDb(*tc.mockAlertStore); err != nil {
 				t.Fatalf("preparedb: %v", err)
 			}
 			a.AlertStore = as

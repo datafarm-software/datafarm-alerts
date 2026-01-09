@@ -30,7 +30,7 @@ const (
 
 type AlertStore interface {
 	Close() error
-	PrepareDb(*Schema) error
+	PrepareDb(Schema) error
 	GetSnapshot() *Schema
 	//NOTE: could return alertstore.NoAlert
 	GetAlertState(alertId string) (AlertState, error)
@@ -67,7 +67,7 @@ type AlertRecipient struct {
 type AlertState struct {
 	Time        time.Time
 	Duration    time.Duration
-	RangeValues []int
+	RangeValues []int `gorm:"serializer:json"`
 	Message     string
 	Id          string `gorm:"foreignKey:AlertId"`
 	Level       AlertLevel
@@ -75,7 +75,7 @@ type AlertState struct {
 
 type StoredAlertRule struct {
 	AlertId     string `gorm:"primaryKey;unique"`
-	RangeValues []int
+	RangeValues []int  `gorm:"serializer:json"`
 	Duration    string
 	AlertRange  AlertRange
 }
