@@ -1117,17 +1117,24 @@ func TestGetAlertRule(t *testing.T) {
 
 func TestDeleteAlert(t *testing.T) {
 	tests := map[string]struct {
-		wantErr                        bool
-		wantStatus                     int
-		alertId                        string
-		wantAlertRule                  alertstore.AlertRule
-		mockAlertStore, wantAlertStore *alertstore.Schema
+		wantErr                          bool
+		wantStatus                       int
+		alertId                          string
+		wantAlertRule                    alertstore.AlertRule
+		mockAlertStore, wantAlertStore   *alertstore.Schema
+		mockAlertSource, wantAlertSource map[any]any
 	}{
 
 		"successfully delete an alert": {
 			wantErr:    false,
 			wantStatus: 200,
 			alertId:    AlertId,
+			mockAlertSource: map[any]any{
+				"alertsCount": 1,
+			},
+			wantAlertSource: map[any]any{
+				"alertsCount": 0,
+			},
 			mockAlertStore: &alertstore.Schema{
 				AlertRecipients: []alertstore.AlertRecipient{
 					{AlertId: AlertId, Email: UserEmail},
@@ -1171,22 +1178,21 @@ func TestDeleteAlert(t *testing.T) {
 		},
 
 		"try to delete non existent alert": {
-			wantErr:        true,
-			wantStatus:     404,
-			alertId:        "alert2",
-			wantAlertRule:  alertstore.AlertRule{},
-			mockAlertStore: &alertstore.Schema{},
-			wantAlertStore: &alertstore.Schema{},
+			wantErr:    true,
+			wantStatus: 404,
+			alertId:    "alert2",
 		},
 	}
 
 	var got alertstore.AlertRule
 	var err error
 	var as *alertstore.MockAlertStore
+	var m *alertsource.MockAlertSource
 	_, api := humatest.New(t)
 	a.RegisterHumaOperations(api)
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
+			m = alertsource.NewMockAlertSource(tc.mockAlertSource)
 			as = alertstore.NewMockAlertStore(tc.mockAlertStore)
 			a.AlertStore = as
 			resp := api.Delete(fmt.Sprintf("/alert/%s", tc.alertId))
@@ -1202,6 +1208,9 @@ func TestDeleteAlert(t *testing.T) {
 				}
 				if diff := cmp.Diff(tc.wantAlertStore, as.GetSnapshot()); diff != "" {
 					t.Fatalf("alertStore mismatch (-want +got):\n%s", diff)
+				}
+				if diff := cmp.Diff(tc.wantAlertSource, m.GetSnapshot()); diff != "" {
+					t.Fatalf("alertSource mismatch (-want +got):\n%s", diff)
 				}
 			}
 		})

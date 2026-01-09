@@ -39,6 +39,7 @@ type AlertStore interface {
 	//NOTE: could return alertstore.AlertExists
 	CheckAlertRuleExists(AlertRule) (string, error)
 	DeleteAlertState(alertId string) error
+	//NOTE: could return alertstore.NoAlert
 	DeleteAlertRule(alertId string) (AlertRule, error)
 }
 

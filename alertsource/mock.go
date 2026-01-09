@@ -18,6 +18,10 @@ func NewMockAlertSource(values map[any]any) *MockAlertSource {
 	return &MockAlertSource{values: values}
 }
 
+func (m *MockAlertSource) GetSnapshot() map[any]any {
+	return m.values
+}
+
 func (m *MockAlertSource) GetAlertState() alertstore.AlertState {
 	return alertstore.AlertState{}
 }
@@ -30,7 +34,7 @@ func (m *MockAlertSource) UpdateAlertRule(ar alertstore.AlertRule) error {
 	return fmt.Errorf("not implemented")
 }
 
-func (m *MockAlertSource) RegisterAlertRule(ar alertstore.AlertRule) (string, error) {
+func (m *MockAlertSource) CreateAlertRule(ar alertstore.AlertRule) (string, error) {
 	alertsCount, _ := m.values["alertsCount"].(int)
 	m.values["alertsCount"] = alertsCount + 1
 	return fmt.Sprintf("alert%d", alertsCount+1), nil

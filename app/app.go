@@ -149,8 +149,8 @@ func (a *App) RegisterHumaOperations(api huma.API) {
 				},
 			},
 		},
-		Tags:        []string{"Get"},
-		Summary:     "Get an alert rule.",
+		Tags:        []string{"Retrieve"},
+		Summary:     "Retrieve an Alert Rule.",
 		Description: "Clients can use this route to get an existing sensordata check in the form of an AlertRule.",
 		RequestBody: &huma.RequestBody{},
 		Responses: map[string]*huma.Response{
@@ -349,7 +349,7 @@ func (a *App) CreateAlertRule(
 			AlertId: existingAlertId,
 		}
 	}
-	alertId, err := a.AlertSource.RegisterAlertRule(in.Body)
+	alertId, err := a.AlertSource.CreateAlertRule(in.Body)
 	if err != nil {
 		log.Printf("registering alert: %v", err)
 		return nil, huma.Error500InternalServerError("Internal error while registering the alert.")
@@ -495,6 +495,10 @@ func (a *App) DeleteAlertRule(ctx context.Context,
 		}
 		log.Printf("deleting alert rule: %s: %v", in.AlertId, err)
 		return nil, huma.Error500InternalServerError("Internal error while deleting alert rule.")
+	}
+	if err = a.AlertSource.DeleteAlertRule(in.AlertId); err != nil {
+		log.Printf("deleting source alert rule: %s: %v", in.AlertId, err)
+		return nil, huma.Error500InternalServerError("Internal error while deleting the alert rule from source.")
 	}
 	return &struct{ Body alertstore.AlertRule }{alertRule}, nil
 }

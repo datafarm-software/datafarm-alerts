@@ -4,7 +4,9 @@ import "github.com/geraud22/sensordata-alerts/alertstore"
 
 type AlertSource interface {
 	UpdateAlertRule(alertstore.AlertRule) error
+	CreateAlertRule(alertstore.AlertRule) (string, error)
 	GetAlertState() alertstore.AlertState
-	RegisterAlertRule(alertstore.AlertRule) (string, error)
 	GetAlertLevel() alertstore.AlertLevel
+	//NOTE: Could return alertstore.NoAlert
+	DeleteAlertRule(alertId string) error
 }
