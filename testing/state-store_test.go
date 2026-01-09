@@ -1193,6 +1193,7 @@ func TestDeleteAlert(t *testing.T) {
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
 			m = alertsource.NewMockAlertSource(tc.mockAlertSource)
+			a.AlertSource = m
 			as = alertstore.NewMockAlertStore(tc.mockAlertStore)
 			a.AlertStore = as
 			resp := api.Delete(fmt.Sprintf("/alert/%s", tc.alertId))

@@ -55,10 +55,14 @@ func (i *InfluxAlert) GetAlertState() alertstore.AlertState {
 	}
 }
 
-func (i *InfluxAlert) RegisterAlertRule(ar alertstore.AlertRule) (string, error) {
+func (i *InfluxAlert) CreateAlertRule(ar alertstore.AlertRule) (string, error) {
 	return "", fmt.Errorf("not implemented")
 }
 
 func (i *InfluxAlert) UpdateAlertRule(ar alertstore.AlertRule) error {
+	return fmt.Errorf("not implemented")
+}
+
+func (i *InfluxAlert) DeleteAlertRule(alertId string) error {
 	return fmt.Errorf("not implemented")
 }

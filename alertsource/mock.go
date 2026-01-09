@@ -39,3 +39,9 @@ func (m *MockAlertSource) CreateAlertRule(ar alertstore.AlertRule) (string, erro
 	m.values["alertsCount"] = alertsCount + 1
 	return fmt.Sprintf("alert%d", alertsCount+1), nil
 }
+
+func (m *MockAlertSource) DeleteAlertRule(alertId string) error {
+	alertsCount, _ := m.values["alertsCount"].(int)
+	m.values["alertsCount"] = alertsCount - 1
+	return nil
+}
