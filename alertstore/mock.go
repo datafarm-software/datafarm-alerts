@@ -24,7 +24,7 @@ func (m *MockAlertStore) Close() error {
 	return nil
 }
 
-func (m *MockAlertStore) PrepareDb() error {
+func (m *MockAlertStore) PrepareDb(*Schema) error {
 	return nil
 }
 

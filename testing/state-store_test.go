@@ -680,7 +680,7 @@ func TestCreateAlertRule(t *testing.T) {
 		},
 	}
 
-	var as *alertstore.MockAlertStore
+	var as *alertstore.Gorm
 	var source *alertsource.MockAlertSource
 	var err error
 	var got alertstore.CreatedRule
@@ -688,8 +688,14 @@ func TestCreateAlertRule(t *testing.T) {
 	a.RegisterHumaOperations(api)
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
-			as = alertstore.NewMockAlertStore(tc.mockAlertStore)
+			as, err = alertstore.NewGorm(alertstore.Testing, "testing")
+			if err != nil {
+				t.Fatalf("init gorm: %v", err)
+			}
 			defer as.Close()
+			if err = as.PrepareDb(tc.mockAlertStore); err != nil {
+				t.Fatalf("preparedb: %v", err)
+			}
 			a.AlertStore = as
 			source = alertsource.NewMockAlertSource(tc.mockAlertSource)
 			a.AlertSource = source

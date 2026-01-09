@@ -45,7 +45,7 @@ func (g *Gorm) Close() error {
 	return err
 }
 
-func (g *Gorm) PrepareDb() error {
+func (g *Gorm) PrepareDb(dbRecord *Schema) error {
 	var err error
 	if err = g.db.AutoMigrate(&DeviceAlertRule{}); err != nil {
 		return err
@@ -59,7 +59,7 @@ func (g *Gorm) PrepareDb() error {
 	if err = g.db.AutoMigrate(&StoredAlertRule{}); err != nil {
 		return err
 	}
-	return err
+	return g.StoreAlertRule("alert1", *dbRecord)
 }
 
 func (g *Gorm) GetSnapshot() *Schema {
