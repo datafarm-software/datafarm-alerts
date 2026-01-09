@@ -24,6 +24,10 @@ func (m *MockAlertStore) Close() error {
 	return nil
 }
 
+func (m *MockAlertStore) PrepareDb() error {
+	return nil
+}
+
 func (m *MockAlertStore) GetSnapshot() *Schema {
 	return m.Db
 }

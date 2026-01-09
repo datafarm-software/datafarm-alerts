@@ -44,3 +44,92 @@ func (g *Gorm) Close() error {
 	}
 	return err
 }
+
+func (g *Gorm) PrepareDb() error {
+	var err error
+	if err = g.db.AutoMigrate(&DeviceAlertRule{}); err != nil {
+		return err
+	}
+	if err = g.db.AutoMigrate(&AlertRecipient{}); err != nil {
+		return err
+	}
+	if err = g.db.AutoMigrate(&AlertState{}); err != nil {
+		return err
+	}
+	if err = g.db.AutoMigrate(&StoredAlertRule{}); err != nil {
+		return err
+	}
+	return err
+}
+
+func (g *Gorm) GetSnapshot() *Schema {
+	deviceAlertRules, err := gorm.G[DeviceAlertRule](g.db).Find(ctx)
+	if err != nil {
+		return nil
+	}
+	alertRecipients, err := gorm.G[AlertRecipient](g.db).Find(ctx)
+	if err != nil {
+		return nil
+	}
+	storedAlertRules, err := gorm.G[StoredAlertRule](g.db).Find(ctx)
+	if err != nil {
+		return nil
+	}
+	alertStates, err := gorm.G[AlertState](g.db).Find(ctx)
+	if err != nil {
+		return nil
+	}
+	return &Schema{
+		DeviceAlerts:    deviceAlertRules,
+		AlertRecipients: alertRecipients,
+		AlertStates:     alertStates,
+		AlertRules:      storedAlertRules,
+	}
+}
+
+// NOTE: could return alertstore.NoAlert
+func (g *Gorm) GetAlertState(alertId string) (AlertState, error) {
+	return AlertState{}, fmt.Errorf("not implemented")
+}
+func (g *Gorm) GetAlertRule(alertId string) (AlertRule, error) {
+	return AlertRule{}, fmt.Errorf("not implemented")
+}
+func (g *Gorm) GetAlertRecipients(alertId string) ([]string, error) {
+	return nil, fmt.Errorf("not implemented")
+}
+func (g *Gorm) UpdateAlertState(alert AlertState) error {
+	return fmt.Errorf("not implemented")
+}
+func (g *Gorm) StoreAlertRule(alertId string, dbRecord Schema) error {
+	var err error
+	if err = gorm.G[DeviceAlertRule](g.db).CreateInBatches(ctx,
+		&dbRecord.DeviceAlerts, len(dbRecord.DeviceAlerts)); err != nil {
+		return err
+	}
+	if err = gorm.G[AlertRecipient](g.db).CreateInBatches(ctx,
+		&dbRecord.AlertRecipients, len(dbRecord.AlertRecipients)); err != nil {
+		return err
+	}
+	if err = gorm.G[StoredAlertRule](g.db).CreateInBatches(ctx,
+		&dbRecord.AlertRules, len(dbRecord.AlertRules)); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (g *Gorm) UpdateAlertRule(alertId string, dbRecord Schema) error {
+	return fmt.Errorf("not implemented")
+}
+
+// NOTE: could return alertstore.AlertExists
+func (g *Gorm) CheckAlertRuleExists(AlertRule) (string, error) {
+	return "", fmt.Errorf("not implemented")
+}
+func (g *Gorm) DeleteAlertState(alertId string) error {
+	return fmt.Errorf("not implemented")
+}
+
+// NOTE: could return alertstore.NoAlert
+func (g *Gorm) DeleteAlertRule(alertId string) (AlertRule, error) {
+	return AlertRule{}, fmt.Errorf("not implemented")
+}
