@@ -63,7 +63,7 @@ func (g *Gorm) PrepareDb(dbRecord Schema) error {
 }
 
 func (g *Gorm) GetSnapshot() *Schema {
-	deviceAlertRules, err := gorm.G[DeviceAlertRule](g.db).Find(ctx)
+	device_alert_rules, err := gorm.G[DeviceAlertRule](g.db).Find(ctx)
 	if err != nil {
 		return nil
 	}
@@ -71,7 +71,7 @@ func (g *Gorm) GetSnapshot() *Schema {
 	if err != nil {
 		return nil
 	}
-	storedAlertRules, err := gorm.G[StoredAlertRule](g.db).Find(ctx)
+	stored_alert_rules, err := gorm.G[StoredAlertRule](g.db).Find(ctx)
 	if err != nil {
 		return nil
 	}
@@ -80,10 +80,10 @@ func (g *Gorm) GetSnapshot() *Schema {
 		return nil
 	}
 	return &Schema{
-		DeviceAlerts:    deviceAlertRules,
+		DeviceAlerts:    device_alert_rules,
 		AlertRecipients: alertRecipients,
 		AlertStates:     alertStates,
-		AlertRules:      storedAlertRules,
+		AlertRules:      stored_alert_rules,
 	}
 }
 
@@ -125,12 +125,15 @@ func (g *Gorm) UpdateAlertRule(alertId string, dbRecord Schema) error {
 func (g *Gorm) CheckAlertRuleExists(ar AlertRule) (string, error) {
 	var alertId string
 	err := g.db.Model(&StoredAlertRule{}).
-		Joins("JOIN storedAlertRules ON storedAlertRules.alertId = deviceAlertRules.alertId").
-		Where("deviceAlertRules.deviceId = ?", ar.DeviceId).
-		Where("deviceAlertRules.queryField = ?", ar.QueryField).
-		Where("storedAlertRules.duration = ?", ar.Duration).
-		Where("storedAlertRules.alertRange = ?", ar.AlertRange).
-		Select("storedAlertRules.alertId").
+		Joins(
+			`JOIN stored_alert_rules ON
+			stored_alert_rules.alert_id = device_alert_rules.alert_id`,
+		).
+		Where("device_alert_rules.device_id = ?", ar.DeviceId).
+		Where("device_alert_rules.query_field = ?", ar.QueryField).
+		Where("stored_alert_rules.duration = ?", ar.Duration).
+		Where("stored_alert_rules.alert_range = ?", ar.AlertRange).
+		Select("stored_alert_rules.alert_id").
 		Limit(1).
 		Scan(&alertId).Error
 	if alertId == "" {
