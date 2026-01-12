@@ -95,31 +95,40 @@ func (g *Gorm) GetAlertRule(alertId string) (AlertRule, error) {
 	var ar AlertRule
 	ar.AlertId = alertId
 	var da DeviceAlertRule
-	err := g.db.Table("device_alert_rules").
+	db := g.db.Table("device_alert_rules").
 		Where("alert_id = ?", alertId).
-		Scan(&da).Error
-	if err != nil {
-		return ar, fmt.Errorf("%w, detail: %v", NoAlert, err)
+		Scan(&da)
+	if db.Error != nil {
+		return ar, fmt.Errorf("%w, detail: %v", NoAlert, db.Error)
+	}
+	if db.RowsAffected < 1 {
+		return ar, NoAlert
 	}
 	ar.DeviceId = da.DeviceId
 	ar.QueryField = da.QueryField
 
 	var recipients []string
-	err = g.db.Table("alert_recipients").
+	db = g.db.Table("alert_recipients").
 		Where("alert_id = ?", alertId).
 		Select("email").
-		Scan(&recipients).Error
-	if err != nil {
-		return ar, fmt.Errorf("%w, detail: %v", NoAlert, err)
+		Scan(&recipients)
+	if db.Error != nil {
+		return ar, fmt.Errorf("%w, detail: %v", NoAlert, db.Error)
+	}
+	if db.RowsAffected < 1 {
+		return ar, NoAlert
 	}
 	ar.EmailAddresses = recipients
 
 	var sr StoredAlertRule
-	err = g.db.Table("stored_alert_rules").
+	db = g.db.Table("stored_alert_rules").
 		Where("alert_id = ?", alertId).
-		Scan(&sr).Error
-	if err != nil {
-		return ar, fmt.Errorf("%w, detail: %v", NoAlert, err)
+		Scan(&sr)
+	if db.Error != nil {
+		return ar, fmt.Errorf("%w, detail: %v", NoAlert, db.Error)
+	}
+	if db.RowsAffected < 1 {
+		return ar, NoAlert
 	}
 	ar.RangeValues = sr.RangeValues
 	ar.Duration = sr.Duration
