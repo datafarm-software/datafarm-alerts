@@ -5,8 +5,10 @@ go 1.24.10
 require (
 	github.com/danielgtaylor/huma/v2 v2.34.1
 	github.com/geraud22/config-from-yaml v1.1.1
-	github.com/go-chi/chi/v5 v5.2.2
 	github.com/google/go-cmp v0.7.0
+	gorm.io/driver/sqlite v1.6.0
+	gorm.io/gorm v1.31.1
+	gorm.io/hints v1.1.2
 )
 
 require (
@@ -39,6 +41,4 @@ require (
 	golang.org/x/text v0.32.0 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
-	gorm.io/driver/sqlite v1.6.0 // indirect
-	gorm.io/gorm v1.31.1 // indirect
 )

@@ -122,9 +122,23 @@ func (g *Gorm) UpdateAlertRule(alertId string, dbRecord Schema) error {
 }
 
 // NOTE: could return alertstore.AlertExists
-func (g *Gorm) CheckAlertRuleExists(AlertRule) (string, error) {
-	return "", fmt.Errorf("not implemented")
+func (g *Gorm) CheckAlertRuleExists(ar AlertRule) (string, error) {
+	var alertId string
+	err := g.db.Model(&StoredAlertRule{}).
+		Joins("JOIN storedAlertRules ON storedAlertRules.alertId = deviceAlertRules.alertId").
+		Where("deviceAlertRules.deviceId = ?", ar.DeviceId).
+		Where("deviceAlertRules.queryField = ?", ar.QueryField).
+		Where("storedAlertRules.duration = ?", ar.Duration).
+		Where("storedAlertRules.alertRange = ?", ar.AlertRange).
+		Select("storedAlertRules.alertId").
+		Limit(1).
+		Scan(&alertId).Error
+	if alertId == "" {
+		err = NoAlert
+	}
+	return alertId, err
 }
+
 func (g *Gorm) DeleteAlertState(alertId string) error {
 	return fmt.Errorf("not implemented")
 }
