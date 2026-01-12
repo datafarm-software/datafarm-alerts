@@ -126,7 +126,7 @@ func (g *Gorm) CheckAlertRuleExists(ar AlertRule) (string, error) {
 	var alertId string
 	err := g.db.Model(&StoredAlertRule{}).
 		Joins(
-			`JOIN stored_alert_rules ON
+			`JOIN device_alert_rules ON
 			stored_alert_rules.alert_id = device_alert_rules.alert_id`,
 		).
 		Where("device_alert_rules.device_id = ?", ar.DeviceId).
