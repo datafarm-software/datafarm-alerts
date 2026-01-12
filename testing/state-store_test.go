@@ -713,7 +713,7 @@ func TestCreateAlertRule(t *testing.T) {
 	a.RegisterHumaOperations(api)
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
-			as, err = alertstore.NewGorm(alertstore.Testing, fmt.Sprintf("testing_%s", name))
+			as, err = alertstore.NewGorm(alertstore.Testing, "testing")
 			if err != nil {
 				t.Fatalf("init gorm: %v", err)
 			}
@@ -1132,7 +1132,10 @@ func TestGetAlertRule(t *testing.T) {
 	a.RegisterHumaOperations(api)
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
-			a.AlertStore = alertstore.NewMockAlertStore(tc.mockAlertStore)
+			a.AlertStore, err = alertstore.NewGorm(alertstore.Testing, "testing")
+			if err = a.AlertStore.PrepareDb(*tc.mockAlertStore); err != nil {
+				t.Fatalf("prepareDb: %v", err)
+			}
 			resp := api.Get(fmt.Sprintf("/alert/%s", tc.alertId))
 			if tc.wantStatus != resp.Code {
 				t.Fatalf("wantStatusCode: %d, response code: %d", tc.wantStatus, resp.Code)
