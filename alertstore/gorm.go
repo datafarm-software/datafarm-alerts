@@ -100,7 +100,7 @@ func (g *Gorm) GetAlertRecipients(alertId string) ([]string, error) {
 func (g *Gorm) UpdateAlertState(alert AlertState) error {
 	return fmt.Errorf("not implemented")
 }
-func (g *Gorm) StoreAlertRule(alertId string, dbRecord Schema) error {
+func (g *Gorm) StoreAlertRule(dbRecord Schema) error {
 	var err error
 	if err = gorm.G[DeviceAlertRule](g.db).CreateInBatches(ctx,
 		&dbRecord.DeviceAlerts, len(dbRecord.DeviceAlerts)); err != nil {

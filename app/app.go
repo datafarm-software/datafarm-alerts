@@ -373,7 +373,7 @@ func (a *App) CreateAlertRule(
 			},
 		},
 	}
-	if err := a.AlertStore.StoreAlertRule(alertId, dbRecord); err != nil {
+	if err := a.AlertStore.StoreAlertRule(dbRecord); err != nil {
 		log.Printf("storing alert: %v", err)
 		return nil, huma.Error500InternalServerError("internal error storing the alert rule")
 	}
