@@ -704,15 +704,15 @@ func TestCreateAlertRule(t *testing.T) {
 		},
 	}
 
-	var as *alertstore.Gorm
 	var source *alertsource.MockAlertSource
-	var err error
 	var got alertstore.CreatedRule
+	var as alertstore.AlertStore
+	var err error
 	_, api := humatest.New(t)
 	a.RegisterHumaOperations(api)
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
-			as, err = alertstore.NewGorm(alertstore.Testing, "testing")
+			as, err = alertstore.NewGorm(alertstore.Testing, fmt.Sprintf("testing_%s", name))
 			if err != nil {
 				t.Fatalf("init gorm: %v", err)
 			}

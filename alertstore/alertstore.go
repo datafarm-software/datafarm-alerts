@@ -56,11 +56,11 @@ type Schema struct {
 type DeviceAlertRule struct {
 	DeviceId   string `gorm:"index:idx_deviceId"`
 	QueryField string `gorm:"index:idx_queryField"`
-	AlertId    string `gorm:"foreignKey:AlertId"`
+	AlertId    string `gorm:"primaryKey;unique;not null;check:length(alert_id)>0"`
 }
 
 type AlertRecipient struct {
-	AlertId string `gorm:"foreignKey:AlertId"`
+	AlertId string `gorm:"primaryKey;unique;not null;check:length(alert_id)>0"`
 	Email   string
 }
 
@@ -69,12 +69,12 @@ type AlertState struct {
 	Duration    time.Duration
 	RangeValues []int `gorm:"serializer:json"`
 	Message     string
-	Id          string `gorm:"foreignKey:AlertId"`
+	Id          string `gorm:"primaryKey;unique;not null;check:length(id)>0"`
 	Level       AlertLevel
 }
 
 type StoredAlertRule struct {
-	AlertId     string     `gorm:"primaryKey;unique"`
+	AlertId     string     `gorm:"primaryKey;unique;not null;check:length(alert_id)>0"`
 	RangeValues []int      `gorm:"serializer:json"`
 	Duration    string     `gorm:"index:idx_duration"`
 	AlertRange  AlertRange `gorm:"index:idx_alertRange"`

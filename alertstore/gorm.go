@@ -124,7 +124,7 @@ func (g *Gorm) UpdateAlertRule(alertId string, dbRecord Schema) error {
 // NOTE: could return alertstore.AlertExists
 func (g *Gorm) CheckAlertRuleExists(ar AlertRule) (string, error) {
 	var alertId string
-	err := g.db.Model(&StoredAlertRule{}).
+	err := g.db.Table("stored_alert_rules").
 		Joins(
 			`JOIN device_alert_rules ON
 			stored_alert_rules.alert_id = device_alert_rules.alert_id`,
@@ -133,11 +133,11 @@ func (g *Gorm) CheckAlertRuleExists(ar AlertRule) (string, error) {
 		Where("device_alert_rules.query_field = ?", ar.QueryField).
 		Where("stored_alert_rules.duration = ?", ar.Duration).
 		Where("stored_alert_rules.alert_range = ?", ar.AlertRange).
-		Select("stored_alert_rules.alert_id").
+		Select("device_alert_rules.alert_id").
 		Limit(1).
 		Scan(&alertId).Error
 	if alertId == "" {
-		err = NoAlert
+		err = fmt.Errorf("%w. Detail: %v", NoAlert, err)
 	}
 	return alertId, err
 }
