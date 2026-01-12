@@ -92,8 +92,41 @@ func (g *Gorm) GetAlertState(alertId string) (AlertState, error) {
 	return AlertState{}, fmt.Errorf("not implemented")
 }
 func (g *Gorm) GetAlertRule(alertId string) (AlertRule, error) {
-	return AlertRule{}, fmt.Errorf("not implemented")
+	var ar AlertRule
+	ar.AlertId = alertId
+	var da DeviceAlertRule
+	err := g.db.Table("device_alert_rules").
+		Where("alert_id = ?", alertId).
+		Scan(&da).Error
+	if err != nil {
+		return ar, fmt.Errorf("%w, detail: %v", NoAlert, err)
+	}
+	ar.DeviceId = da.DeviceId
+	ar.QueryField = da.QueryField
+
+	var recipients []string
+	err = g.db.Table("alert_recipients").
+		Where("alert_id = ?", alertId).
+		Select("email").
+		Scan(&recipients).Error
+	if err != nil {
+		return ar, fmt.Errorf("%w, detail: %v", NoAlert, err)
+	}
+	ar.EmailAddresses = recipients
+
+	var sr StoredAlertRule
+	err = g.db.Table("stored_alert_rules").
+		Where("alert_id = ?", alertId).
+		Scan(&sr).Error
+	if err != nil {
+		return ar, fmt.Errorf("%w, detail: %v", NoAlert, err)
+	}
+	ar.RangeValues = sr.RangeValues
+	ar.Duration = sr.Duration
+	ar.AlertRange = sr.AlertRange
+	return ar, nil
 }
+
 func (g *Gorm) GetAlertRecipients(alertId string) ([]string, error) {
 	return nil, fmt.Errorf("not implemented")
 }
@@ -124,7 +157,7 @@ func (g *Gorm) UpdateAlertRule(alertId string, dbRecord Schema) error {
 // NOTE: could return alertstore.AlertExists
 func (g *Gorm) CheckAlertRuleExists(ar AlertRule) (string, error) {
 	var alertId string
-	err := g.db.Debug().Table("stored_alert_rules").
+	err := g.db.Table("stored_alert_rules").
 		Joins(
 			`JOIN device_alert_rules ON
 			stored_alert_rules.alert_id = device_alert_rules.alert_id`,

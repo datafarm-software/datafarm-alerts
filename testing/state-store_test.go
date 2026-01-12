@@ -1133,6 +1133,7 @@ func TestGetAlertRule(t *testing.T) {
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
 			a.AlertStore, err = alertstore.NewGorm(alertstore.Testing, "testing")
+			defer a.AlertStore.Close()
 			if err = a.AlertStore.PrepareDb(*tc.mockAlertStore); err != nil {
 				t.Fatalf("prepareDb: %v", err)
 			}
