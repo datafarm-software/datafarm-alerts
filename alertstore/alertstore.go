@@ -60,7 +60,7 @@ type DeviceAlertRule struct {
 }
 
 type AlertRecipient struct {
-	AlertId string `gorm:"primaryKey;unique;not null;check:length(alert_id)>0"`
+	AlertId string `gorm:"check:length(alert_id)>0"`
 	Email   string
 }
 

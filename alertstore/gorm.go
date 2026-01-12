@@ -59,7 +59,7 @@ func (g *Gorm) PrepareDb(dbRecord Schema) error {
 	if err = g.db.AutoMigrate(&StoredAlertRule{}); err != nil {
 		return err
 	}
-	return g.StoreAlertRule("alert1", dbRecord)
+	return g.StoreAlertRule(dbRecord)
 }
 
 func (g *Gorm) GetSnapshot() *Schema {
@@ -124,7 +124,7 @@ func (g *Gorm) UpdateAlertRule(alertId string, dbRecord Schema) error {
 // NOTE: could return alertstore.AlertExists
 func (g *Gorm) CheckAlertRuleExists(ar AlertRule) (string, error) {
 	var alertId string
-	err := g.db.Table("stored_alert_rules").
+	err := g.db.Debug().Table("stored_alert_rules").
 		Joins(
 			`JOIN device_alert_rules ON
 			stored_alert_rules.alert_id = device_alert_rules.alert_id`,
@@ -136,8 +136,8 @@ func (g *Gorm) CheckAlertRuleExists(ar AlertRule) (string, error) {
 		Select("device_alert_rules.alert_id").
 		Limit(1).
 		Scan(&alertId).Error
-	if alertId == "" {
-		err = fmt.Errorf("%w. Detail: %v", NoAlert, err)
+	if alertId != "" {
+		err = fmt.Errorf("%w. Detail: %v", AlertExists, err)
 	}
 	return alertId, err
 }

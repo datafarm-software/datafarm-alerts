@@ -545,6 +545,7 @@ func TestCreateAlertRule(t *testing.T) {
 				},
 				AlertRules: []alertstore.StoredAlertRule{
 					{
+						AlertId:     AlertId,
 						RangeValues: []int{5},
 						Duration:    "24h",
 						AlertRange:  alertstore.LessThan,
