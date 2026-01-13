@@ -82,8 +82,8 @@ type StoredAlertRule struct {
 
 type AlertRule struct {
 	AlertId        string     `json:"alertId" doc:"Alert Id."`
-	EmailAddresses []string   `json:"emailAddresses" format:"email" doc:"List of email addresses to notify in the event of the alert. If updated, new list will replace old one as an overwrite."` //NOTE: implementation should know to automatically store this in a join table with alertId.
-	RangeValues    []int      `json:"rangeValues" minItems:"1" maxItems:"2" doc:"One or two values, depending on whether the alertRange is a range or < >"`                                        //NOTE: this should get stored as a string
+	EmailAddresses []string   `gorm:"serializer:json" json:"emailAddresses" format:"email" doc:"List of email addresses to notify in the event of the alert. If updated, new list will replace old one as an overwrite."` //NOTE: implementation should know to automatically store this in a join table with alertId.
+	RangeValues    []int      `gorm:"serializer:json" json:"rangeValues" minItems:"1" maxItems:"2" doc:"One or two values, depending on whether the alertRange is a range or < >"`                                        //NOTE: this should get stored as a string
 	Duration       string     `json:"duration" pattern:"^[0-9]{1,2}[smhd]$" doc:"A duration literal, specifying how often a check should occur."`
 	DeviceId       string     `json:"deviceId" pattern:"^[a-zA-Z0-9]+$" doc:"The device for which data should be checked."`
 	QueryField     string     `json:"queryField" pattern:"^[a-zA-Z0-9_]+$" doc:"The field on the device, for which data should be checked."`

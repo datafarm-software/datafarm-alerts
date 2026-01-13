@@ -94,21 +94,9 @@ func (g *Gorm) GetAlertState(alertId string) (AlertState, error) {
 func (g *Gorm) GetAlertRule(alertId string) (AlertRule, error) {
 	var ar AlertRule
 	ar.AlertId = alertId
-	var da DeviceAlertRule
-	db := g.db.Table("device_alert_rules").
-		Where("alert_id = ?", alertId).
-		Scan(&da)
-	if db.Error != nil {
-		return ar, fmt.Errorf("%w, detail: %v", NoAlert, db.Error)
-	}
-	if db.RowsAffected < 1 {
-		return ar, NoAlert
-	}
-	ar.DeviceId = da.DeviceId
-	ar.QueryField = da.QueryField
 
 	var recipients []string
-	db = g.db.Table("alert_recipients").
+	db := g.db.Table("alert_recipients").
 		Where("alert_id = ?", alertId).
 		Select("email").
 		Scan(&recipients)
@@ -120,19 +108,32 @@ func (g *Gorm) GetAlertRule(alertId string) (AlertRule, error) {
 	}
 	ar.EmailAddresses = recipients
 
-	var sr StoredAlertRule
-	db = g.db.Table("stored_alert_rules").
-		Where("alert_id = ?", alertId).
-		Scan(&sr)
+	db = g.db.Debug().Table("stored_alert_rules AS sar").
+		Select(`
+			sar.alert_id,
+			dar.device_id,
+			dar.query_field,
+			sar.range_values,
+			sar.duration,
+			sar.alert_range,
+			json_group_array(ar.email) AS email_addresses
+		`).
+		Joins(`
+			LEFT JOIN device_alert_rules dar
+			ON dar.alert_id = sar.alert_id
+		`).
+		Joins(`
+			LEFT JOIN alert_recipients ar
+			ON sar.alert_id = ar.alert_id
+		`).
+		Where("sar.alert_id = ?", alertId).
+		Scan(&ar)
 	if db.Error != nil {
 		return ar, fmt.Errorf("%w, detail: %v", NoAlert, db.Error)
 	}
 	if db.RowsAffected < 1 {
 		return ar, NoAlert
 	}
-	ar.RangeValues = sr.RangeValues
-	ar.Duration = sr.Duration
-	ar.AlertRange = sr.AlertRange
 	return ar, nil
 }
 
