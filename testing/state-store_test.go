@@ -1003,9 +1003,10 @@ func TestUpdateAlertRule(t *testing.T) {
 		},
 
 		"error when trying to update non existent alert rule": {
-			wantStatus: http.StatusNotFound,
-			wantErr:    true,
-			alertId:    AlertId,
+			wantStatus:     http.StatusNotFound,
+			wantErr:        true,
+			alertId:        AlertId,
+			mockAlertStore: &alertstore.Schema{},
 			alertRule: alertstore.AlertRule{
 				EmailAddresses: []string{UserEmail},
 				RangeValues:    []int{10, 20},
@@ -1017,9 +1018,10 @@ func TestUpdateAlertRule(t *testing.T) {
 		},
 
 		"invalid: 1 range value on a range type alert check": {
-			wantStatus: http.StatusBadRequest,
-			wantErr:    true,
-			alertId:    AlertId,
+			wantStatus:     http.StatusBadRequest,
+			wantErr:        true,
+			mockAlertStore: &alertstore.Schema{},
+			alertId:        AlertId,
 			alertRule: alertstore.AlertRule{
 				EmailAddresses: []string{UserEmail},
 				RangeValues:    []int{10},
@@ -1031,9 +1033,10 @@ func TestUpdateAlertRule(t *testing.T) {
 		},
 
 		"invalid: 2 range values on a less than type alert check": {
-			wantStatus: http.StatusBadRequest,
-			wantErr:    true,
-			alertId:    AlertId,
+			wantStatus:     http.StatusBadRequest,
+			wantErr:        true,
+			mockAlertStore: &alertstore.Schema{},
+			alertId:        AlertId,
 			alertRule: alertstore.AlertRule{
 				EmailAddresses: []string{UserEmail},
 				RangeValues:    []int{50, 90},

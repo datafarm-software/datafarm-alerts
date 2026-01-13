@@ -60,8 +60,8 @@ type DeviceAlertRule struct {
 }
 
 type AlertRecipient struct {
-	AlertId string `gorm:"check:length(alert_id)>0"`
-	Email   string
+	AlertId string `gorm:"check:length(alert_id)>0;index:uniq_alert_email,unique"`
+	Email   string `gorm:"check:length(email)>0;index:uniq_alert_email,unique"`
 }
 
 type AlertState struct {

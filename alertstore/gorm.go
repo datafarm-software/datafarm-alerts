@@ -7,6 +7,7 @@ import (
 
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 var ctx = context.Background()
@@ -142,7 +143,7 @@ func (g *Gorm) GetAlertRecipients(alertId string) ([]string, error) {
 func (g *Gorm) UpdateAlertState(alert AlertState) error {
 	return fmt.Errorf("not implemented")
 }
-func (g *Gorm) StoreAlertRule(dbRecord Schema) error {
+func (g *Gorm) StoreAlertRule(dbRecord Schema) eror {
 	var err error
 	if err = gorm.G[DeviceAlertRule](g.db).CreateInBatches(ctx,
 		&dbRecord.DeviceAlerts, len(dbRecord.DeviceAlerts)); err != nil {
@@ -160,7 +161,46 @@ func (g *Gorm) StoreAlertRule(dbRecord Schema) error {
 }
 
 func (g *Gorm) UpdateAlertRule(alertId string, dbRecord Schema) error {
-	return fmt.Errorf("not implemented")
+	return g.db.Transaction(func(tx *gorm.DB) error {
+		var err error
+		for _, da := range dbRecord.DeviceAlerts {
+			if err = tx.Table("device_alert_rules").
+				Update("device_id", da.DeviceId).
+				Update("query_field", da.QueryField).
+				Where("alert_id", da.AlertId).Error; err != nil {
+				break
+			}
+		}
+		if err != nil {
+			return err
+		}
+		for _, ar := range dbRecord.AlertRecipients {
+			if err = tx.Clauses(
+				clause.OnConflict{
+					Columns:   []clause.Column{{Name: "alert_id"}, {Name: "email"}},
+					DoNothing: true,
+				}).
+				Table("alert_recipients").
+				Create(&ar).Error; err != nil {
+				break
+			}
+		}
+		if err != nil {
+			return err
+		}
+
+		for _, sar := range dbRecord.AlertRules {
+			if err = tx.Table("stored_alert_rules").
+				Where("alert_id = ?", sar.AlertId).
+				Updates(&sar).Error; err != nil {
+				break
+			}
+		}
+		if err != nil {
+			return err
+		}
+		return nil
+	})
 }
 
 // NOTE: could return alertstore.AlertExists
