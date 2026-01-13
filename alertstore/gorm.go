@@ -167,9 +167,9 @@ func (g *Gorm) UpdateAlertRule(alertId string, dbRecord Schema) error {
 		var err error
 		for _, da := range dbRecord.DeviceAlerts {
 			if err = tx.Table("device_alert_rules").
+				Where("alert_id", da.AlertId).
 				Update("device_id", da.DeviceId).
-				Update("query_field", da.QueryField).
-				Where("alert_id", da.AlertId).Error; err != nil {
+				Update("query_field", da.QueryField).Error; err != nil {
 				break
 			}
 		}

@@ -872,6 +872,7 @@ func TestUpdateAlertRule(t *testing.T) {
 				},
 			},
 			wantAlertStore: &alertstore.Schema{
+				AlertStates: []alertstore.AlertState{},
 				AlertRecipients: []alertstore.AlertRecipient{
 					{AlertId: AlertId, Email: UserEmail},
 				},
@@ -926,6 +927,7 @@ func TestUpdateAlertRule(t *testing.T) {
 				},
 			},
 			wantAlertStore: &alertstore.Schema{
+				AlertStates: []alertstore.AlertState{},
 				AlertRecipients: []alertstore.AlertRecipient{
 					{AlertId: AlertId, Email: UserEmail},
 					{AlertId: AlertId, Email: "user2@alert.com"},
@@ -981,6 +983,7 @@ func TestUpdateAlertRule(t *testing.T) {
 				},
 			},
 			wantAlertStore: &alertstore.Schema{
+				AlertStates: []alertstore.AlertState{},
 				AlertRecipients: []alertstore.AlertRecipient{
 					{AlertId: AlertId, Email: UserEmail},
 				},
