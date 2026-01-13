@@ -59,6 +59,36 @@ func (g *Gorm) PrepareDb(dbRecord Schema) error {
 	if err = g.db.AutoMigrate(&StoredAlertRule{}); err != nil {
 		return err
 	}
+	stmts := []string{
+		`DROP VIEW IF EXISTS alert_rule_view`,
+		`CREATE VIEW alert_rule_view AS
+		SELECT
+			sar.alert_id,
+			dar.device_id,
+			dar.query_field,
+			sar.range_values,
+			sar.duration,
+			sar.alert_range,
+			json_group_array(ar.email) AS email_addresses
+		FROM stored_alert_rules sar
+		LEFT JOIN device_alert_rules dar
+			ON dar.alert_id = sar.alert_id
+		LEFT JOIN alert_recipients ar
+			ON ar.alert_id = sar.alert_id
+		GROUP BY
+			sar.alert_id,
+			dar.device_id,
+			dar.query_field,
+			sar.range_values,
+			sar.duration,
+			sar.alert_range
+		`,
+	}
+	for _, stmt := range stmts {
+		if err = g.db.Exec(stmt).Error; err != nil {
+			return err
+		}
+	}
 	return g.StoreAlertRule(dbRecord)
 }
 
@@ -94,34 +124,9 @@ func (g *Gorm) GetAlertState(alertId string) (AlertState, error) {
 func (g *Gorm) GetAlertRule(alertId string) (AlertRule, error) {
 	var ar AlertRule
 	ar.AlertId = alertId
-	db := g.db.Debug().Table("stored_alert_rules AS sar").
-		Select(`
-			sar.alert_id,
-			dar.device_id,
-			dar.query_field,
-			sar.range_values,
-			sar.duration,
-			sar.alert_range,
-			json_group_array(ar.email) AS email_addresses
-		`).
-		Joins(`
-			LEFT JOIN device_alert_rules dar
-			ON dar.alert_id = sar.alert_id
-		`).
-		Joins(`
-			LEFT JOIN alert_recipients ar
-			ON sar.alert_id = ar.alert_id
-		`).
-		Where("sar.alert_id = ?", alertId).
-		Group(`
-			sar.alert_id,
-			dar.device_id,
-			dar.query_field,
-			sar.range_values,
-			sar.duration,
-			sar.alert_range;
-		`).
-		Scan(&ar)
+	db := g.db.Table("alert_rule_view").
+		Where("alert_id = ?", alertId).
+		Take(&ar)
 	if db.Error != nil {
 		return ar, fmt.Errorf("%w, detail: %v", NoAlert, db.Error)
 	}
