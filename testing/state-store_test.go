@@ -1225,15 +1225,16 @@ func TestDeleteAlert(t *testing.T) {
 		},
 
 		"try to delete non existent alert": {
-			wantErr:    true,
-			wantStatus: 404,
-			alertId:    "alert2",
+			wantErr:        true,
+			wantStatus:     404,
+			alertId:        "alert2",
+			mockAlertStore: &alertstore.Schema{},
 		},
 	}
 
 	var got alertstore.AlertRule
 	var err error
-	var as *alertstore.MockAlertStore
+	var as *alertstore.Gorm
 	var m *alertsource.MockAlertSource
 	_, api := humatest.New(t)
 	a.RegisterHumaOperations(api)
@@ -1241,8 +1242,14 @@ func TestDeleteAlert(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			m = alertsource.NewMockAlertSource(tc.mockAlertSource)
 			a.AlertSource = m
-			as = alertstore.NewMockAlertStore(tc.mockAlertStore)
+			as, err = alertstore.NewGorm(alertstore.Testing, "testing")
+			if err != nil {
+				t.Fatalf("init gorm: %v", err)
+			}
 			defer as.Close()
+			if err = as.PrepareDb(*tc.mockAlertStore); err != nil {
+				t.Fatalf("preparedb: %v", err)
+			}
 			a.AlertStore = as
 			resp := api.Delete(fmt.Sprintf("/alert/%s", tc.alertId))
 			if tc.wantStatus != resp.Code {
