@@ -280,18 +280,25 @@ func (a *App) RespondToAlert(
 	in *struct{ Body alertsource.InfluxAlert }) (*struct{}, error) {
 	source := alertsource.AlertSource(&in.Body)
 	alert := source.GetAlertState()
-	previousAlert, err := a.AlertStore.GetAlertState(alert.Id)
-	if err != nil {
-		log.Printf("getting previous alert for %s: %v", alert.Id, err)
-		return nil, huma.Error404NotFound("no alert configured")
-	}
 	alertRule, err := a.AlertStore.GetAlertRule(alert.Id)
 	if err != nil {
-		log.Printf("getting alert rule for %s: %v", alert.Id, err)
-		return nil, huma.Error500InternalServerError("Internal error getting the alert rule.")
+		if !errors.Is(err, alertstore.NoAlert) {
+			log.Printf("getting alert rule for %s: %v", alert.Id, err)
+			return nil, huma.Error500InternalServerError("Internal error getting the alert rule.")
+		}
+		return nil, huma.Error404NotFound("Alert rule not found.")
 	}
 	if alertRule.QueryField != in.Body.QueryField || alertRule.DeviceId != in.Body.DeviceId {
 		return nil, huma.Error404NotFound("Received alert with unknown DeviceId and QueryField combination.")
+	}
+	previousAlert, err := a.AlertStore.GetAlertState(alert.Id)
+	if err != nil {
+		if !errors.Is(err, alertstore.NoAlert) {
+			log.Printf("getting previous alert for %s: %v", alert.Id, err)
+			return nil, huma.Error500InternalServerError("Internal error getting previous alert state.")
+		}
+		//NOTE: if no previous state is found, assume first time alert.
+		previousAlert.Level = alertstore.Ok
 	}
 	alert.Duration, err = alertstore.ParseDuration(alertRule.Duration)
 	if err != nil {

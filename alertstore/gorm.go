@@ -122,6 +122,7 @@ func (g *Gorm) GetSnapshot() *Schema {
 func (g *Gorm) GetAlertState(alertId string) (AlertState, error) {
 	return AlertState{}, fmt.Errorf("not implemented")
 }
+
 func (g *Gorm) GetAlertRule(alertId string) (AlertRule, error) {
 	var ar AlertRule
 	ar.AlertId = alertId
