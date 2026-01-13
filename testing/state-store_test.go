@@ -29,9 +29,9 @@ const SomeDuration = (24 * time.Hour)
 const AlertId = "alert1"
 const UserEmail = "user1@alert.com"
 
-var AlertReceived = time.Now()
-var AfterDuration = time.Now().Add(25 * time.Hour)
-var WithinDuration = time.Now().Add(6 * time.Hour)
+var AlertReceived = time.Date(1994, 6, 24, 6, 0, 0, 0, time.UTC)
+var AfterDuration = AlertReceived.Add(25 * time.Hour)
+var WithinDuration = AlertReceived.Add(6 * time.Hour)
 
 func TestShouldNotifyCrit(t *testing.T) {
 	var got bool
@@ -500,7 +500,7 @@ func TestRespondToAlert(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			n = notifier.NewMockNotifier(tc.mockNotifierStore)
 			a.Notifier = n
-			a.AlertStore, err = alertstore.NewMockAlertStore(alertstore.Testing, "testing")
+			a.AlertStore, err = alertstore.NewGorm(alertstore.Testing, "testing")
 			if err != nil {
 				t.Fatalf("init alertstore: %v", err)
 			}

@@ -90,6 +90,16 @@ func (g *Gorm) PrepareDb(dbRecord Schema) error {
 			return err
 		}
 	}
+	if len(dbRecord.AlertStates) > 0 {
+		for _, state := range dbRecord.AlertStates {
+			if err = g.UpdateAlertState(state); err != nil {
+				break
+			}
+		}
+		if err != nil {
+			return err
+		}
+	}
 	return g.StoreAlertRule(dbRecord)
 }
 
@@ -122,7 +132,7 @@ func (g *Gorm) GetSnapshot() *Schema {
 func (g *Gorm) GetAlertState(alertId string) (AlertState, error) {
 	var as AlertState
 	var err error
-	db := g.db.Find(&as, AlertState{Id: alertId})
+	db := g.db.Debug().First(&as, AlertState{Id: alertId})
 	err = db.Error
 	if db.RowsAffected < 1 {
 		err = NoAlert
