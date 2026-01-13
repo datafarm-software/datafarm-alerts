@@ -143,21 +143,23 @@ func (g *Gorm) GetAlertRecipients(alertId string) ([]string, error) {
 func (g *Gorm) UpdateAlertState(alert AlertState) error {
 	return fmt.Errorf("not implemented")
 }
-func (g *Gorm) StoreAlertRule(dbRecord Schema) eror {
+func (g *Gorm) StoreAlertRule(dbRecord Schema) error {
 	var err error
-	if err = gorm.G[DeviceAlertRule](g.db).CreateInBatches(ctx,
-		&dbRecord.DeviceAlerts, len(dbRecord.DeviceAlerts)); err != nil {
-		return err
-	}
-	if err = gorm.G[AlertRecipient](g.db).CreateInBatches(ctx,
-		&dbRecord.AlertRecipients, len(dbRecord.AlertRecipients)); err != nil {
-		return err
-	}
-	if err = gorm.G[StoredAlertRule](g.db).CreateInBatches(ctx,
-		&dbRecord.AlertRules, len(dbRecord.AlertRules)); err != nil {
-		return err
-	}
-	return nil
+	return g.db.Transaction(func(tx *gorm.DB) error {
+		if err = gorm.G[DeviceAlertRule](g.db).CreateInBatches(ctx,
+			&dbRecord.DeviceAlerts, len(dbRecord.DeviceAlerts)); err != nil {
+			return err
+		}
+		if err = gorm.G[AlertRecipient](g.db).CreateInBatches(ctx,
+			&dbRecord.AlertRecipients, len(dbRecord.AlertRecipients)); err != nil {
+			return err
+		}
+		if err = gorm.G[StoredAlertRule](g.db).CreateInBatches(ctx,
+			&dbRecord.AlertRules, len(dbRecord.AlertRules)); err != nil {
+			return err
+		}
+		return nil
+	})
 }
 
 func (g *Gorm) UpdateAlertRule(alertId string, dbRecord Schema) error {
