@@ -228,8 +228,8 @@ func (g *Gorm) CheckAlertRuleExists(ar AlertRule) (string, error) {
 
 func (g *Gorm) DeleteAlertState(alertId string) error {
 	if err := g.db.Table("alert_states").
-		Delete("*").
-		Where("alert_id = ?", alertId).Error; err != nil {
+		Where("id = ?", alertId).
+		Delete("*").Error; err != nil {
 		return err
 	}
 	return nil
@@ -237,5 +237,29 @@ func (g *Gorm) DeleteAlertState(alertId string) error {
 
 // NOTE: could return alertstore.NoAlert
 func (g *Gorm) DeleteAlertRule(alertId string) (AlertRule, error) {
-	return AlertRule{}, fmt.Errorf("not implemented")
+	ar, err := g.GetAlertRule(alertId)
+	if err != nil {
+		return ar, err
+	}
+	if err := g.db.Transaction(func(tx *gorm.DB) error {
+		if err = tx.Table("device_alert_rules").
+			Where("alert_id = ?", alertId).
+			Delete("*").Error; err != nil {
+			return err
+		}
+		if err = tx.Table("alert_recipients").
+			Where("alert_id = ?", alertId).
+			Delete("*").Error; err != nil {
+			return err
+		}
+		if err = tx.Table("stored_alert_rules").
+			Where("alert_id = ?", alertId).
+			Delete("*").Error; err != nil {
+			return err
+		}
+		return nil
+	}); err != nil {
+		return ar, err
+	}
+	return ar, nil
 }
