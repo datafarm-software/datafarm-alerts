@@ -30,6 +30,11 @@ func (m *MockAlertStore) GetSnapshot() *Schema {
 
 func (m *MockAlertStore) GetAlertState(alertId string) (AlertState, error) {
 	var state, emptyState AlertState
+	if len(m.Db.AlertStates) < 1 {
+		return AlertState{
+			Time: time.Now(),
+		}, nil
+	}
 	for _, as := range m.Db.AlertStates {
 		if as.Id == alertId {
 			state = as
@@ -170,6 +175,10 @@ func (m *MockAlertStore) CheckAlertRuleExists(ar AlertRule) (string, error) {
 }
 
 func (m *MockAlertStore) UpdateAlertState(alert AlertState) error {
+	if len(m.Db.AlertStates) < 1 {
+		m.Db.AlertStates = append(m.Db.AlertStates, alert)
+		return nil
+	}
 	for i, state := range m.Db.AlertStates {
 		if state.Id != alert.Id {
 			continue

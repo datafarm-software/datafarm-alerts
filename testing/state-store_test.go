@@ -14,6 +14,7 @@ import (
 	"github.com/geraud22/sensordata-alerts/app"
 	"github.com/geraud22/sensordata-alerts/notifier"
 	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
 )
 
 var a = &app.App{}
@@ -317,6 +318,15 @@ func TestRespondToAlert(t *testing.T) {
 						Duration: "24h",
 					},
 				},
+				AlertStates: []alertstore.AlertState{
+					{
+						Time:     AlertReceived,
+						Duration: SomeDuration,
+						Message:  "Alert is ok.",
+						Id:       AlertId,
+						Level:    alertstore.Ok,
+					},
+				},
 			},
 			alert: alertsource.InfluxAlert{
 				Id:         AlertId,
@@ -339,6 +349,15 @@ func TestRespondToAlert(t *testing.T) {
 						Duration: "24h",
 					},
 				},
+				AlertStates: []alertstore.AlertState{
+					{
+						Time:     AlertReceived,
+						Duration: SomeDuration,
+						Message:  "Alert is ok.",
+						Id:       AlertId,
+						Level:    alertstore.Ok,
+					},
+				},
 			},
 		},
 
@@ -356,6 +375,15 @@ func TestRespondToAlert(t *testing.T) {
 					{
 						AlertId:  AlertId,
 						Duration: "24h",
+					},
+				},
+				AlertStates: []alertstore.AlertState{
+					{
+						Time:     AlertReceived,
+						Duration: SomeDuration,
+						Message:  "Alert is ok.",
+						Id:       AlertId,
+						Level:    alertstore.Ok,
 					},
 				},
 			},
@@ -378,6 +406,15 @@ func TestRespondToAlert(t *testing.T) {
 					{
 						AlertId:  AlertId,
 						Duration: "24h",
+					},
+				},
+				AlertStates: []alertstore.AlertState{
+					{
+						Time:     AlertReceived,
+						Duration: SomeDuration,
+						Message:  "Alert is ok.",
+						Id:       AlertId,
+						Level:    alertstore.Ok,
 					},
 				},
 			},
@@ -436,7 +473,7 @@ func TestRespondToAlert(t *testing.T) {
 				AlertStates: []alertstore.AlertState{
 					{
 						Id:       AlertId,
-						Time:     AlertReceived,
+						Time:     AlertReceived.Add(SomeDuration).Add(1 * time.Hour),
 						Duration: SomeDuration,
 						Message:  "New alert message stating crit level.",
 						Level:    alertstore.Crit,
@@ -469,9 +506,7 @@ func TestRespondToAlert(t *testing.T) {
 				t.Fatalf("user inboxes mismatch (-want +got):\n%s", diff)
 			}
 			if diff := cmp.Diff(tc.wantAlertStore, as.GetSnapshot(),
-				cmp.Comparer(func(a, b time.Time) bool {
-					return a.Sub(b) < 10*time.Millisecond
-				})); diff != "" {
+				cmpopts.EquateApproxTime(1*time.Second)); diff != "" {
 				t.Fatalf("alertstore mismatch (-want +got):\n%s", diff)
 			}
 		})

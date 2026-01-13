@@ -290,6 +290,9 @@ func (a *App) RespondToAlert(
 		log.Printf("getting alert rule for %s: %v", alert.Id, err)
 		return nil, huma.Error500InternalServerError("Internal error getting the alert rule.")
 	}
+	if alertRule.QueryField != in.Body.QueryField || alertRule.DeviceId != in.Body.DeviceId {
+		return nil, huma.Error404NotFound("Received alert with unknown DeviceId and QueryField combination.")
+	}
 	alert.Duration, err = alertstore.ParseDuration(alertRule.Duration)
 	if err != nil {
 		log.Printf("parsing duration for alert: %s, %s, err: %v", alert.Id, alertRule.Duration, err)
