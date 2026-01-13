@@ -146,8 +146,16 @@ func (g *Gorm) GetAlertRule(alertId string) (AlertRule, error) {
 }
 
 func (g *Gorm) GetAlertRecipients(alertId string) ([]string, error) {
-	return nil, fmt.Errorf("not implemented")
+	var emails []string
+	var err error
+	db := g.db.Table("alert_recipients").Find(&emails, "alert_id = ?", alertId)
+	err = db.Error
+	if db.RowsAffected < 1 || len(emails) < 1 {
+		err = fmt.Errorf("no recipients")
+	}
+	return emails, err
 }
+
 func (g *Gorm) UpdateAlertState(alert AlertState) error {
 	return fmt.Errorf("not implemented")
 }
