@@ -1045,16 +1045,19 @@ func TestUpdateAlertRule(t *testing.T) {
 		},
 	}
 
-	var as *alertstore.MockAlertStore
+	var as *alertstore.Gorm
 	var err error
 	var got alertstore.AlertRule
 	_, api := humatest.New(t)
 	a.RegisterHumaOperations(api)
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
-			as = alertstore.NewMockAlertStore(tc.mockAlertStore)
+			as, err = alertstore.NewGorm(alertstore.Testing, "testing")
 			defer as.Close()
 			a.AlertStore = as
+			if err = a.AlertStore.PrepareDb(*tc.mockAlertStore); err != nil {
+				t.Fatalf("preparedb: %v", err)
+			}
 			resp := api.Put(fmt.Sprintf("/alert/%s", tc.alertId), tc.alertRule)
 			if tc.wantStatus != resp.Code {
 				t.Fatalf("wantStatusCode: %d, response code: %d", tc.wantStatus, resp.Code)
