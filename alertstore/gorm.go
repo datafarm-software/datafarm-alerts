@@ -157,7 +157,7 @@ func (g *Gorm) GetAlertRecipients(alertId string) ([]string, error) {
 }
 
 func (g *Gorm) UpdateAlertState(alert AlertState) error {
-	return fmt.Errorf("not implemented")
+	return g.db.Model(&AlertState{}).Updates(&alert).Error
 }
 func (g *Gorm) StoreAlertRule(dbRecord Schema) error {
 	var err error
