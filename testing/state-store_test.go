@@ -484,28 +484,26 @@ func TestRespondToAlert(t *testing.T) {
 	}
 
 	var n *notifier.MockNotifier
-	var as alertstore.AlertStore
 	var err error
 	_, api := humatest.New(t)
 	a.RegisterHumaOperations(api)
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
 			n = notifier.NewMockNotifier(tc.mockNotifierStore)
-			as, err = alertstore.NewMockAlertStore(alertstore.Testing, "testing")
+			a.Notifier = n
+			a.AlertStore, err = alertstore.NewMockAlertStore(alertstore.Testing, "testing")
 			if err != nil {
 				t.Fatalf("init alertstore: %v", err)
 			}
-			defer as.Close()
-			if err = as.PrepareDb(*tc.mockAlertStore); err != nil {
+			defer a.AlertStore.Close()
+			if err = a.AlertStore.PrepareDb(*tc.mockAlertStore); err != nil {
 				t.Fatalf("preparedb: %v", err)
 			}
-			a.AlertStore = as
-			a.Notifier = n
 			api.Post("/alert/notify", tc.alert)
 			if diff := cmp.Diff(tc.wantUserInboxes, n.GetUserInboxes()); diff != "" {
 				t.Fatalf("user inboxes mismatch (-want +got):\n%s", diff)
 			}
-			if diff := cmp.Diff(tc.wantAlertStore, as.GetSnapshot(),
+			if diff := cmp.Diff(tc.wantAlertStore, a.AlertStore.GetSnapshot(),
 				cmpopts.EquateApproxTime(1*time.Second)); diff != "" {
 				t.Fatalf("alertstore mismatch (-want +got):\n%s", diff)
 			}
@@ -809,25 +807,21 @@ func TestCreateAlertRule(t *testing.T) {
 		},
 	}
 
-	var source *alertsource.MockAlertSource
 	var got alertstore.CreatedRule
-	var as alertstore.AlertStore
 	var err error
 	_, api := humatest.New(t)
 	a.RegisterHumaOperations(api)
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
-			as, err = alertstore.NewGorm(alertstore.Testing, "testing")
+			a.AlertStore, err = alertstore.NewGorm(alertstore.Testing, "testing")
 			if err != nil {
 				t.Fatalf("init alertstore: %v", err)
 			}
-			defer as.Close()
-			if err = as.PrepareDb(*tc.mockAlertStore); err != nil {
+			defer a.AlertStore.Close()
+			if err = a.AlertStore.PrepareDb(*tc.mockAlertStore); err != nil {
 				t.Fatalf("preparedb: %v", err)
 			}
-			a.AlertStore = as
-			source = alertsource.NewMockAlertSource(tc.mockAlertSource)
-			a.AlertSource = source
+			a.AlertSource = alertsource.NewMockAlertSource(tc.mockAlertSource)
 			resp := api.Post("/alert", tc.alertRule)
 			if tc.wantStatus != resp.Code {
 				t.Fatalf("wantStatusCode: %d, response code: %d", tc.wantStatus, resp.Code)
@@ -1155,16 +1149,14 @@ func TestUpdateAlertRule(t *testing.T) {
 		},
 	}
 
-	var as alertstore.AlertStore
 	var err error
 	var got alertstore.AlertRule
 	_, api := humatest.New(t)
 	a.RegisterHumaOperations(api)
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
-			as, err = alertstore.NewGorm(alertstore.Testing, "testing")
-			defer as.Close()
-			a.AlertStore = as
+			a.AlertStore, err = alertstore.NewGorm(alertstore.Testing, "testing")
+			defer a.AlertStore.Close()
 			if err = a.AlertStore.PrepareDb(*tc.mockAlertStore); err != nil {
 				t.Fatalf("preparedb: %v", err)
 			}
@@ -1179,7 +1171,7 @@ func TestUpdateAlertRule(t *testing.T) {
 				if diff := cmp.Diff(tc.alertRule, got); diff != "" {
 					t.Fatalf("response mismatch (-want +got):\n%s", diff)
 				}
-				if diff := cmp.Diff(tc.wantAlertStore, as.GetSnapshot()); diff != "" {
+				if diff := cmp.Diff(tc.wantAlertStore, a.AlertStore.GetSnapshot()); diff != "" {
 					t.Fatalf("alertstore mismatch (-want +got):\n%s", diff)
 				}
 			}
@@ -1338,7 +1330,6 @@ func TestDeleteAlert(t *testing.T) {
 
 	var got alertstore.AlertRule
 	var err error
-	var as alertstore.AlertStore
 	var m *alertsource.MockAlertSource
 	_, api := humatest.New(t)
 	a.RegisterHumaOperations(api)
@@ -1346,15 +1337,14 @@ func TestDeleteAlert(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			m = alertsource.NewMockAlertSource(tc.mockAlertSource)
 			a.AlertSource = m
-			as, err = alertstore.NewGorm(alertstore.Testing, "testing")
+			a.AlertStore, err = alertstore.NewGorm(alertstore.Testing, "testing")
 			if err != nil {
 				t.Fatalf("init alertstore: %v", err)
 			}
-			defer as.Close()
-			if err = as.PrepareDb(*tc.mockAlertStore); err != nil {
+			defer a.AlertStore.Close()
+			if err = a.AlertStore.PrepareDb(*tc.mockAlertStore); err != nil {
 				t.Fatalf("preparedb: %v", err)
 			}
-			a.AlertStore = as
 			resp := api.Delete(fmt.Sprintf("/alert/%s", tc.alertId))
 			if tc.wantStatus != resp.Code {
 				t.Fatalf("wantStatus: %d, response Code: %v", tc.wantStatus, resp.Code)
@@ -1366,7 +1356,7 @@ func TestDeleteAlert(t *testing.T) {
 				if diff := cmp.Diff(tc.wantAlertRule, got); err != nil {
 					t.Fatalf("alertRule mismatch (-want +got):\n%s", diff)
 				}
-				if diff := cmp.Diff(tc.wantAlertStore, as.GetSnapshot()); diff != "" {
+				if diff := cmp.Diff(tc.wantAlertStore, a.AlertStore.GetSnapshot()); diff != "" {
 					t.Fatalf("alertStore mismatch (-want +got):\n%s", diff)
 				}
 				if diff := cmp.Diff(tc.wantAlertSource, m.GetSnapshot()); diff != "" {
