@@ -227,7 +227,12 @@ func (g *Gorm) CheckAlertRuleExists(ar AlertRule) (string, error) {
 }
 
 func (g *Gorm) DeleteAlertState(alertId string) error {
-	return fmt.Errorf("not implemented")
+	if err := g.db.Table("alert_states").
+		Delete("*").
+		Where("alert_id = ?", alertId).Error; err != nil {
+		return err
+	}
+	return nil
 }
 
 // NOTE: could return alertstore.NoAlert
