@@ -96,6 +96,7 @@ func TestShouldNotifyCrit(t *testing.T) {
 
 func TestRespondToAlert(t *testing.T) {
 	tests := map[string]struct {
+		wantStatus                     int
 		wantUserInboxes                map[string][]string
 		mockNotifierStore              map[any]any
 		mockAlertStore, wantAlertStore *alertstore.Schema
@@ -103,6 +104,7 @@ func TestRespondToAlert(t *testing.T) {
 	}{
 
 		"send alert because still crit after duration": {
+			wantStatus: http.StatusNoContent,
 			wantUserInboxes: map[string][]string{
 				UserEmail: {
 					"New alert message stating crit level.",
@@ -163,7 +165,7 @@ func TestRespondToAlert(t *testing.T) {
 				AlertStates: []alertstore.AlertState{
 					{
 						Id:       AlertId,
-						Time:     AlertReceived,
+						Time:     AlertReceived.Add(SomeDuration).Add(1 * time.Hour),
 						Duration: SomeDuration,
 						Message:  "New alert message stating crit level.",
 						Level:    alertstore.Crit,
@@ -173,8 +175,10 @@ func TestRespondToAlert(t *testing.T) {
 		},
 
 		"no notification because duration has not elapsed": {
+			wantStatus:      http.StatusNoContent,
 			wantUserInboxes: EmptyInboxes,
 			mockAlertStore: &alertstore.Schema{
+				AlertRecipients: []alertstore.AlertRecipient{},
 				DeviceAlerts: []alertstore.DeviceAlertRule{
 					{
 						DeviceId:   RegisteredDeviceId,
@@ -207,6 +211,7 @@ func TestRespondToAlert(t *testing.T) {
 				QueryField: RegisteredQueryField,
 			},
 			wantAlertStore: &alertstore.Schema{
+				AlertRecipients: []alertstore.AlertRecipient{},
 				DeviceAlerts: []alertstore.DeviceAlertRule{
 					{
 						DeviceId:   RegisteredDeviceId,
@@ -233,6 +238,7 @@ func TestRespondToAlert(t *testing.T) {
 		},
 
 		"send notification because alert level changing from ok to crit": {
+			wantStatus: http.StatusNoContent,
 			wantUserInboxes: map[string][]string{
 				UserEmail: {
 					"Alert message stating crit level.",
@@ -293,7 +299,7 @@ func TestRespondToAlert(t *testing.T) {
 				AlertStates: []alertstore.AlertState{
 					{
 						Id:       AlertId,
-						Time:     AlertReceived,
+						Time:     WithinDuration,
 						Duration: SomeDuration,
 						Message:  "Alert message stating crit level.",
 						Level:    alertstore.Crit,
@@ -303,6 +309,7 @@ func TestRespondToAlert(t *testing.T) {
 		},
 
 		"no notification because alert on unregistered queryField": {
+			wantStatus:      http.StatusNotFound,
 			wantUserInboxes: EmptyInboxes,
 			mockAlertStore: &alertstore.Schema{
 				DeviceAlerts: []alertstore.DeviceAlertRule{
@@ -362,6 +369,7 @@ func TestRespondToAlert(t *testing.T) {
 		},
 
 		"no notification because alert on unregistered deviceId": {
+			wantStatus:      http.StatusNotFound,
 			wantUserInboxes: EmptyInboxes,
 			mockAlertStore: &alertstore.Schema{
 				DeviceAlerts: []alertstore.DeviceAlertRule{
@@ -421,6 +429,7 @@ func TestRespondToAlert(t *testing.T) {
 		},
 
 		"respond to first alert": {
+			wantStatus: http.StatusNoContent,
 			wantUserInboxes: map[string][]string{
 				UserEmail: {
 					"New alert message stating crit level.",
@@ -491,7 +500,7 @@ func TestRespondToAlert(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			n = notifier.NewMockNotifier(tc.mockNotifierStore)
 			a.Notifier = n
-			a.AlertStore, err = alertstore.NewGorm(alertstore.Testing, "testing")
+			a.AlertStore, err = alertstore.NewMockAlertStore(alertstore.Testing, "testing")
 			if err != nil {
 				t.Fatalf("init alertstore: %v", err)
 			}
@@ -499,13 +508,18 @@ func TestRespondToAlert(t *testing.T) {
 			if err = a.AlertStore.PrepareDb(*tc.mockAlertStore); err != nil {
 				t.Fatalf("preparedb: %v", err)
 			}
-			api.Post("/alert/notify", tc.alert)
-			if diff := cmp.Diff(tc.wantUserInboxes, n.GetUserInboxes()); diff != "" {
-				t.Fatalf("user inboxes mismatch (-want +got):\n%s", diff)
+			resp := api.Post("/alert/notify", tc.alert)
+			if resp.Code != tc.wantStatus {
+				t.Fatalf("wantStatus: %d, response status: %d", tc.wantStatus, resp.Code)
 			}
-			if diff := cmp.Diff(tc.wantAlertStore, a.AlertStore.GetSnapshot(),
-				cmpopts.EquateApproxTime(1*time.Second)); diff != "" {
-				t.Fatalf("alertstore mismatch (-want +got):\n%s", diff)
+			if tc.wantStatus < 300 {
+				if diff := cmp.Diff(tc.wantUserInboxes, n.GetUserInboxes()); diff != "" {
+					t.Fatalf("user inboxes mismatch (-want +got):\n%s", diff)
+				}
+				if diff := cmp.Diff(tc.wantAlertStore, a.AlertStore.GetSnapshot(),
+					cmpopts.EquateApproxTime(1*time.Second)); diff != "" {
+					t.Fatalf("alertstore mismatch (-want +got):\n%s", diff)
+				}
 			}
 		})
 	}

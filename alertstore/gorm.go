@@ -122,7 +122,7 @@ func (g *Gorm) GetSnapshot() *Schema {
 func (g *Gorm) GetAlertState(alertId string) (AlertState, error) {
 	var as AlertState
 	var err error
-	db := g.db.First(&as, alertId)
+	db := g.db.Find(&as, AlertState{Id: alertId})
 	err = db.Error
 	if db.RowsAffected < 1 {
 		err = NoAlert
@@ -148,7 +148,9 @@ func (g *Gorm) GetAlertRule(alertId string) (AlertRule, error) {
 func (g *Gorm) GetAlertRecipients(alertId string) ([]string, error) {
 	var emails []string
 	var err error
-	db := g.db.Table("alert_recipients").Find(&emails, "alert_id = ?", alertId)
+	db := g.db.Model(&AlertRecipient{}).
+		Where("alert_id = ?", alertId).
+		Pluck("email", &emails)
 	err = db.Error
 	if db.RowsAffected < 1 || len(emails) < 1 {
 		err = fmt.Errorf("no recipients")
@@ -157,7 +159,8 @@ func (g *Gorm) GetAlertRecipients(alertId string) ([]string, error) {
 }
 
 func (g *Gorm) UpdateAlertState(alert AlertState) error {
-	return g.db.Model(&AlertState{}).Updates(&alert).Error
+	return g.db.Model(&AlertState{}).
+		Where("id = ?", alert.Id).Save(&alert).Error
 }
 func (g *Gorm) StoreAlertRule(dbRecord Schema) error {
 	var err error

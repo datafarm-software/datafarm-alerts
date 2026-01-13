@@ -183,7 +183,7 @@ func (m *MockAlertStore) UpdateAlertState(alert AlertState) error {
 		if state.Id != alert.Id {
 			continue
 		}
-		alert.Time = time.Now()
+		// alert.Time = time.Now()
 		m.Db.AlertStates[i] = alert
 	}
 	return nil
