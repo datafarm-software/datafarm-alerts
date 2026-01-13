@@ -385,14 +385,21 @@ func TestRespondToAlert(t *testing.T) {
 	}
 
 	var n *notifier.MockNotifier
-	var as *alertstore.MockAlertStore
+	var as *alertstore.Gorm
+	var err error
 	_, api := humatest.New(t)
 	a.RegisterHumaOperations(api)
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
 			n = notifier.NewMockNotifier(tc.mockNotifierStore)
-			as = alertstore.NewMockAlertStore(tc.mockAlertStore)
+			as, err = alertstore.NewGorm(alertstore.Testing, "testing")
+			if err != nil {
+				t.Fatalf("init gorm: %v", err)
+			}
 			defer as.Close()
+			if err = as.PrepareDb(*tc.mockAlertStore); err != nil {
+				t.Fatalf("preparedb: %v", err)
+			}
 			a.AlertStore = as
 			a.Notifier = n
 			api.Post("/alert/notify", tc.alert)
