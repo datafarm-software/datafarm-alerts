@@ -491,7 +491,7 @@ func TestRespondToAlert(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			n = notifier.NewMockNotifier(tc.mockNotifierStore)
 			a.Notifier = n
-			a.AlertStore, err = alertstore.NewMockAlertStore(alertstore.Testing, "testing")
+			a.AlertStore, err = alertstore.NewGorm(alertstore.Testing, "testing")
 			if err != nil {
 				t.Fatalf("init alertstore: %v", err)
 			}

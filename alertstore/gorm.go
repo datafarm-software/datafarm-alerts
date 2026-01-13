@@ -120,7 +120,14 @@ func (g *Gorm) GetSnapshot() *Schema {
 
 // NOTE: could return alertstore.NoAlert
 func (g *Gorm) GetAlertState(alertId string) (AlertState, error) {
-	return AlertState{}, fmt.Errorf("not implemented")
+	var as AlertState
+	var err error
+	db := g.db.First(&as, alertId)
+	err = db.Error
+	if db.RowsAffected < 1 {
+		err = NoAlert
+	}
+	return as, err
 }
 
 func (g *Gorm) GetAlertRule(alertId string) (AlertRule, error) {
