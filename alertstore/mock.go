@@ -11,20 +11,16 @@ type MockAlertStore struct {
 	Db *Schema
 }
 
-func NewMockAlertStore(db *Schema) *MockAlertStore {
-	if db == nil {
-		db = &Schema{}
-	}
-	return &MockAlertStore{
-		Db: db,
-	}
+func NewMockAlertStore(mode Mode, dbName string) (*MockAlertStore, error) {
+	return &MockAlertStore{}, nil
 }
 
 func (m *MockAlertStore) Close() error {
 	return nil
 }
 
-func (m *MockAlertStore) PrepareDb(Schema) error {
+func (m *MockAlertStore) PrepareDb(db Schema) error {
+	m.Db = &db
 	return nil
 }
 

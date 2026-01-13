@@ -32,9 +32,13 @@ type App struct {
 }
 
 func Start(opts Opts) error {
+	var err error
 	app := &App{}
 	app.Notifier = notifier.NewMockNotifier(nil)
-	app.AlertStore = alertstore.NewMockAlertStore(nil)
+	app.AlertStore, err = alertstore.NewMockAlertStore(alertstore.Production, "prod")
+	if err != nil {
+		return err
+	}
 	app.AlertSource = alertsource.NewMockAlertSource(nil)
 	cli := humacli.New(func(hooks humacli.Hooks, options *Opts) {
 		router := http.NewServeMux()

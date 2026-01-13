@@ -382,19 +382,81 @@ func TestRespondToAlert(t *testing.T) {
 				},
 			},
 		},
+
+		"respond to first alert": {
+			wantUserInboxes: map[string][]string{
+				UserEmail: {
+					"New alert message stating crit level.",
+				},
+			},
+			mockAlertStore: &alertstore.Schema{
+				AlertRecipients: []alertstore.AlertRecipient{
+					{AlertId: AlertId, Email: UserEmail},
+				},
+				DeviceAlerts: []alertstore.DeviceAlertRule{
+					{
+						DeviceId:   RegisteredDeviceId,
+						QueryField: RegisteredQueryField,
+						AlertId:    AlertId,
+					},
+				},
+				AlertRules: []alertstore.StoredAlertRule{
+					{
+						AlertId:  AlertId,
+						Duration: "24h",
+					},
+				},
+				AlertStates: []alertstore.AlertState{},
+			},
+			alert: alertsource.InfluxAlert{
+				Id:         AlertId,
+				Level:      "crit",
+				Message:    "New alert message stating crit level.",
+				Time:       AfterDuration,
+				DeviceId:   RegisteredDeviceId,
+				QueryField: RegisteredQueryField,
+			},
+			wantAlertStore: &alertstore.Schema{
+				AlertRecipients: []alertstore.AlertRecipient{
+					{AlertId: AlertId, Email: UserEmail},
+				},
+				DeviceAlerts: []alertstore.DeviceAlertRule{
+					{
+						DeviceId:   RegisteredDeviceId,
+						QueryField: RegisteredQueryField,
+						AlertId:    AlertId,
+					},
+				},
+				AlertRules: []alertstore.StoredAlertRule{
+					{
+						AlertId:  AlertId,
+						Duration: "24h",
+					},
+				},
+				AlertStates: []alertstore.AlertState{
+					{
+						Id:       AlertId,
+						Time:     AlertReceived,
+						Duration: SomeDuration,
+						Message:  "New alert message stating crit level.",
+						Level:    alertstore.Crit,
+					},
+				},
+			},
+		},
 	}
 
 	var n *notifier.MockNotifier
-	var as *alertstore.Gorm
+	var as alertstore.AlertStore
 	var err error
 	_, api := humatest.New(t)
 	a.RegisterHumaOperations(api)
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
 			n = notifier.NewMockNotifier(tc.mockNotifierStore)
-			as, err = alertstore.NewGorm(alertstore.Testing, "testing")
+			as, err = alertstore.NewMockAlertStore(alertstore.Testing, "testing")
 			if err != nil {
-				t.Fatalf("init gorm: %v", err)
+				t.Fatalf("init alertstore: %v", err)
 			}
 			defer as.Close()
 			if err = as.PrepareDb(*tc.mockAlertStore); err != nil {
@@ -722,7 +784,7 @@ func TestCreateAlertRule(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			as, err = alertstore.NewGorm(alertstore.Testing, "testing")
 			if err != nil {
-				t.Fatalf("init gorm: %v", err)
+				t.Fatalf("init alertstore: %v", err)
 			}
 			defer as.Close()
 			if err = as.PrepareDb(*tc.mockAlertStore); err != nil {
@@ -1058,7 +1120,7 @@ func TestUpdateAlertRule(t *testing.T) {
 		},
 	}
 
-	var as *alertstore.Gorm
+	var as alertstore.AlertStore
 	var err error
 	var got alertstore.AlertRule
 	_, api := humatest.New(t)
@@ -1241,7 +1303,7 @@ func TestDeleteAlert(t *testing.T) {
 
 	var got alertstore.AlertRule
 	var err error
-	var as *alertstore.Gorm
+	var as alertstore.AlertStore
 	var m *alertsource.MockAlertSource
 	_, api := humatest.New(t)
 	a.RegisterHumaOperations(api)
@@ -1251,7 +1313,7 @@ func TestDeleteAlert(t *testing.T) {
 			a.AlertSource = m
 			as, err = alertstore.NewGorm(alertstore.Testing, "testing")
 			if err != nil {
-				t.Fatalf("init gorm: %v", err)
+				t.Fatalf("init alertstore: %v", err)
 			}
 			defer as.Close()
 			if err = as.PrepareDb(*tc.mockAlertStore); err != nil {
