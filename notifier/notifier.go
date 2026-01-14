@@ -1,5 +1,10 @@
 package notifier
 
+import (
+	gomail "github.com/fawwazid/go-mail"
+)
+
 type Notifier interface {
-	Notify(users []string, message string) error
+	gomail.Mailer
+	Notify(emails []string, message string) error
 }

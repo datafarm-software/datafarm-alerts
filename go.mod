@@ -1,14 +1,14 @@
 module github.com/geraud22/sensordata-alerts
 
-go 1.24.10
+go 1.25.5
 
 require (
 	github.com/danielgtaylor/huma/v2 v2.34.1
+	github.com/fawwazid/go-mail v0.0.0-20251214162540-d4e6e90ec457
 	github.com/geraud22/config-from-yaml v1.1.1
 	github.com/google/go-cmp v0.7.0
 	gorm.io/driver/sqlite v1.6.0
 	gorm.io/gorm v1.31.1
-	gorm.io/hints v1.1.2
 )
 
 require (
