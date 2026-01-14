@@ -39,6 +39,9 @@ func Start(opts Opts) error {
 	if err != nil {
 		return err
 	}
+	if err = app.AlertStore.PrepareDb(alertstore.Schema{}); err != nil {
+		return err
+	}
 	app.AlertSource = alertsource.NewMockAlertSource(nil)
 	cli := humacli.New(func(hooks humacli.Hooks, options *Opts) {
 		router := http.NewServeMux()
