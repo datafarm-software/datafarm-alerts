@@ -289,6 +289,7 @@ func (a *App) RespondToAlert(
 			log.Printf("getting alert rule for %s: %v", alert.Id, err)
 			return nil, huma.Error500InternalServerError("Internal error getting the alert rule.")
 		}
+		log.Printf("Alert rule not found. %s", in.Body.Id)
 		return nil, huma.Error404NotFound("Alert rule not found.")
 	}
 	if alertRule.QueryField != in.Body.QueryField || alertRule.DeviceId != in.Body.DeviceId {
@@ -326,6 +327,7 @@ func (a *App) RespondToAlert(
 	}
 	return nil, nil
 }
+
 func (a *App) ShouldNotifyCrit(alert, previous alertstore.AlertState) bool {
 	if alert.Level != alertstore.Crit {
 		return false

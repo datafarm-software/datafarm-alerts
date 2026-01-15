@@ -18,7 +18,7 @@ import (
 )
 
 var a = &app.App{}
-var EmptyInboxes = map[string][]string{}
+var EmptyInboxes = map[string][]notifier.AlertMessage{}
 var EmptyAlertStore = &alertstore.Schema{}
 
 const UnregisteredQueryField = "humidity"
@@ -28,6 +28,7 @@ const RegisteredDeviceId = "device1"
 const SomeDuration = (24 * time.Hour)
 const AlertId = "alert1"
 const UserEmail = "user1@alert.com"
+const RegisteredAlertName = "Temperature Check"
 
 var AlertReceived = time.Date(1994, 6, 24, 6, 0, 0, 0, time.UTC)
 var AfterDuration = AlertReceived.Add(25 * time.Hour)
@@ -97,7 +98,7 @@ func TestShouldNotifyCrit(t *testing.T) {
 func TestRespondToAlert(t *testing.T) {
 	tests := map[string]struct {
 		wantStatus                     int
-		wantUserInboxes                map[string][]string
+		wantUserInboxes                map[string][]notifier.AlertMessage
 		mockNotifierStore              map[any]any
 		mockAlertStore, wantAlertStore *alertstore.Schema
 		alert                          alertsource.InfluxAlert
@@ -105,9 +106,15 @@ func TestRespondToAlert(t *testing.T) {
 
 		"send alert because still crit after duration": {
 			wantStatus: http.StatusNoContent,
-			wantUserInboxes: map[string][]string{
+			wantUserInboxes: map[string][]notifier.AlertMessage{
 				UserEmail: {
-					"New alert message stating crit level.",
+					{
+						Name:       RegisteredAlertName,
+						DeviceId:   RegisteredDeviceId,
+						QueryField: RegisteredQueryField,
+						Level:      alertstore.Crit,
+						Timestamp:  AfterDuration,
+					},
 				},
 			},
 			mockAlertStore: &alertstore.Schema{
@@ -140,6 +147,7 @@ func TestRespondToAlert(t *testing.T) {
 			alert: alertsource.InfluxAlert{
 				Id:         AlertId,
 				Level:      "crit",
+				Name:       RegisteredAlertName,
 				Message:    "New alert message stating crit level.",
 				Time:       AfterDuration,
 				DeviceId:   RegisteredDeviceId,
@@ -239,9 +247,15 @@ func TestRespondToAlert(t *testing.T) {
 
 		"send notification because alert level changing from ok to crit": {
 			wantStatus: http.StatusNoContent,
-			wantUserInboxes: map[string][]string{
+			wantUserInboxes: map[string][]notifier.AlertMessage{
 				UserEmail: {
-					"Alert message stating crit level.",
+					{
+						Name:       RegisteredAlertName,
+						DeviceId:   RegisteredDeviceId,
+						QueryField: RegisteredQueryField,
+						Level:      alertstore.Crit,
+						Timestamp:  WithinDuration,
+					},
 				},
 			},
 			mockAlertStore: &alertstore.Schema{

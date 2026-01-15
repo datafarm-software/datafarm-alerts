@@ -18,13 +18,13 @@ func NewMockNotifier(values map[any]any) *MockNotifier {
 	}
 }
 
-func (m *MockNotifier) Notify(users []string, message string) error {
+func (m *MockNotifier) Notify(message AlertMessage, emails ...string) error {
 	userInboxes, ok := m.values["userInboxes"].(map[string][]string)
 	if !ok {
 		return fmt.Errorf("found no userInboxes")
 	}
-	for _, user := range users {
-		userInboxes[user] = append(userInboxes[user], message)
+	for _, e := range emails {
+		userInboxes[e] = append(userInboxes[e], message)
 	}
 	return nil
 }

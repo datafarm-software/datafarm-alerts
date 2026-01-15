@@ -1,6 +1,9 @@
 package alertsource
 
-import "github.com/geraud22/sensordata-alerts/alertstore"
+import (
+	"github.com/geraud22/sensordata-alerts/alertstore"
+	"github.com/geraud22/sensordata-alerts/notifier"
+)
 
 type AlertSource interface {
 	UpdateAlertRule(alertstore.AlertRule) error
@@ -9,4 +12,5 @@ type AlertSource interface {
 	GetAlertLevel() alertstore.AlertLevel
 	//NOTE: Could return alertstore.NoAlert
 	DeleteAlertRule(alertId string) error
+	AlertMessage() notifier.AlertMessage
 }
