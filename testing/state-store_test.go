@@ -850,7 +850,11 @@ func TestCreateAlertRule(t *testing.T) {
 			if err = a.AlertStore.PrepareDb(*tc.mockAlertStore); err != nil {
 				t.Fatalf("preparedb: %v", err)
 			}
-			a.AlertSource = alertsource.NewMockAlertSource(tc.mockAlertSource)
+			a.AlertSource, err = alertsource.NewInflux(tc.mockAlertSource)
+			if err != nil {
+				t.Fatalf("init alertsource: %v", err)
+			}
+			defer a.AlertSource.Close()
 			resp := api.Post("/alert", tc.alertRule)
 			if tc.wantStatus != resp.Code {
 				t.Fatalf("wantStatusCode: %d, response code: %d", tc.wantStatus, resp.Code)
@@ -1372,6 +1376,7 @@ func TestDeleteAlert(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			m = alertsource.NewMockAlertSource(tc.mockAlertSource)
 			a.AlertSource = m
+			defer a.AlertSource.Close()
 			a.AlertStore, err = alertstore.NewGorm(alertstore.Testing, "testing")
 			if err != nil {
 				t.Fatalf("init alertstore: %v", err)
