@@ -139,7 +139,6 @@ func TestRespondToAlert(t *testing.T) {
 						Id:       AlertId,
 						Time:     AlertReceived,
 						Duration: SomeDuration,
-						Message:  "Already crit.",
 						Level:    alertstore.Crit,
 					},
 				},
@@ -148,7 +147,6 @@ func TestRespondToAlert(t *testing.T) {
 				Id:         AlertId,
 				Level:      "crit",
 				Name:       RegisteredAlertName,
-				Message:    "New alert message stating crit level.",
 				Time:       AfterDuration,
 				DeviceId:   RegisteredDeviceId,
 				QueryField: RegisteredQueryField,
@@ -175,7 +173,6 @@ func TestRespondToAlert(t *testing.T) {
 						Id:       AlertId,
 						Time:     AlertReceived.Add(SomeDuration).Add(1 * time.Hour),
 						Duration: SomeDuration,
-						Message:  "New alert message stating crit level.",
 						Level:    alertstore.Crit,
 					},
 				},
@@ -205,7 +202,6 @@ func TestRespondToAlert(t *testing.T) {
 						Id:       AlertId,
 						Time:     AlertReceived,
 						Duration: SomeDuration,
-						Message:  "Already crit.",
 						Level:    alertstore.Crit,
 					},
 				},
@@ -213,7 +209,6 @@ func TestRespondToAlert(t *testing.T) {
 			alert: alertsource.InfluxAlert{
 				Id:         AlertId,
 				Level:      "crit",
-				Message:    "Alert message stating crit level.",
 				Time:       WithinDuration,
 				DeviceId:   RegisteredDeviceId,
 				QueryField: RegisteredQueryField,
@@ -238,7 +233,6 @@ func TestRespondToAlert(t *testing.T) {
 						Id:       AlertId,
 						Time:     AlertReceived,
 						Duration: SomeDuration,
-						Message:  "Already crit.",
 						Level:    alertstore.Crit,
 					},
 				},
@@ -280,7 +274,6 @@ func TestRespondToAlert(t *testing.T) {
 						Id:       AlertId,
 						Time:     AlertReceived,
 						Duration: SomeDuration,
-						Message:  "Status Ok.",
 						Level:    alertstore.Ok,
 					},
 				},
@@ -288,7 +281,6 @@ func TestRespondToAlert(t *testing.T) {
 			alert: alertsource.InfluxAlert{
 				Id:         AlertId,
 				Level:      "crit",
-				Message:    "Alert message stating crit level.",
 				Time:       WithinDuration,
 				DeviceId:   RegisteredDeviceId,
 				QueryField: RegisteredQueryField,
@@ -315,7 +307,7 @@ func TestRespondToAlert(t *testing.T) {
 						Id:       AlertId,
 						Time:     WithinDuration,
 						Duration: SomeDuration,
-						Message:  "Alert message stating crit level.",
+						Name:     RegisteredAlertName,
 						Level:    alertstore.Crit,
 					},
 				},
@@ -343,7 +335,6 @@ func TestRespondToAlert(t *testing.T) {
 					{
 						Time:     AlertReceived,
 						Duration: SomeDuration,
-						Message:  "Alert is ok.",
 						Id:       AlertId,
 						Level:    alertstore.Ok,
 					},
@@ -352,7 +343,6 @@ func TestRespondToAlert(t *testing.T) {
 			alert: alertsource.InfluxAlert{
 				Id:         AlertId,
 				Level:      "crit",
-				Message:    "Alert that should be ignored.",
 				DeviceId:   RegisteredDeviceId,
 				QueryField: UnregisteredQueryField,
 			},
@@ -374,7 +364,6 @@ func TestRespondToAlert(t *testing.T) {
 					{
 						Time:     AlertReceived,
 						Duration: SomeDuration,
-						Message:  "Alert is ok.",
 						Id:       AlertId,
 						Level:    alertstore.Ok,
 					},
@@ -403,7 +392,6 @@ func TestRespondToAlert(t *testing.T) {
 					{
 						Time:     AlertReceived,
 						Duration: SomeDuration,
-						Message:  "Alert is ok.",
 						Id:       AlertId,
 						Level:    alertstore.Ok,
 					},
@@ -412,7 +400,6 @@ func TestRespondToAlert(t *testing.T) {
 			alert: alertsource.InfluxAlert{
 				Id:         AlertId,
 				Level:      "crit",
-				Message:    "Alert message stating crit level.",
 				DeviceId:   UnregisteredDeviceId,
 				QueryField: RegisteredQueryField,
 			},
@@ -434,7 +421,6 @@ func TestRespondToAlert(t *testing.T) {
 					{
 						Time:     AlertReceived,
 						Duration: SomeDuration,
-						Message:  "Alert is ok.",
 						Id:       AlertId,
 						Level:    alertstore.Ok,
 					},
@@ -444,9 +430,15 @@ func TestRespondToAlert(t *testing.T) {
 
 		"respond to first alert": {
 			wantStatus: http.StatusNoContent,
-			wantUserInboxes: map[string][]string{
+			wantUserInboxes: map[string][]notifier.AlertMessage{
 				UserEmail: {
-					"New alert message stating crit level.",
+					{
+						Name:       RegisteredAlertName,
+						DeviceId:   RegisteredDeviceId,
+						QueryField: RegisteredQueryField,
+						Level:      alertstore.Crit,
+						Timestamp:  AfterDuration,
+					},
 				},
 			},
 			mockAlertStore: &alertstore.Schema{
@@ -471,7 +463,7 @@ func TestRespondToAlert(t *testing.T) {
 			alert: alertsource.InfluxAlert{
 				Id:         AlertId,
 				Level:      "crit",
-				Message:    "New alert message stating crit level.",
+				Name:       RegisteredAlertName,
 				Time:       AfterDuration,
 				DeviceId:   RegisteredDeviceId,
 				QueryField: RegisteredQueryField,
@@ -498,7 +490,7 @@ func TestRespondToAlert(t *testing.T) {
 						Id:       AlertId,
 						Time:     AlertReceived.Add(SomeDuration).Add(1 * time.Hour),
 						Duration: SomeDuration,
-						Message:  "New alert message stating crit level.",
+						Name:     RegisteredAlertName,
 						Level:    alertstore.Crit,
 					},
 				},

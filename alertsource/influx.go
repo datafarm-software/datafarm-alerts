@@ -8,11 +8,11 @@ import (
 )
 
 type InfluxAlert struct {
-	Id                       string    `json:"_check_id" required:"true"`
-	Name                     string    `json:"_check_name"`
-	Level                    string    `json:"_level" required:"true"`
-	Measurement              string    `json:"_measurement"`
-	Message                  string    `json:"_message" required:"true"`
+	Id          string `json:"_check_id" required:"true"`
+	Name        string `json:"_check_name"`
+	Level       string `json:"_level" required:"true"`
+	Measurement string `json:"_measurement"`
+	// Message                  string    `json:"_message" required:"true"`
 	NotificationEndpointId   string    `json:"_notification_endpoint_id"`
 	NotificationEndpointName string    `json:"_notification_endpoint_name"`
 	NotificationRuleId       string    `json:"_notification_rule_id"`
