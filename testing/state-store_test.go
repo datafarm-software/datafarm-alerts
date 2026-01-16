@@ -172,6 +172,7 @@ func TestRespondToAlert(t *testing.T) {
 					{
 						Id:       AlertId,
 						Time:     AlertReceived.Add(SomeDuration).Add(1 * time.Hour),
+						Name:     RegisteredAlertName,
 						Duration: SomeDuration,
 						Level:    alertstore.Crit,
 					},
@@ -281,6 +282,7 @@ func TestRespondToAlert(t *testing.T) {
 			alert: alertsource.InfluxAlert{
 				Id:         AlertId,
 				Level:      "crit",
+				Name:       RegisteredAlertName,
 				Time:       WithinDuration,
 				DeviceId:   RegisteredDeviceId,
 				QueryField: RegisteredQueryField,
