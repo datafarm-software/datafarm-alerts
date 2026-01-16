@@ -19,7 +19,7 @@ func NewMockNotifier(values map[any]any) *MockNotifier {
 }
 
 func (m *MockNotifier) Notify(message AlertMessage, emails ...string) error {
-	userInboxes, ok := m.values["userInboxes"].(map[string][]string)
+	userInboxes, ok := m.values["userInboxes"].(map[string][]AlertMessage)
 	if !ok {
 		return fmt.Errorf("found no userInboxes")
 	}

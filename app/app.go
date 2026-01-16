@@ -312,12 +312,19 @@ func (a *App) RespondToAlert(
 	if !a.ShouldNotifyCrit(alert, previousAlert) {
 		return nil, nil
 	}
-	users, err := a.AlertStore.GetAlertRecipients(alert.Id)
+	emails, err := a.AlertStore.GetAlertRecipients(alert.Id)
 	if err != nil {
 		log.Printf("GetAlertRecipients: %v", err)
 		return nil, huma.Error500InternalServerError("Internal error getting alert recipients.")
 	}
-	if err = a.Notifier.Notify(users, alert.Message); err != nil {
+	message := notifier.AlertMessage{
+		Name:       alert.Name,
+		DeviceId:   alertRule.DeviceId,
+		QueryField: alertRule.QueryField,
+		Level:      alert.Level,
+		Timestamp:  alert.Time,
+	}
+	if err = a.Notifier.Notify(message, emails...); err != nil {
 		log.Printf("notifying users: %v", err)
 		return nil, huma.Error500InternalServerError("Could not notify users.")
 	}

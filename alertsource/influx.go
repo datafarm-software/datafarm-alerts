@@ -8,11 +8,10 @@ import (
 )
 
 type InfluxAlert struct {
-	Id          string `json:"_check_id" required:"true"`
-	Name        string `json:"_check_name"`
-	Level       string `json:"_level" required:"true"`
-	Measurement string `json:"_measurement"`
-	// Message                  string    `json:"_message" required:"true"`
+	Id                       string    `json:"_check_id" required:"true"`
+	Name                     string    `json:"_check_name"`
+	Level                    string    `json:"_level" required:"true"`
+	Measurement              string    `json:"_measurement"`
 	NotificationEndpointId   string    `json:"_notification_endpoint_id"`
 	NotificationEndpointName string    `json:"_notification_endpoint_name"`
 	NotificationRuleId       string    `json:"_notification_rule_id"`
@@ -48,10 +47,10 @@ func (i *InfluxAlert) GetAlertLevel() alertstore.AlertLevel {
 
 func (i *InfluxAlert) GetAlertState() alertstore.AlertState {
 	return alertstore.AlertState{
-		Time:    i.Time,
-		Message: i.Message,
-		Id:      i.Id,
-		Level:   i.GetAlertLevel(),
+		Time:  i.Time,
+		Name:  i.Name,
+		Id:    i.Id,
+		Level: i.GetAlertLevel(),
 	}
 }
 
