@@ -30,7 +30,7 @@ type InfluxAlert struct {
 	_          struct{} `json:"-" additionalProperties:"true"`
 }
 
-func (i *InfluxAlert) GetAlertLevel() alertstore.AlertLevel {
+func (i *InfluxAlert) AlertLevel() alertstore.AlertLevel {
 	var al alertstore.AlertLevel
 	switch i.Level {
 	case "ok":
@@ -45,23 +45,25 @@ func (i *InfluxAlert) GetAlertLevel() alertstore.AlertLevel {
 	return al
 }
 
-func (i *InfluxAlert) GetAlertState() alertstore.AlertState {
+func (i *InfluxAlert) AlertState() alertstore.AlertState {
 	return alertstore.AlertState{
 		Time:  i.Time,
 		Name:  i.Name,
 		Id:    i.Id,
-		Level: i.GetAlertLevel(),
+		Level: i.AlertLevel(),
 	}
 }
 
-func (i *InfluxAlert) CreateAlertRule(ar alertstore.AlertRule) (string, error) {
+type InfluxSource struct{}
+
+func (i *InfluxSource) CreateAlertRule(ar alertstore.AlertRule) (string, error) {
 	return "", fmt.Errorf("not implemented")
 }
 
-func (i *InfluxAlert) UpdateAlertRule(ar alertstore.AlertRule) error {
+func (i *InfluxSource) UpdateAlertRule(ar alertstore.AlertRule) error {
 	return fmt.Errorf("not implemented")
 }
 
-func (i *InfluxAlert) DeleteAlertRule(alertId string) error {
+func (i *InfluxSource) DeleteAlertRule(alertId string) error {
 	return fmt.Errorf("not implemented")
 }

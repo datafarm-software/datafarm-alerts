@@ -281,8 +281,8 @@ func (a *App) RegisterHumaOperations(api huma.API) {
 func (a *App) RespondToAlert(
 	ctx context.Context,
 	in *struct{ Body alertsource.InfluxAlert }) (*struct{}, error) {
-	source := alertsource.AlertSource(&in.Body)
-	alert := source.GetAlertState()
+	source := alertsource.AlertFromSource(&in.Body)
+	alert := source.AlertState()
 	alertRule, err := a.AlertStore.GetAlertRule(alert.Id)
 	if err != nil {
 		if !errors.Is(err, alertstore.NoAlert) {
