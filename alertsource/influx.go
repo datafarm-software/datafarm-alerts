@@ -1,11 +1,15 @@
 package alertsource
 
 import (
+	"context"
 	"fmt"
 	"time"
 
 	"github.com/geraud22/sensordata-alerts/alertstore"
+	influxdb2 "github.com/influxdata/influxdb-client-go/v2"
 )
+
+var ctx context.Context
 
 type InfluxAlert struct {
 	Id                       string    `json:"_check_id" required:"true"`
@@ -54,16 +58,42 @@ func (i *InfluxAlert) AlertState() alertstore.AlertState {
 	}
 }
 
-type InfluxSource struct{}
+type InfluxOpts struct {
+	Org   string `mapstructure:"org"`
+	Url   string `mapstructure:"url"`
+	Token string `mapstructure:"token"`
+}
 
-func (i *InfluxSource) CreateAlertRule(ar alertstore.AlertRule) (string, error) {
+type Influx struct {
+	ctxCancel context.CancelFunc
+	client    influxdb2.Client
+}
+
+func NewInflux(opts InfluxOpts) (*Influx, error) {
+	c, cancel := context.WithCancel(context.Background())
+	ctx = c
+	client := influxdb2.NewClientWithOptions(opts.Url, opts.Token, influxdb2.DefaultOptions())
+	err := client.APIClient().GetPing(ctx)
+	return &Influx{
+		ctxCancel: cancel,
+		client:    client,
+	}, err
+}
+
+func (i *Influx) Close() error {
+	i.ctxCancel()
+	i.client.Close()
+	return nil
+}
+
+func (i *Influx) CreateAlertRule(ar alertstore.AlertRule) (string, error) {
 	return "", fmt.Errorf("not implemented")
 }
 
-func (i *InfluxSource) UpdateAlertRule(ar alertstore.AlertRule) error {
+func (i *Influx) UpdateAlertRule(ar alertstore.AlertRule) error {
 	return fmt.Errorf("not implemented")
 }
 
-func (i *InfluxSource) DeleteAlertRule(alertId string) error {
+func (i *Influx) DeleteAlertRule(alertId string) error {
 	return fmt.Errorf("not implemented")
 }

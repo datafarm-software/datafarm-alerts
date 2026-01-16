@@ -22,14 +22,6 @@ func (m *MockAlertSource) GetSnapshot() map[any]any {
 	return m.values
 }
 
-func (m *MockAlertSource) GetAlertState() alertstore.AlertState {
-	return alertstore.AlertState{}
-}
-
-func (m *MockAlertSource) GetAlertLevel() alertstore.AlertLevel {
-	return alertstore.Ok
-}
-
 func (m *MockAlertSource) UpdateAlertRule(ar alertstore.AlertRule) error {
 	return fmt.Errorf("not implemented")
 }

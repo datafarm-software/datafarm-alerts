@@ -22,7 +22,8 @@ type HttpOpts struct {
 }
 
 type Opts struct {
-	Http HttpOpts `mapstructure:"http" validate:"required"`
+	Http   HttpOpts               `mapstructure:"http" validate:"required"`
+	Influx alertsource.InfluxOpts `mapstructure:"influx" validate:"required"`
 }
 
 type App struct {
@@ -102,7 +103,7 @@ func (a *App) RegisterHumaOperations(api huma.API) {
 				Description: "Internal Server Error",
 				Content: map[string]*huma.MediaType{
 					"application/json": {
-						Schema: huma.SchemaFromType(registry, reflect.TypeOf(HumaError{})),
+						Schema: huma.SchemaFromType(registry, reflect.TypeFor[HumaError]()),
 						Example: HumaError{
 							Schema: "http://localhost:3030/schemas/ErrorModel.json",
 							Title:  "Internal Server Error",
@@ -114,7 +115,7 @@ func (a *App) RegisterHumaOperations(api huma.API) {
 				Description: "Bad Request",
 				Content: map[string]*huma.MediaType{
 					"application/json": {
-						Schema: huma.SchemaFromType(registry, reflect.TypeOf(HumaError{})),
+						Schema: huma.SchemaFromType(registry, reflect.TypeFor[HumaError]()),
 						Example: HumaError{
 							Schema: "http://localhost:3030/schemas/ErrorModel.json",
 							Title:  "Bad Request",
@@ -128,7 +129,7 @@ func (a *App) RegisterHumaOperations(api huma.API) {
 				Description: "Resource Conflict",
 				Content: map[string]*huma.MediaType{
 					"application/json": {
-						Schema: huma.SchemaFromType(registry, reflect.TypeOf(ErrorResponse{})),
+						Schema: huma.SchemaFromType(registry, reflect.TypeFor[ErrorResponse]()),
 						Example: ErrorResponse{
 							StatusError: huma.Error409Conflict(
 								"Alert with identical parameters already exists."),
