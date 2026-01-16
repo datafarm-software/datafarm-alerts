@@ -103,24 +103,24 @@ func (g *Gorm) PrepareDb(dbRecord Schema) error {
 	return g.StoreAlertRule(dbRecord)
 }
 
-func (g *Gorm) GetSnapshot() *Schema {
+func (g *Gorm) GetSnapshot() Schema {
 	device_alert_rules, err := gorm.G[DeviceAlertRule](g.db).Find(ctx)
 	if err != nil {
-		return nil
+		return Schema{}
 	}
 	alertRecipients, err := gorm.G[AlertRecipient](g.db).Find(ctx)
 	if err != nil {
-		return nil
+		return Schema{}
 	}
 	stored_alert_rules, err := gorm.G[StoredAlertRule](g.db).Find(ctx)
 	if err != nil {
-		return nil
+		return Schema{}
 	}
 	alertStates, err := gorm.G[AlertState](g.db).Find(ctx)
 	if err != nil {
-		return nil
+		return Schema{}
 	}
-	return &Schema{
+	return Schema{
 		DeviceAlerts:    device_alert_rules,
 		AlertRecipients: alertRecipients,
 		AlertStates:     alertStates,

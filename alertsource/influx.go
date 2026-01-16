@@ -59,9 +59,10 @@ func (i *InfluxAlert) AlertState() alertstore.AlertState {
 }
 
 type InfluxOpts struct {
-	Org   string `mapstructure:"org"`
-	Url   string `mapstructure:"url"`
-	Token string `mapstructure:"token"`
+	Org   string          `mapstructure:"org" validate:"required"`
+	Url   string          `mapstructure:"url" validate:"required"`
+	Token string          `mapstructure:"token" validate:"required"`
+	Mode  alertstore.Mode `mapstructure:"mode" validate:"required"`
 }
 
 type Influx struct {

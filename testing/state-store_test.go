@@ -19,7 +19,7 @@ import (
 
 var a = &app.App{}
 var EmptyInboxes = map[string][]notifier.AlertMessage{}
-var EmptyAlertStore = &alertstore.Schema{}
+var EmptyAlertStore = alertstore.Schema{}
 
 const UnregisteredQueryField = "humidity"
 const RegisteredQueryField = "temperature"
@@ -100,7 +100,7 @@ func TestRespondToAlert(t *testing.T) {
 		wantStatus                     int
 		wantUserInboxes                map[string][]notifier.AlertMessage
 		mockNotifierStore              map[any]any
-		mockAlertStore, wantAlertStore *alertstore.Schema
+		mockAlertStore, wantAlertStore alertstore.Schema
 		alert                          alertsource.InfluxAlert
 	}{
 
@@ -117,7 +117,7 @@ func TestRespondToAlert(t *testing.T) {
 					},
 				},
 			},
-			mockAlertStore: &alertstore.Schema{
+			mockAlertStore: alertstore.Schema{
 				AlertRecipients: []alertstore.AlertRecipient{
 					{AlertId: AlertId, Email: UserEmail},
 				},
@@ -151,7 +151,7 @@ func TestRespondToAlert(t *testing.T) {
 				DeviceId:   RegisteredDeviceId,
 				QueryField: RegisteredQueryField,
 			},
-			wantAlertStore: &alertstore.Schema{
+			wantAlertStore: alertstore.Schema{
 				AlertRecipients: []alertstore.AlertRecipient{
 					{AlertId: AlertId, Email: UserEmail},
 				},
@@ -182,7 +182,7 @@ func TestRespondToAlert(t *testing.T) {
 		"no notification because duration has not elapsed": {
 			wantStatus:      http.StatusNoContent,
 			wantUserInboxes: EmptyInboxes,
-			mockAlertStore: &alertstore.Schema{
+			mockAlertStore: alertstore.Schema{
 				AlertRecipients: []alertstore.AlertRecipient{},
 				DeviceAlerts: []alertstore.DeviceAlertRule{
 					{
@@ -214,7 +214,7 @@ func TestRespondToAlert(t *testing.T) {
 				DeviceId:   RegisteredDeviceId,
 				QueryField: RegisteredQueryField,
 			},
-			wantAlertStore: &alertstore.Schema{
+			wantAlertStore: alertstore.Schema{
 				AlertRecipients: []alertstore.AlertRecipient{},
 				DeviceAlerts: []alertstore.DeviceAlertRule{
 					{
@@ -253,7 +253,7 @@ func TestRespondToAlert(t *testing.T) {
 					},
 				},
 			},
-			mockAlertStore: &alertstore.Schema{
+			mockAlertStore: alertstore.Schema{
 				AlertRecipients: []alertstore.AlertRecipient{
 					{AlertId: AlertId, Email: UserEmail},
 				},
@@ -287,7 +287,7 @@ func TestRespondToAlert(t *testing.T) {
 				DeviceId:   RegisteredDeviceId,
 				QueryField: RegisteredQueryField,
 			},
-			wantAlertStore: &alertstore.Schema{
+			wantAlertStore: alertstore.Schema{
 				AlertRecipients: []alertstore.AlertRecipient{
 					{AlertId: AlertId, Email: UserEmail},
 				},
@@ -318,7 +318,7 @@ func TestRespondToAlert(t *testing.T) {
 		"no notification because alert on unregistered queryField": {
 			wantStatus:      http.StatusNotFound,
 			wantUserInboxes: EmptyInboxes,
-			mockAlertStore: &alertstore.Schema{
+			mockAlertStore: alertstore.Schema{
 				DeviceAlerts: []alertstore.DeviceAlertRule{
 					{
 						DeviceId:   RegisteredDeviceId,
@@ -348,7 +348,7 @@ func TestRespondToAlert(t *testing.T) {
 				DeviceId:   RegisteredDeviceId,
 				QueryField: UnregisteredQueryField,
 			},
-			wantAlertStore: &alertstore.Schema{
+			wantAlertStore: alertstore.Schema{
 				DeviceAlerts: []alertstore.DeviceAlertRule{
 					{
 						DeviceId:   RegisteredDeviceId,
@@ -376,7 +376,7 @@ func TestRespondToAlert(t *testing.T) {
 		"no notification because alert on unregistered deviceId": {
 			wantStatus:      http.StatusNotFound,
 			wantUserInboxes: EmptyInboxes,
-			mockAlertStore: &alertstore.Schema{
+			mockAlertStore: alertstore.Schema{
 				DeviceAlerts: []alertstore.DeviceAlertRule{
 					{
 						DeviceId:   RegisteredDeviceId,
@@ -406,7 +406,7 @@ func TestRespondToAlert(t *testing.T) {
 				DeviceId:   UnregisteredDeviceId,
 				QueryField: RegisteredQueryField,
 			},
-			wantAlertStore: &alertstore.Schema{
+			wantAlertStore: alertstore.Schema{
 				DeviceAlerts: []alertstore.DeviceAlertRule{
 					{
 						DeviceId:   RegisteredDeviceId,
@@ -444,7 +444,7 @@ func TestRespondToAlert(t *testing.T) {
 					},
 				},
 			},
-			mockAlertStore: &alertstore.Schema{
+			mockAlertStore: alertstore.Schema{
 				AlertRecipients: []alertstore.AlertRecipient{
 					{AlertId: AlertId, Email: UserEmail},
 				},
@@ -471,7 +471,7 @@ func TestRespondToAlert(t *testing.T) {
 				DeviceId:   RegisteredDeviceId,
 				QueryField: RegisteredQueryField,
 			},
-			wantAlertStore: &alertstore.Schema{
+			wantAlertStore: alertstore.Schema{
 				AlertRecipients: []alertstore.AlertRecipient{
 					{AlertId: AlertId, Email: UserEmail},
 				},
@@ -513,8 +513,8 @@ func TestRespondToAlert(t *testing.T) {
 				t.Fatalf("init alertstore: %v", err)
 			}
 			defer a.AlertStore.Close()
-			if err = a.AlertStore.PrepareDb(*tc.mockAlertStore); err != nil {
-				t.Fatalf("preparedb: %v", err)
+			if err = a.AlertStore.PrepareDb(tc.mockAlertStore); err != nil {
+				t.Fatalf("alertstore preparedb: %v", err)
 			}
 			resp := api.Post("/alert/notify", tc.alert)
 			if resp.Code != tc.wantStatus {
@@ -538,21 +538,21 @@ func TestCreateAlertRule(t *testing.T) {
 		wantErr                        bool
 		wantResponse                   alertstore.CreatedRule
 		wantStatus                     int
-		wantAlertStore, mockAlertStore *alertstore.Schema
-		mockAlertSource                map[any]any
+		wantAlertStore, mockAlertStore alertstore.Schema
+		mockAlertSource                []alertstore.AlertRule
 		alertRule                      alertstore.AlertRule
 	}{
 
 		"successfully create a less than alert rule": {
 			wantErr:    false,
 			wantStatus: http.StatusOK,
-			mockAlertStore: &alertstore.Schema{
+			mockAlertStore: alertstore.Schema{
 				DeviceAlerts:    []alertstore.DeviceAlertRule{},
 				AlertRecipients: []alertstore.AlertRecipient{},
 				AlertStates:     []alertstore.AlertState{},
 				AlertRules:      []alertstore.StoredAlertRule{},
 			},
-			wantAlertStore: &alertstore.Schema{
+			wantAlertStore: alertstore.Schema{
 				AlertRecipients: []alertstore.AlertRecipient{
 					{AlertId: AlertId, Email: UserEmail},
 				},
@@ -589,7 +589,7 @@ func TestCreateAlertRule(t *testing.T) {
 		"invalid range on less than alert": {
 			wantErr:    true,
 			wantStatus: http.StatusUnprocessableEntity,
-			mockAlertStore: &alertstore.Schema{
+			mockAlertStore: alertstore.Schema{
 				DeviceAlerts:    []alertstore.DeviceAlertRule{},
 				AlertRecipients: []alertstore.AlertRecipient{},
 				AlertStates:     []alertstore.AlertState{},
@@ -606,7 +606,7 @@ func TestCreateAlertRule(t *testing.T) {
 		"invalid range on range alert": {
 			wantErr:    true,
 			wantStatus: http.StatusUnprocessableEntity,
-			mockAlertStore: &alertstore.Schema{
+			mockAlertStore: alertstore.Schema{
 				DeviceAlerts:    []alertstore.DeviceAlertRule{},
 				AlertRecipients: []alertstore.AlertRecipient{},
 				AlertStates:     []alertstore.AlertState{},
@@ -623,7 +623,7 @@ func TestCreateAlertRule(t *testing.T) {
 			wantErr:        true,
 			wantStatus:     http.StatusUnprocessableEntity,
 			wantAlertStore: EmptyAlertStore,
-			mockAlertStore: &alertstore.Schema{
+			mockAlertStore: alertstore.Schema{
 				DeviceAlerts:    []alertstore.DeviceAlertRule{},
 				AlertRecipients: []alertstore.AlertRecipient{},
 				AlertStates:     []alertstore.AlertState{},
@@ -640,7 +640,7 @@ func TestCreateAlertRule(t *testing.T) {
 		"identical alert already exists": {
 			wantErr:    true,
 			wantStatus: http.StatusConflict,
-			wantAlertStore: &alertstore.Schema{
+			wantAlertStore: alertstore.Schema{
 				AlertRecipients: []alertstore.AlertRecipient{
 					{AlertId: AlertId, Email: UserEmail},
 				},
@@ -660,7 +660,7 @@ func TestCreateAlertRule(t *testing.T) {
 					},
 				},
 			},
-			mockAlertStore: &alertstore.Schema{
+			mockAlertStore: alertstore.Schema{
 				AlertRecipients: []alertstore.AlertRecipient{
 					{AlertId: AlertId, Email: UserEmail},
 				},
@@ -696,7 +696,7 @@ func TestCreateAlertRule(t *testing.T) {
 			wantResponse: alertstore.CreatedRule{
 				AlertId: "alert2",
 			},
-			wantAlertStore: &alertstore.Schema{
+			wantAlertStore: alertstore.Schema{
 				AlertRecipients: []alertstore.AlertRecipient{
 					{AlertId: AlertId, Email: UserEmail},
 					{AlertId: "alert2", Email: UserEmail},
@@ -731,7 +731,7 @@ func TestCreateAlertRule(t *testing.T) {
 			mockAlertSource: map[any]any{
 				"alertsCount": 1,
 			},
-			mockAlertStore: &alertstore.Schema{
+			mockAlertStore: alertstore.Schema{
 				AlertRecipients: []alertstore.AlertRecipient{
 					{AlertId: AlertId, Email: UserEmail},
 				},
@@ -768,7 +768,7 @@ func TestCreateAlertRule(t *testing.T) {
 			wantResponse: alertstore.CreatedRule{
 				AlertId: "alert2",
 			},
-			wantAlertStore: &alertstore.Schema{
+			wantAlertStore: alertstore.Schema{
 				AlertRecipients: []alertstore.AlertRecipient{
 					{AlertId: AlertId, Email: UserEmail},
 					{AlertId: "alert2", Email: UserEmail},
@@ -801,7 +801,7 @@ func TestCreateAlertRule(t *testing.T) {
 					},
 				},
 			},
-			mockAlertStore: &alertstore.Schema{
+			mockAlertStore: alertstore.Schema{
 				AlertRecipients: []alertstore.AlertRecipient{
 					{AlertId: AlertId, Email: UserEmail},
 				},
@@ -847,12 +847,15 @@ func TestCreateAlertRule(t *testing.T) {
 				t.Fatalf("init alertstore: %v", err)
 			}
 			defer a.AlertStore.Close()
-			if err = a.AlertStore.PrepareDb(*tc.mockAlertStore); err != nil {
-				t.Fatalf("preparedb: %v", err)
+			if err = a.AlertStore.PrepareDb(tc.mockAlertStore); err != nil {
+				t.Fatalf("alertstore preparedb: %v", err)
 			}
-			a.AlertSource, err = alertsource.NewInflux(tc.mockAlertSource)
+			a.AlertSource, err = alertsource.NewMockAlertSource()
 			if err != nil {
 				t.Fatalf("init alertsource: %v", err)
+			}
+			if err = a.AlertSource.PrepareDb(tc.mockAlertSource); err != nil {
+				t.Fatalf("alertsource preparedb: %v", err)
 			}
 			defer a.AlertSource.Close()
 			resp := api.Post("/alert", tc.alertRule)
@@ -967,7 +970,7 @@ func TestUpdateAlertRule(t *testing.T) {
 		wantStatus                     int
 		alertId                        string
 		alertRule                      alertstore.AlertRule
-		mockAlertStore, wantAlertStore *alertstore.Schema
+		mockAlertStore, wantAlertStore alertstore.Schema
 	}{
 
 		"update the range values of an alert": {
@@ -983,7 +986,7 @@ func TestUpdateAlertRule(t *testing.T) {
 				QueryField:     RegisteredQueryField,
 				AlertRange:     alertstore.Range,
 			},
-			mockAlertStore: &alertstore.Schema{
+			mockAlertStore: alertstore.Schema{
 				AlertRecipients: []alertstore.AlertRecipient{
 					{AlertId: AlertId, Email: UserEmail},
 				},
@@ -1003,7 +1006,7 @@ func TestUpdateAlertRule(t *testing.T) {
 					},
 				},
 			},
-			wantAlertStore: &alertstore.Schema{
+			wantAlertStore: alertstore.Schema{
 				AlertStates: []alertstore.AlertState{},
 				AlertRecipients: []alertstore.AlertRecipient{
 					{AlertId: AlertId, Email: UserEmail},
@@ -1039,7 +1042,7 @@ func TestUpdateAlertRule(t *testing.T) {
 				QueryField:     RegisteredQueryField,
 				AlertRange:     alertstore.Range,
 			},
-			mockAlertStore: &alertstore.Schema{
+			mockAlertStore: alertstore.Schema{
 				AlertRecipients: []alertstore.AlertRecipient{
 					{AlertId: AlertId, Email: UserEmail},
 				},
@@ -1059,7 +1062,7 @@ func TestUpdateAlertRule(t *testing.T) {
 					},
 				},
 			},
-			wantAlertStore: &alertstore.Schema{
+			wantAlertStore: alertstore.Schema{
 				AlertStates: []alertstore.AlertState{},
 				AlertRecipients: []alertstore.AlertRecipient{
 					{AlertId: AlertId, Email: UserEmail},
@@ -1096,7 +1099,7 @@ func TestUpdateAlertRule(t *testing.T) {
 				QueryField:     RegisteredQueryField,
 				AlertRange:     alertstore.Range,
 			},
-			mockAlertStore: &alertstore.Schema{
+			mockAlertStore: alertstore.Schema{
 				AlertRecipients: []alertstore.AlertRecipient{
 					{AlertId: AlertId, Email: UserEmail},
 				},
@@ -1116,7 +1119,7 @@ func TestUpdateAlertRule(t *testing.T) {
 					},
 				},
 			},
-			wantAlertStore: &alertstore.Schema{
+			wantAlertStore: alertstore.Schema{
 				AlertStates: []alertstore.AlertState{},
 				AlertRecipients: []alertstore.AlertRecipient{
 					{AlertId: AlertId, Email: UserEmail},
@@ -1143,7 +1146,7 @@ func TestUpdateAlertRule(t *testing.T) {
 			wantStatus:     http.StatusNotFound,
 			wantErr:        true,
 			alertId:        AlertId,
-			mockAlertStore: &alertstore.Schema{},
+			mockAlertStore: alertstore.Schema{},
 			alertRule: alertstore.AlertRule{
 				Name:           RegisteredAlertName,
 				EmailAddresses: []string{UserEmail},
@@ -1158,7 +1161,7 @@ func TestUpdateAlertRule(t *testing.T) {
 		"invalid: 1 range value on a range type alert check": {
 			wantStatus:     http.StatusBadRequest,
 			wantErr:        true,
-			mockAlertStore: &alertstore.Schema{},
+			mockAlertStore: alertstore.Schema{},
 			alertId:        AlertId,
 			alertRule: alertstore.AlertRule{
 				Name:           RegisteredAlertName,
@@ -1174,7 +1177,7 @@ func TestUpdateAlertRule(t *testing.T) {
 		"invalid: 2 range values on a less than type alert check": {
 			wantStatus:     http.StatusBadRequest,
 			wantErr:        true,
-			mockAlertStore: &alertstore.Schema{},
+			mockAlertStore: alertstore.Schema{},
 			alertId:        AlertId,
 			alertRule: alertstore.AlertRule{
 				EmailAddresses: []string{UserEmail},
@@ -1196,7 +1199,7 @@ func TestUpdateAlertRule(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			a.AlertStore, err = alertstore.NewGorm(alertstore.Testing, "testing")
 			defer a.AlertStore.Close()
-			if err = a.AlertStore.PrepareDb(*tc.mockAlertStore); err != nil {
+			if err = a.AlertStore.PrepareDb(tc.mockAlertStore); err != nil {
 				t.Fatalf("preparedb: %v", err)
 			}
 			resp := api.Put(fmt.Sprintf("/alert/%s", tc.alertId), tc.alertRule)
@@ -1224,14 +1227,14 @@ func TestGetAlertRule(t *testing.T) {
 		want           alertstore.AlertRule
 		wantStatus     int
 		alertId        string
-		mockAlertStore *alertstore.Schema
+		mockAlertStore alertstore.Schema
 	}{
 
 		"successfully get a stored alert": {
 			wantErr:    false,
 			wantStatus: http.StatusOK,
 			alertId:    AlertId,
-			mockAlertStore: &alertstore.Schema{
+			mockAlertStore: alertstore.Schema{
 				AlertRecipients: []alertstore.AlertRecipient{
 					{AlertId: AlertId, Email: UserEmail},
 				},
@@ -1266,7 +1269,7 @@ func TestGetAlertRule(t *testing.T) {
 			want:           alertstore.AlertRule{},
 			wantStatus:     404,
 			alertId:        "alert2",
-			mockAlertStore: &alertstore.Schema{},
+			mockAlertStore: alertstore.Schema{},
 		},
 	}
 
@@ -1278,8 +1281,8 @@ func TestGetAlertRule(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			a.AlertStore, err = alertstore.NewGorm(alertstore.Testing, "testing")
 			defer a.AlertStore.Close()
-			if err = a.AlertStore.PrepareDb(*tc.mockAlertStore); err != nil {
-				t.Fatalf("prepareDb: %v", err)
+			if err = a.AlertStore.PrepareDb(tc.mockAlertStore); err != nil {
+				t.Fatalf("alertstore prepareDb: %v", err)
 			}
 			resp := api.Get(fmt.Sprintf("/alert/%s", tc.alertId))
 			if tc.wantStatus != resp.Code {
@@ -1303,7 +1306,7 @@ func TestDeleteAlert(t *testing.T) {
 		wantStatus                       int
 		alertId                          string
 		wantAlertRule                    alertstore.AlertRule
-		mockAlertStore, wantAlertStore   *alertstore.Schema
+		mockAlertStore, wantAlertStore   alertstore.Schema
 		mockAlertSource, wantAlertSource map[any]any
 	}{
 
@@ -1317,7 +1320,7 @@ func TestDeleteAlert(t *testing.T) {
 			wantAlertSource: map[any]any{
 				"alertsCount": 0,
 			},
-			mockAlertStore: &alertstore.Schema{
+			mockAlertStore: alertstore.Schema{
 				AlertRecipients: []alertstore.AlertRecipient{
 					{AlertId: AlertId, Email: UserEmail},
 				},
@@ -1342,7 +1345,7 @@ func TestDeleteAlert(t *testing.T) {
 					},
 				},
 			},
-			wantAlertStore: &alertstore.Schema{
+			wantAlertStore: alertstore.Schema{
 				DeviceAlerts:    []alertstore.DeviceAlertRule{},
 				AlertRecipients: []alertstore.AlertRecipient{},
 				AlertStates:     []alertstore.AlertState{},
@@ -1363,7 +1366,7 @@ func TestDeleteAlert(t *testing.T) {
 			wantErr:        true,
 			wantStatus:     404,
 			alertId:        "alert2",
-			mockAlertStore: &alertstore.Schema{},
+			mockAlertStore: alertstore.Schema{},
 		},
 	}
 
@@ -1382,8 +1385,8 @@ func TestDeleteAlert(t *testing.T) {
 				t.Fatalf("init alertstore: %v", err)
 			}
 			defer a.AlertStore.Close()
-			if err = a.AlertStore.PrepareDb(*tc.mockAlertStore); err != nil {
-				t.Fatalf("preparedb: %v", err)
+			if err = a.AlertStore.PrepareDb(tc.mockAlertStore); err != nil {
+				t.Fatalf("alertstore preparedb: %v", err)
 			}
 			resp := api.Delete(fmt.Sprintf("/alert/%s", tc.alertId))
 			if tc.wantStatus != resp.Code {

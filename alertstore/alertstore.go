@@ -31,7 +31,7 @@ const (
 type AlertStore interface {
 	Close() error
 	PrepareDb(Schema) error
-	GetSnapshot() *Schema
+	GetSnapshot() Schema
 	//NOTE: could return alertstore.NoAlert
 	GetAlertState(alertId string) (AlertState, error)
 	GetAlertRule(alertId string) (AlertRule, error)
