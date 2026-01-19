@@ -1,14 +1,18 @@
 package testing
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
+	"os"
 	"reflect"
 	"testing"
 	"time"
 
 	"github.com/danielgtaylor/huma/v2/humatest"
+	cfy "github.com/geraud22/config-from-yaml"
 	"github.com/geraud22/sensordata-alerts/alertsource"
 	"github.com/geraud22/sensordata-alerts/alertstore"
 	"github.com/geraud22/sensordata-alerts/app"
@@ -849,7 +853,20 @@ func TestCreateAlertRule(t *testing.T) {
 			if err = a.AlertStore.PrepareDb(tc.mockAlertStore); err != nil {
 				t.Fatalf("alertstore preparedb: %v", err)
 			}
-			a.AlertSource, err = alertsource.NewMockAlertSource()
+			influxTest := true
+			var influxOpts alertsource.InfluxOpts
+			if influxTest {
+				config, err := os.ReadFile("../config.yml")
+				if err != nil {
+					log.Fatalf("error reading config file: %v", err)
+				}
+				appOpts, err := cfy.LoadConfig[app.Opts](bytes.NewReader(config), "yaml", nil)
+				if err != nil {
+					log.Fatalf("error loading config: %v", err)
+				}
+				influxOpts = appOpts.Influx
+			}
+			a.AlertSource, err = alertsource.NewInflux(influxOpts)
 			if err != nil {
 				t.Fatalf("init alertsource: %v", err)
 			}

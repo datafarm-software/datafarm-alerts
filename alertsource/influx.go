@@ -62,12 +62,13 @@ type InfluxOpts struct {
 	Org   string          `mapstructure:"org" validate:"required"`
 	Url   string          `mapstructure:"url" validate:"required"`
 	Token string          `mapstructure:"token" validate:"required"`
-	Mode  alertstore.Mode `mapstructure:"mode" validate:"required"`
+	Mode  alertstore.Mode `mapstructure:"mode"`
 }
 
 type Influx struct {
-	ctxCancel context.CancelFunc
-	client    influxdb2.Client
+	ctxCancel          context.CancelFunc
+	client             influxdb2.Client
+	testingAlertsCount int
 }
 
 func NewInflux(opts InfluxOpts) (*Influx, error) {
@@ -97,4 +98,13 @@ func (i *Influx) UpdateAlertRule(ar alertstore.AlertRule) error {
 
 func (i *Influx) DeleteAlertRule(alertId string) error {
 	return fmt.Errorf("not implemented")
+}
+
+func (i *Influx) PrepareDb(alertsCount int) error {
+	i.testingAlertsCount = alertsCount
+	return nil
+}
+
+func (i *Influx) GetSnapshot() int {
+	return i.testingAlertsCount
 }
