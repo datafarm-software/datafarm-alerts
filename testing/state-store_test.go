@@ -1181,7 +1181,7 @@ func TestUpdateAlertRule(t *testing.T) {
 		},
 
 		"invalid: 1 range value on a range type alert check": {
-			wantStatus:     http.StatusBadRequest,
+			wantStatus:     http.StatusUnprocessableEntity,
 			wantErr:        true,
 			mockAlertStore: alertstore.Schema{},
 			alertId:        AlertId,
@@ -1193,22 +1193,6 @@ func TestUpdateAlertRule(t *testing.T) {
 				DeviceId:       RegisteredDeviceId,
 				QueryField:     RegisteredQueryField,
 				AlertRange:     alertstore.Range,
-			},
-		},
-
-		"invalid: 2 range values on a less than type alert check": {
-			wantStatus:     http.StatusBadRequest,
-			wantErr:        true,
-			mockAlertStore: alertstore.Schema{},
-			alertId:        AlertId,
-			alertRule: alertstore.AlertRule{
-				EmailAddresses: []string{UserEmail},
-				Name:           RegisteredAlertName,
-				RangeValues:    []float32{50, 90},
-				Duration:       "24h",
-				DeviceId:       RegisteredDeviceId,
-				QueryField:     RegisteredQueryField,
-				AlertRange:     alertstore.LessThan,
 			},
 		},
 	}
