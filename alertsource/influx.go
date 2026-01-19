@@ -7,6 +7,7 @@ import (
 
 	"github.com/geraud22/sensordata-alerts/alertstore"
 	influxdb2 "github.com/influxdata/influxdb-client-go/v2"
+	"github.com/influxdata/influxdb-client-go/v2/domain"
 )
 
 var ctx context.Context
@@ -68,6 +69,7 @@ type InfluxOpts struct {
 type Influx struct {
 	ctxCancel          context.CancelFunc
 	client             influxdb2.Client
+	mode               alertstore.Mode
 	testingAlertsCount int
 }
 
@@ -79,6 +81,7 @@ func NewInflux(opts InfluxOpts) (*Influx, error) {
 	return &Influx{
 		ctxCancel: cancel,
 		client:    client,
+		mode:      opts.Mode,
 	}, err
 }
 
@@ -89,7 +92,20 @@ func (i *Influx) Close() error {
 }
 
 func (i *Influx) CreateAlertRule(ar alertstore.AlertRule) (string, error) {
-	return "", fmt.Errorf("not implemented")
+	var thresholds []domain.Threshold
+	level := domain.CheckStatusLevelCRIT
+	switch ar.AlertRange {
+	case alertstore.LessThan:
+		thresholds = append(thresholds, domain.LesserThreshold{
+			Value:         ar.RangeValues[0],
+			ThresholdBase: domain.ThresholdBase{Level: &level},
+		})
+	case alertstore.GreaterThan:
+	case alertstore.Range:
+	default:
+		return "", fmt.Errorf("unknown alert range type: %d", ar.AlertRange)
+	}
+	return "", nil
 }
 
 func (i *Influx) UpdateAlertRule(ar alertstore.AlertRule) error {
