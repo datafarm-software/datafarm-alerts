@@ -848,7 +848,7 @@ func TestCreateAlertRule(t *testing.T) {
 			defer a.AlertStore.Close()
 			err = a.AlertStore.PrepareDb(tc.mockAlertStore)
 			require.Nil(t, err)
-			influxTest := false
+			influxTest := true
 			if influxTest {
 				var influxOpts alertsource.InfluxOpts
 				config, err := os.ReadFile("../config.yml")

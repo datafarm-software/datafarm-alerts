@@ -92,20 +92,91 @@ func (i *Influx) Close() error {
 }
 
 func (i *Influx) CreateAlertRule(ar alertstore.AlertRule) (string, error) {
-	var thresholds []domain.Threshold
-	level := domain.CheckStatusLevelCRIT
+	var lesser domain.LesserThreshold
+	var greater domain.GreaterThreshold
+	var rang domain.RangeThreshold
+	lo := domain.CheckStatusLevelOK
+	lc := domain.CheckStatusLevelCRIT
+
 	switch ar.AlertRange {
 	case alertstore.LessThan:
-		thresholds = append(thresholds, domain.LesserThreshold{
+		greater = domain.GreaterThreshold{
 			Value:         ar.RangeValues[0],
-			ThresholdBase: domain.ThresholdBase{Level: &level},
-		})
+			ThresholdBase: domain.ThresholdBase{Level: &lo},
+		}
+		lesser = domain.LesserThreshold{
+			Value:         ar.RangeValues[1],
+			ThresholdBase: domain.ThresholdBase{Level: &lc},
+		}
+
 	case alertstore.GreaterThan:
+		greater = domain.GreaterThreshold{
+			Value:         ar.RangeValues[0],
+			ThresholdBase: domain.ThresholdBase{Level: &lc},
+		}
+		lesser = domain.LesserThreshold{
+			Value:         ar.RangeValues[1],
+			ThresholdBase: domain.ThresholdBase{Level: &lo},
+		}
+
 	case alertstore.Range:
+		if ar.RangeValues[0] >= ar.RangeValues[1] {
+			return "", fmt.Errorf("first boundary is not smaller than the second.")
+		}
+		rang = domain.RangeThreshold{
+			ThresholdBase: domain.ThresholdBase{Level: &lo},
+			Max:           ar.RangeValues[1],
+			Min:           ar.RangeValues[0],
+		}
+		greater = domain.GreaterThreshold{
+			ThresholdBase: domain.ThresholdBase{Level: &lc},
+			Value:         ar.RangeValues[1],
+		}
+		lesser = domain.LesserThreshold{
+			ThresholdBase: domain.ThresholdBase{Level: &lc},
+			Value:         ar.RangeValues[0],
+		}
 	default:
 		return "", fmt.Errorf("unknown alert range type: %d", ar.AlertRange)
 	}
-	return "", nil
+
+	thresholds := []domain.Threshold{&greater, &lesser, &rang}
+	key := "queryField"
+	check := domain.ThresholdCheck{
+		CheckBaseExtend: domain.CheckBaseExtend{
+			CheckBase: domain.CheckBase{
+				Name:   ar.Name,
+				OrgID:  *org.Id,
+				Query:  domain.DashboardQuery{Text: &flux},
+				Status: domain.TaskStatusTypeActive,
+			},
+			Every:                 &ar.Duration,
+			StatusMessageTemplate: &msg,
+			Tags: &[]struct {
+				Key   *string `json:"key,omitempty"`
+				Value *string `json:"value,omitempty"`
+			}{{Key: &key, Value: &ar.QueryField}},
+		},
+		Thresholds: &thresholds,
+	}
+
+	params := domain.CreateCheckAllParams{
+		Body: domain.CreateCheckJSONRequestBody(&check),
+	}
+	nc, err := i.client.APIClient().CreateCheck(ctx, &params)
+	if err != nil {
+		return "", err
+	}
+
+	var alertId string
+	if nc.Type() == "threshold" {
+		tc, ok := nc.(*domain.ThresholdCheck)
+		if !ok {
+			return "", fmt.Errorf("invalid check created")
+		}
+		alertId = *tc.CheckBase.Id
+	}
+	return alertId, nil
 }
 
 func (i *Influx) UpdateAlertRule(ar alertstore.AlertRule) error {
