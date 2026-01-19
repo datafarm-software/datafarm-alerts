@@ -544,8 +544,9 @@ func TestCreateAlertRule(t *testing.T) {
 	}{
 
 		"successfully create a less than alert rule": {
-			wantErr:    false,
-			wantStatus: http.StatusOK,
+			wantErr:              false,
+			wantStatus:           http.StatusOK,
+			wantAlertSourceCount: 1,
 			mockAlertStore: alertstore.Schema{
 				DeviceAlerts:    []alertstore.DeviceAlertRule{},
 				AlertRecipients: []alertstore.AlertRecipient{},
@@ -864,9 +865,9 @@ func TestCreateAlertRule(t *testing.T) {
 				if err = json.Unmarshal(resp.Body.Bytes(), &got); err != nil {
 					t.Fatalf("unmarshalling: %s", err)
 				}
-				got := a.AlertSource.GetSnapshot()
-				if tc.wantAlertSourceCount != got {
-					t.Fatalf("wantAlertSourceCount: %d, got alertsCount: %d", tc.wantAlertSourceCount, got)
+				gotAlertSourceCount := a.AlertSource.GetSnapshot()
+				if tc.wantAlertSourceCount != gotAlertSourceCount {
+					t.Fatalf("wantAlertSourceCount: %d, got alertsCount: %d", tc.wantAlertSourceCount, gotAlertSourceCount)
 				}
 				if diff := cmp.Diff(tc.wantResponse, got); diff != "" {
 					t.Fatalf("response mismatch (-want +got):\n%s", diff)
