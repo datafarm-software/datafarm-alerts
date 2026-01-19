@@ -11,9 +11,11 @@ type AlertFromSource interface {
 
 type AlertSource interface {
 	Close() error
-	PrepareDb([]alertstore.AlertRule) error
 	UpdateAlertRule(alertstore.AlertRule) error
 	CreateAlertRule(alertstore.AlertRule) (string, error)
 	//NOTE: Could return alertstore.NoAlert
 	DeleteAlertRule(alertId string) error
+	//NOTE: used in testing
+	PrepareDb(int) error
+	GetSnapshot() int
 }

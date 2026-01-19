@@ -535,12 +535,12 @@ func TestRespondToAlert(t *testing.T) {
 
 func TestCreateAlertRule(t *testing.T) {
 	tests := map[string]struct {
-		wantErr                        bool
-		wantResponse                   alertstore.CreatedRule
-		wantStatus                     int
-		wantAlertStore, mockAlertStore alertstore.Schema
-		mockAlertSource                []alertstore.AlertRule
-		alertRule                      alertstore.AlertRule
+		wantErr                                        bool
+		wantResponse                                   alertstore.CreatedRule
+		wantStatus                                     int
+		wantAlertStore, mockAlertStore                 alertstore.Schema
+		startingAlertSourceCount, wantAlertSourceCount int
+		alertRule                                      alertstore.AlertRule
 	}{
 
 		"successfully create a less than alert rule": {
@@ -728,9 +728,8 @@ func TestCreateAlertRule(t *testing.T) {
 					},
 				},
 			},
-			mockAlertSource: map[any]any{
-				"alertsCount": 1,
-			},
+			startingAlertSourceCount: 1,
+			wantAlertSourceCount:     2,
 			mockAlertStore: alertstore.Schema{
 				AlertRecipients: []alertstore.AlertRecipient{
 					{AlertId: AlertId, Email: UserEmail},
@@ -821,9 +820,8 @@ func TestCreateAlertRule(t *testing.T) {
 					},
 				},
 			},
-			mockAlertSource: map[any]any{
-				"alertsCount": 1,
-			},
+			startingAlertSourceCount: 1,
+			wantAlertSourceCount:     2,
 			alertRule: alertstore.AlertRule{
 				Name:           RegisteredAlertName,
 				EmailAddresses: []string{UserEmail, "user2@alert.com"},
@@ -854,7 +852,7 @@ func TestCreateAlertRule(t *testing.T) {
 			if err != nil {
 				t.Fatalf("init alertsource: %v", err)
 			}
-			if err = a.AlertSource.PrepareDb(tc.mockAlertSource); err != nil {
+			if err = a.AlertSource.PrepareDb(tc.startingAlertSourceCount); err != nil {
 				t.Fatalf("alertsource preparedb: %v", err)
 			}
 			defer a.AlertSource.Close()
@@ -865,6 +863,10 @@ func TestCreateAlertRule(t *testing.T) {
 			if !tc.wantErr {
 				if err = json.Unmarshal(resp.Body.Bytes(), &got); err != nil {
 					t.Fatalf("unmarshalling: %s", err)
+				}
+				got := a.AlertSource.GetSnapshot()
+				if tc.wantAlertSourceCount != got {
+					t.Fatalf("wantAlertSourceCount: %d, got alertsCount: %d", tc.wantAlertSourceCount, got)
 				}
 				if diff := cmp.Diff(tc.wantResponse, got); diff != "" {
 					t.Fatalf("response mismatch (-want +got):\n%s", diff)
@@ -1302,24 +1304,20 @@ func TestGetAlertRule(t *testing.T) {
 
 func TestDeleteAlert(t *testing.T) {
 	tests := map[string]struct {
-		wantErr                          bool
-		wantStatus                       int
-		alertId                          string
-		wantAlertRule                    alertstore.AlertRule
-		mockAlertStore, wantAlertStore   alertstore.Schema
-		mockAlertSource, wantAlertSource map[any]any
+		wantErr                                        bool
+		wantStatus                                     int
+		alertId                                        string
+		wantAlertRule                                  alertstore.AlertRule
+		mockAlertStore, wantAlertStore                 alertstore.Schema
+		startingAlertSourceCount, wantAlertSourceCount int
 	}{
 
 		"successfully delete an alert": {
-			wantErr:    false,
-			wantStatus: 200,
-			alertId:    AlertId,
-			mockAlertSource: map[any]any{
-				"alertsCount": 1,
-			},
-			wantAlertSource: map[any]any{
-				"alertsCount": 0,
-			},
+			wantErr:                  false,
+			wantStatus:               200,
+			alertId:                  AlertId,
+			startingAlertSourceCount: 1,
+			wantAlertSourceCount:     0,
 			mockAlertStore: alertstore.Schema{
 				AlertRecipients: []alertstore.AlertRecipient{
 					{AlertId: AlertId, Email: UserEmail},
@@ -1372,14 +1370,17 @@ func TestDeleteAlert(t *testing.T) {
 
 	var got alertstore.AlertRule
 	var err error
-	var m *alertsource.MockAlertSource
+	var m alertsource.AlertSource
 	_, api := humatest.New(t)
 	a.RegisterHumaOperations(api)
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
-			m = alertsource.NewMockAlertSource(tc.mockAlertSource)
+			m, err = alertsource.NewMockAlertSource()
 			a.AlertSource = m
 			defer a.AlertSource.Close()
+			if err = a.AlertSource.PrepareDb(tc.startingAlertSourceCount); err != nil {
+				t.Fatalf("alertsource preparedb: %v", err)
+			}
 			a.AlertStore, err = alertstore.NewGorm(alertstore.Testing, "testing")
 			if err != nil {
 				t.Fatalf("init alertstore: %v", err)
@@ -1402,8 +1403,9 @@ func TestDeleteAlert(t *testing.T) {
 				if diff := cmp.Diff(tc.wantAlertStore, a.AlertStore.GetSnapshot()); diff != "" {
 					t.Fatalf("alertStore mismatch (-want +got):\n%s", diff)
 				}
-				if diff := cmp.Diff(tc.wantAlertSource, m.GetSnapshot()); diff != "" {
-					t.Fatalf("alertSource mismatch (-want +got):\n%s", diff)
+				got := a.AlertSource.GetSnapshot()
+				if tc.wantAlertSourceCount != got {
+					t.Fatalf("wantAlertSourceCount: %d, got alertsCount: %d", tc.wantAlertSourceCount, got)
 				}
 			}
 		})

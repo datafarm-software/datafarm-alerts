@@ -8,7 +8,7 @@ import (
 )
 
 type MockAlertSource struct {
-	alerts []alertstore.AlertRule
+	alertsCount int
 }
 
 func NewMockAlertSource() (*MockAlertSource, error) {
@@ -19,13 +19,13 @@ func (m *MockAlertSource) Close() error {
 	return nil
 }
 
-func (m *MockAlertSource) PrepareDb(alerts []alertstore.AlertRule) error {
-	m.alerts = alerts
+func (m *MockAlertSource) PrepareDb(alertsCount int) error {
+	m.alertsCount = alertsCount
 	return nil
 }
 
-func (m *MockAlertSource) GetSnapshot() []alertstore.AlertRule {
-	return m.alerts
+func (m *MockAlertSource) GetSnapshot() int {
+	return m.alertsCount
 }
 
 func (m *MockAlertSource) UpdateAlertRule(ar alertstore.AlertRule) error {
