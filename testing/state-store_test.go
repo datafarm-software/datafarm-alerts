@@ -4,12 +4,13 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
 	"os"
 	"reflect"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/require"
 
 	"github.com/danielgtaylor/huma/v2/humatest"
 	cfy "github.com/geraud22/config-from-yaml"
@@ -513,13 +514,10 @@ func TestRespondToAlert(t *testing.T) {
 			n = notifier.NewMockNotifier(tc.mockNotifierStore)
 			a.Notifier = n
 			a.AlertStore, err = alertstore.NewGorm(alertstore.Testing, "testing")
-			if err != nil {
-				t.Fatalf("init alertstore: %v", err)
-			}
+			require.Nil(t, err)
 			defer a.AlertStore.Close()
-			if err = a.AlertStore.PrepareDb(tc.mockAlertStore); err != nil {
-				t.Fatalf("alertstore preparedb: %v", err)
-			}
+			err = a.AlertStore.PrepareDb(tc.mockAlertStore)
+			require.Nil(t, err)
 			resp := api.Post("/alert/notify", tc.alert)
 			if resp.Code != tc.wantStatus {
 				t.Fatalf("wantStatus: %d, response status: %d", tc.wantStatus, resp.Code)
@@ -846,44 +844,33 @@ func TestCreateAlertRule(t *testing.T) {
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
 			a.AlertStore, err = alertstore.NewGorm(alertstore.Testing, "testing")
-			if err != nil {
-				t.Fatalf("init alertstore: %v", err)
-			}
+			require.Nil(t, err)
 			defer a.AlertStore.Close()
-			if err = a.AlertStore.PrepareDb(tc.mockAlertStore); err != nil {
-				t.Fatalf("alertstore preparedb: %v", err)
-			}
+			err = a.AlertStore.PrepareDb(tc.mockAlertStore)
+			require.Nil(t, err)
 			influxTest := false
 			if influxTest {
 				var influxOpts alertsource.InfluxOpts
 				config, err := os.ReadFile("../config.yml")
-				if err != nil {
-					log.Fatalf("error reading config file: %v", err)
-				}
+				require.Nil(t, err)
 				appOpts, err := cfy.LoadConfig[app.Opts](bytes.NewReader(config), "yaml", nil)
-				if err != nil {
-					log.Fatalf("error loading config: %v", err)
-				}
+				require.Nil(t, err)
 				influxOpts = appOpts.Influx
 				a.AlertSource, err = alertsource.NewInflux(influxOpts)
 			} else {
 				a.AlertSource, err = alertsource.NewMockAlertSource()
 			}
-			if err != nil {
-				t.Fatalf("init alertsource: %v", err)
-			}
-			if err = a.AlertSource.PrepareDb(tc.startingAlertSourceCount); err != nil {
-				t.Fatalf("alertsource preparedb: %v", err)
-			}
+			require.Nil(t, err)
+			err = a.AlertSource.PrepareDb(tc.startingAlertSourceCount)
+			require.Nil(t, err)
 			defer a.AlertSource.Close()
 			resp := api.Post("/alert", tc.alertRule)
 			if tc.wantStatus != resp.Code {
 				t.Fatalf("wantStatusCode: %d, response code: %d", tc.wantStatus, resp.Code)
 			}
 			if !tc.wantErr {
-				if err = json.Unmarshal(resp.Body.Bytes(), &got); err != nil {
-					t.Fatalf("unmarshalling: %s", err)
-				}
+				err = json.Unmarshal(resp.Body.Bytes(), &got)
+				require.Nil(t, err)
 				gotAlertSourceCount := a.AlertSource.GetSnapshot()
 				if tc.wantAlertSourceCount != gotAlertSourceCount {
 					t.Fatalf("wantAlertSourceCount: %d, got alertsCount: %d", tc.wantAlertSourceCount, gotAlertSourceCount)
@@ -1205,17 +1192,15 @@ func TestUpdateAlertRule(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			a.AlertStore, err = alertstore.NewGorm(alertstore.Testing, "testing")
 			defer a.AlertStore.Close()
-			if err = a.AlertStore.PrepareDb(tc.mockAlertStore); err != nil {
-				t.Fatalf("preparedb: %v", err)
-			}
+			err = a.AlertStore.PrepareDb(tc.mockAlertStore)
+			require.Nil(t, err)
 			resp := api.Put(fmt.Sprintf("/alert/%s", tc.alertId), tc.alertRule)
 			if tc.wantStatus != resp.Code {
 				t.Fatalf("wantStatusCode: %d, response code: %d", tc.wantStatus, resp.Code)
 			}
 			if !tc.wantErr {
-				if err = json.Unmarshal(resp.Body.Bytes(), &got); err != nil {
-					t.Fatalf("unmarshalling: %s", err)
-				}
+				err = json.Unmarshal(resp.Body.Bytes(), &got)
+				require.Nil(t, err)
 				if diff := cmp.Diff(tc.alertRule, got); diff != "" {
 					t.Fatalf("response mismatch (-want +got):\n%s", diff)
 				}
@@ -1287,17 +1272,15 @@ func TestGetAlertRule(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			a.AlertStore, err = alertstore.NewGorm(alertstore.Testing, "testing")
 			defer a.AlertStore.Close()
-			if err = a.AlertStore.PrepareDb(tc.mockAlertStore); err != nil {
-				t.Fatalf("alertstore prepareDb: %v", err)
-			}
+			err = a.AlertStore.PrepareDb(tc.mockAlertStore)
+			require.Nil(t, err)
 			resp := api.Get(fmt.Sprintf("/alert/%s", tc.alertId))
 			if tc.wantStatus != resp.Code {
 				t.Fatalf("wantStatusCode: %d, response code: %d", tc.wantStatus, resp.Code)
 			}
 			if !tc.wantErr {
-				if err = json.Unmarshal(resp.Body.Bytes(), &got); err != nil {
-					t.Fatalf("unmarshalling: %s", err)
-				}
+				err = json.Unmarshal(resp.Body.Bytes(), &got)
+				require.Nil(t, err)
 				if diff := cmp.Diff(tc.want, got); diff != "" {
 					t.Fatalf("response mismatch (-want +got):\n%s", diff)
 				}
@@ -1318,7 +1301,7 @@ func TestDeleteAlert(t *testing.T) {
 
 		"successfully delete an alert": {
 			wantErr:                  false,
-			wantStatus:               200,
+			wantStatus:               http.StatusOK,
 			alertId:                  AlertId,
 			startingAlertSourceCount: 1,
 			wantAlertSourceCount:     0,
@@ -1380,27 +1363,23 @@ func TestDeleteAlert(t *testing.T) {
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
 			m, err = alertsource.NewMockAlertSource()
+			require.Nil(t, err)
 			a.AlertSource = m
 			defer a.AlertSource.Close()
-			if err = a.AlertSource.PrepareDb(tc.startingAlertSourceCount); err != nil {
-				t.Fatalf("alertsource preparedb: %v", err)
-			}
 			a.AlertStore, err = alertstore.NewGorm(alertstore.Testing, "testing")
-			if err != nil {
-				t.Fatalf("init alertstore: %v", err)
-			}
+			require.Nil(t, err)
 			defer a.AlertStore.Close()
-			if err = a.AlertStore.PrepareDb(tc.mockAlertStore); err != nil {
-				t.Fatalf("alertstore preparedb: %v", err)
-			}
+			err = a.AlertSource.PrepareDb(tc.startingAlertSourceCount)
+			require.Nil(t, err)
+			err = a.AlertStore.PrepareDb(tc.mockAlertStore)
+			require.Nil(t, err)
 			resp := api.Delete(fmt.Sprintf("/alert/%s", tc.alertId))
 			if tc.wantStatus != resp.Code {
 				t.Fatalf("wantStatus: %d, response Code: %v", tc.wantStatus, resp.Code)
 			}
 			if !tc.wantErr {
-				if err = json.Unmarshal(resp.Body.Bytes(), &got); err != nil {
-					t.Fatalf("unmarshalling: %v", err)
-				}
+				err = json.Unmarshal(resp.Body.Bytes(), &got)
+				require.Nil(t, err)
 				if diff := cmp.Diff(tc.wantAlertRule, got); err != nil {
 					t.Fatalf("alertRule mismatch (-want +got):\n%s", diff)
 				}
