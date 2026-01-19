@@ -841,6 +841,12 @@ func TestCreateAlertRule(t *testing.T) {
 	var err error
 	_, api := humatest.New(t)
 	a.RegisterHumaOperations(api)
+	var influxOpts alertsource.InfluxOpts
+	config, err := os.ReadFile("../config.yml")
+	require.Nil(t, err)
+	appOpts, err := cfy.LoadConfig[app.Opts](bytes.NewReader(config), "yaml", nil)
+	require.Nil(t, err)
+	influxOpts = appOpts.Influx
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
 			a.AlertStore, err = alertstore.NewGorm(alertstore.Testing, "testing")
@@ -850,12 +856,6 @@ func TestCreateAlertRule(t *testing.T) {
 			require.Nil(t, err)
 			influxTest := true
 			if influxTest {
-				var influxOpts alertsource.InfluxOpts
-				config, err := os.ReadFile("../config.yml")
-				require.Nil(t, err)
-				appOpts, err := cfy.LoadConfig[app.Opts](bytes.NewReader(config), "yaml", nil)
-				require.Nil(t, err)
-				influxOpts = appOpts.Influx
 				a.AlertSource, err = alertsource.NewInflux(influxOpts)
 			} else {
 				a.AlertSource, err = alertsource.NewMockAlertSource()
@@ -873,7 +873,9 @@ func TestCreateAlertRule(t *testing.T) {
 				require.Nil(t, err)
 				gotAlertSourceCount := a.AlertSource.GetSnapshot()
 				if tc.wantAlertSourceCount != gotAlertSourceCount {
-					t.Fatalf("wantAlertSourceCount: %d, got alertsCount: %d", tc.wantAlertSourceCount, gotAlertSourceCount)
+					t.Fatalf(
+						"wantAlertSourceCount: %d, got alertsCount: %d",
+						tc.wantAlertSourceCount, gotAlertSourceCount)
 				}
 				if diff := cmp.Diff(tc.wantResponse, got); diff != "" {
 					t.Fatalf("response mismatch (-want +got):\n%s", diff)

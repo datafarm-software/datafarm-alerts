@@ -82,6 +82,7 @@ type Influx struct {
 	mode               alertstore.Mode
 	orgId, org         string
 	testingAlertsCount int
+	testingAlertIds    []string
 }
 
 func NewInflux(opts InfluxOpts) (*Influx, error) {
@@ -97,6 +98,10 @@ func NewInflux(opts InfluxOpts) (*Influx, error) {
 		cancel()
 		return nil, err
 	}
+	if org.Id == nil {
+		cancel()
+		return nil, fmt.Errorf("found no org")
+	}
 	return &Influx{
 		ctxCancel: cancel,
 		client:    client,
@@ -107,9 +112,21 @@ func NewInflux(opts InfluxOpts) (*Influx, error) {
 }
 
 func (i *Influx) Close() error {
+	var err error
+	if i.mode == alertstore.Testing {
+		var dp domain.DeleteChecksIDAllParams
+		for _, id := range i.testingAlertIds {
+			dp = domain.DeleteChecksIDAllParams{
+				CheckID: id,
+			}
+			if err = i.client.APIClient().DeleteChecksID(ctx, &dp); err != nil {
+				break
+			}
+		}
+	}
 	i.ctxCancel()
 	i.client.Close()
-	return nil
+	return err
 }
 
 func (i *Influx) CreateAlertRule(ar alertstore.AlertRule) (string, error) {
@@ -197,6 +214,10 @@ func (i *Influx) CreateAlertRule(ar alertstore.AlertRule) (string, error) {
 			return "", fmt.Errorf("invalid check created")
 		}
 		alertId = *tc.CheckBase.Id
+	}
+	if i.mode == alertstore.Testing {
+		i.testingAlertsCount++
+		i.testingAlertIds = append(i.testingAlertIds, alertId)
 	}
 	return alertId, nil
 }
