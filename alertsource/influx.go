@@ -10,6 +10,16 @@ import (
 	"github.com/influxdata/influxdb-client-go/v2/domain"
 )
 
+var msg string = `
+	Check: ${r._check_name} DeviceId: %s, QueryField: %s
+	State: ${r._level} at Time: %s, due to value ${r._value}`
+
+var flux string = `from(bucket: "%s")
+        |> range(start: %s)
+        |> filter(fn: (r) => r["deviceID"] == "%s")
+        |> filter(fn: (r) => r["_field"] == "%s")
+        |> aggregateWindow(every: %s, fn: mean, createEmpty: false)`
+
 var ctx context.Context
 
 type InfluxAlert struct {
@@ -70,6 +80,7 @@ type Influx struct {
 	ctxCancel          context.CancelFunc
 	client             influxdb2.Client
 	mode               alertstore.Mode
+	orgId, org         string
 	testingAlertsCount int
 }
 
@@ -77,12 +88,22 @@ func NewInflux(opts InfluxOpts) (*Influx, error) {
 	c, cancel := context.WithCancel(context.Background())
 	ctx = c
 	client := influxdb2.NewClientWithOptions(opts.Url, opts.Token, influxdb2.DefaultOptions())
-	err := client.APIClient().GetPing(ctx)
+	if err := client.APIClient().GetPing(ctx); err != nil {
+		cancel()
+		return nil, err
+	}
+	org, err := client.OrganizationsAPI().FindOrganizationByName(ctx, opts.Org)
+	if err != nil {
+		cancel()
+		return nil, err
+	}
 	return &Influx{
 		ctxCancel: cancel,
 		client:    client,
 		mode:      opts.Mode,
-	}, err
+		org:       opts.Org,
+		orgId:     *org.Id,
+	}, nil
 }
 
 func (i *Influx) Close() error {
@@ -142,11 +163,12 @@ func (i *Influx) CreateAlertRule(ar alertstore.AlertRule) (string, error) {
 
 	thresholds := []domain.Threshold{&greater, &lesser, &rang}
 	key := "queryField"
+	flux = fmt.Sprintf(flux, i.org, ar.AlertRange, ar.DeviceId, ar.QueryField, ar.AlertRange)
 	check := domain.ThresholdCheck{
 		CheckBaseExtend: domain.CheckBaseExtend{
 			CheckBase: domain.CheckBase{
 				Name:   ar.Name,
-				OrgID:  *org.Id,
+				OrgID:  i.orgId,
 				Query:  domain.DashboardQuery{Text: &flux},
 				Status: domain.TaskStatusTypeActive,
 			},

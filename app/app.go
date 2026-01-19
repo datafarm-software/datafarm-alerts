@@ -287,6 +287,7 @@ func (a *App) RespondToAlert(
 	in *struct{ Body alertsource.InfluxAlert }) (*struct{}, error) {
 	source := alertsource.AlertFromSource(&in.Body)
 	alert := source.AlertState()
+	log.Println("alert: ", alert)
 	alertRule, err := a.AlertStore.GetAlertRule(alert.Id)
 	if err != nil {
 		if !errors.Is(err, alertstore.NoAlert) {
