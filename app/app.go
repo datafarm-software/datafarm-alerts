@@ -43,7 +43,10 @@ func Start(opts Opts) error {
 	if err = app.AlertStore.PrepareDb(alertstore.Schema{}); err != nil {
 		return err
 	}
-	app.AlertSource = alertsource.NewMockAlertSource(nil)
+	app.AlertSource, err = alertsource.NewMockAlertSource()
+	if err != nil {
+		return err
+	}
 	cli := humacli.New(func(hooks humacli.Hooks, options *Opts) {
 		router := http.NewServeMux()
 		config := huma.DefaultConfig("SensorData Alerts API", "1.0.0")

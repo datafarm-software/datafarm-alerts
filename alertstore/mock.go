@@ -24,8 +24,8 @@ func (m *MockAlertStore) PrepareDb(db Schema) error {
 	return nil
 }
 
-func (m *MockAlertStore) GetSnapshot() *Schema {
-	return m.Db
+func (m *MockAlertStore) GetSnapshot() Schema {
+	return *m.Db
 }
 
 func (m *MockAlertStore) GetAlertState(alertId string) (AlertState, error) {

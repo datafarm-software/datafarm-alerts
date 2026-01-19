@@ -2,7 +2,6 @@ package alertsource
 
 import (
 	"fmt"
-	"slices"
 
 	"github.com/geraud22/sensordata-alerts/alertstore"
 )
@@ -33,17 +32,13 @@ func (m *MockAlertSource) UpdateAlertRule(ar alertstore.AlertRule) error {
 }
 
 func (m *MockAlertSource) CreateAlertRule(ar alertstore.AlertRule) (string, error) {
-	alertCount := len(m.alerts) + 1
+	alertCount := m.alertsCount + 1
 	ar.AlertId = fmt.Sprintf("alert%d", alertCount)
-	m.alerts = append(m.alerts, ar)
+	m.alertsCount++
 	return ar.AlertId, nil
 }
 
 func (m *MockAlertSource) DeleteAlertRule(alertId string) error {
-	for i, alert := range m.alerts {
-		if alert.AlertId == alertId {
-			m.alerts = slices.Delete(m.alerts, i, i+1)
-		}
-	}
+	m.alertsCount--
 	return nil
 }
