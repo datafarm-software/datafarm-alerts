@@ -87,6 +87,7 @@ type Influx struct {
 	orgId, org         string
 	testingAlertsCount int
 	testingAlertIds    []string
+	testingAlertIdsMap map[string]string
 }
 
 var once sync.Once
@@ -113,7 +114,9 @@ func NewTestingInflux() (*Influx, error) {
 	if topErr != nil {
 		return nil, topErr
 	}
-	return NewInflux(testingInfluxOpts)
+	influx, err := NewInflux(testingInfluxOpts)
+	influx.testingAlertIdsMap = make(map[string]string)
+	return influx, err
 }
 
 func NewInflux(opts InfluxOpts) (*Influx, error) {
@@ -189,6 +192,9 @@ func (i *Influx) CreateAlertRule(ar alertstore.AlertRule) (string, error) {
 }
 
 func (i *Influx) UpdateAlertRule(ar alertstore.AlertRule) error {
+	if i.mode == alertstore.Testing {
+		ar.AlertId = i.testingAlertIdsMap[ar.AlertId]
+	}
 	check, err := i.createThresholdCheck(ar)
 	if err != nil {
 		return err
@@ -211,13 +217,14 @@ func (i *Influx) PrepareDb(alertsCount int, alerts ...alertstore.AlertRule) erro
 	}
 	var err error
 	var alertId string
-	for _, rule := range alerts {
+	for iter, rule := range alerts {
 		alertId, err = i.CreateAlertRule(rule)
 		if err != nil {
 			break
 		}
 		if i.mode == alertstore.Testing {
 			i.testingAlertIds = append(i.testingAlertIds, alertId)
+			i.testingAlertIdsMap[fmt.Sprintf("alert%d", iter+1)] = alertId
 		}
 	}
 	return err
