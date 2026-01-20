@@ -140,19 +140,23 @@ func (i *Influx) CreateAlertRule(ar alertstore.AlertRule) (string, error) {
 
 	switch ar.AlertRange {
 	case alertstore.LessThan:
+		greater = domain.GreaterThreshold{
+			Value:         ar.RangeValues[0],
+			ThresholdBase: domain.ThresholdBase{Level: &lo},
+		}
 		lesser = domain.LesserThreshold{
-			Value:         ar.RangeValues[1],
+			Value:         ar.RangeValues[0],
 			ThresholdBase: domain.ThresholdBase{Level: &lc},
 		}
-		thresholds = append(thresholds, &lesser)
+		thresholds = append(thresholds, &lesser, &greater)
 
 	case alertstore.GreaterThan:
 		greater = domain.GreaterThreshold{
-			Value:         ar.RangeValues[1],
+			Value:         ar.RangeValues[0],
 			ThresholdBase: domain.ThresholdBase{Level: &lc, AllValues: &allValues},
 		}
 		lesser = domain.LesserThreshold{
-			Value:         ar.RangeValues[1],
+			Value:         ar.RangeValues[0],
 			ThresholdBase: domain.ThresholdBase{Level: &lo},
 		}
 		thresholds = []domain.Threshold{&lesser, &greater}

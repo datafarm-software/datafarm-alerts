@@ -632,6 +632,51 @@ func TestCreateAlertRule(t *testing.T) {
 				AlertId: AlertId,
 			},
 		},
+
+		"successfully create a range alert rule": {
+			wantErr:              false,
+			wantStatus:           http.StatusOK,
+			wantAlertSourceCount: 1,
+			mockAlertStore: alertstore.Schema{
+				DeviceAlerts:    []alertstore.DeviceAlertRule{},
+				AlertRecipients: []alertstore.AlertRecipient{},
+				AlertStates:     []alertstore.AlertState{},
+				AlertRules:      []alertstore.StoredAlertRule{},
+			},
+			wantAlertStore: alertstore.Schema{
+				AlertRecipients: []alertstore.AlertRecipient{
+					{AlertId: AlertId, Email: UserEmail},
+				},
+				DeviceAlerts: []alertstore.DeviceAlertRule{
+					{
+						DeviceId:   RegisteredDeviceId,
+						QueryField: RegisteredQueryField,
+						AlertId:    AlertId,
+					},
+				},
+				AlertRules: []alertstore.StoredAlertRule{
+					{
+						AlertId:     AlertId,
+						RangeValues: []float32{5, 10},
+						Duration:    "24h",
+						AlertRange:  alertstore.Range,
+					},
+				},
+			},
+			alertRule: alertstore.AlertRule{
+				RangeValues:    []float32{5, 10},
+				Name:           RegisteredAlertName,
+				Duration:       "24h",
+				EmailAddresses: []string{UserEmail},
+				DeviceId:       "device1",
+				QueryField:     "temperature",
+				AlertRange:     alertstore.Range,
+			},
+			wantResponse: alertstore.CreatedRule{
+				AlertId: AlertId,
+			},
+		},
+
 		"invalid range on less than alert": {
 			wantErr:    true,
 			wantStatus: http.StatusUnprocessableEntity,
@@ -1213,7 +1258,7 @@ func TestUpdateAlertRule(t *testing.T) {
 		},
 
 		"invalid: 1 range value on a range type alert check": {
-			wantStatus:     http.StatusBadRequest,
+			wantStatus:     http.StatusUnprocessableEntity,
 			wantErr:        true,
 			mockAlertStore: alertstore.Schema{},
 			alertId:        AlertId,
