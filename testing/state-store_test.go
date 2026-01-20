@@ -935,6 +935,25 @@ func TestCreateAlertRule(t *testing.T) {
 	appOpts, err := cfy.LoadConfig[app.Opts](bytes.NewReader(config), "yaml", nil)
 	require.Nil(t, err)
 	influxOpts = appOpts.Influx
+
+	//NOTE: these opts are used to enforce that AlertId not be empty. This reflects that implementations do not necessarily have to exactly match 'Alert1' with returned alert ids.
+	cmpOpts := cmp.Options{
+		cmp.FilterPath(
+			func(p cmp.Path) bool {
+				_, ok := p.Last().(cmp.StructField)
+				return ok &&
+					(p.Last().String() == "AlertId" || p.Last().String() == "Id")
+			},
+			cmp.Comparer(func(x, y string) bool { return x != "" }),
+		),
+		cmpopts.IgnoreFields(alertstore.AlertRule{}, "AlertId"),
+		cmpopts.IgnoreFields(alertstore.StoredAlertRule{}, "AlertId"),
+		cmpopts.IgnoreFields(alertstore.AlertState{}, "Id"),
+		cmpopts.IgnoreFields(alertstore.AlertRecipient{}, "AlertId"),
+		cmpopts.IgnoreFields(alertstore.DeviceAlertRule{}, "AlertId"),
+		cmpopts.IgnoreFields(alertstore.CreatedRule{}, "AlertId"),
+	}
+
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
 			a.AlertStore, err = alertstore.NewGorm(alertstore.Testing, "testing")
@@ -965,7 +984,7 @@ func TestCreateAlertRule(t *testing.T) {
 						"wantAlertSourceCount: %d, got alertsCount: %d",
 						tc.wantAlertSourceCount, gotAlertSourceCount)
 				}
-				if diff := cmp.Diff(tc.wantResponse, got); diff != "" {
+				if diff := cmp.Diff(tc.wantResponse, got, cmpOpts); diff != "" {
 					t.Fatalf("response mismatch (-want +got):\n%s", diff)
 				}
 			}
