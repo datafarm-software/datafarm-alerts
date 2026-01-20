@@ -3,6 +3,7 @@ package alertsource
 import (
 	"context"
 	"fmt"
+	"log"
 	"time"
 
 	"github.com/geraud22/sensordata-alerts/alertstore"
@@ -15,10 +16,10 @@ var msg string = `
 	State: ${r._level} at Time: %s, due to value ${r._value}`
 
 var flux string = `from(bucket: "%s")
-        |> range(start: %s)
-        |> filter(fn: (r) => r["deviceID"] == "%s")
-        |> filter(fn: (r) => r["_field"] == "%s")
-        |> aggregateWindow(every: %s, fn: mean, createEmpty: false)`
+	|> range(start: %s)
+    |> filter(fn: (r) => r["deviceID"] == "%s")
+    |> filter(fn: (r) => r["_field"] == "%s")
+    |> aggregateWindow(every: %s, fn: mean, createEmpty: false)`
 
 var ctx context.Context
 
@@ -133,52 +134,45 @@ func (i *Influx) CreateAlertRule(ar alertstore.AlertRule) (string, error) {
 	var lesser domain.LesserThreshold
 	var greater domain.GreaterThreshold
 	var rang domain.RangeThreshold
+	var thresholds []domain.Threshold
 	lo := domain.CheckStatusLevelOK
 	lc := domain.CheckStatusLevelCRIT
+	allValues := true
 
 	switch ar.AlertRange {
 	case alertstore.LessThan:
-		greater = domain.GreaterThreshold{
-			Value:         ar.RangeValues[0],
-			ThresholdBase: domain.ThresholdBase{Level: &lo},
-		}
 		lesser = domain.LesserThreshold{
 			Value:         ar.RangeValues[1],
 			ThresholdBase: domain.ThresholdBase{Level: &lc},
 		}
+		thresholds = append(thresholds, &lesser)
 
 	case alertstore.GreaterThan:
+		log.Println("greater than")
 		greater = domain.GreaterThreshold{
-			Value:         ar.RangeValues[0],
-			ThresholdBase: domain.ThresholdBase{Level: &lc},
+			Value:         ar.RangeValues[1],
+			ThresholdBase: domain.ThresholdBase{Level: &lc, AllValues: &allValues},
 		}
 		lesser = domain.LesserThreshold{
 			Value:         ar.RangeValues[1],
 			ThresholdBase: domain.ThresholdBase{Level: &lo},
 		}
+		thresholds = []domain.Threshold{&lesser, &greater}
 
 	case alertstore.Range:
 		if ar.RangeValues[0] >= ar.RangeValues[1] {
 			return "", fmt.Errorf("first boundary is not smaller than the second.")
 		}
 		rang = domain.RangeThreshold{
-			ThresholdBase: domain.ThresholdBase{Level: &lo},
+			ThresholdBase: domain.ThresholdBase{Level: &lc},
 			Max:           ar.RangeValues[1],
 			Min:           ar.RangeValues[0],
 		}
-		greater = domain.GreaterThreshold{
-			ThresholdBase: domain.ThresholdBase{Level: &lc},
-			Value:         ar.RangeValues[1],
-		}
-		lesser = domain.LesserThreshold{
-			ThresholdBase: domain.ThresholdBase{Level: &lc},
-			Value:         ar.RangeValues[0],
-		}
+		thresholds = append(thresholds, &rang)
 	default:
 		return "", fmt.Errorf("unknown alert range type: %d", ar.AlertRange)
 	}
 
-	thresholds := []domain.Threshold{&greater, &lesser, &rang}
 	key := "queryField"
 	flux = fmt.Sprintf(flux, i.org, ar.AlertRange, ar.DeviceId, ar.QueryField, ar.AlertRange)
 	check := domain.ThresholdCheck{

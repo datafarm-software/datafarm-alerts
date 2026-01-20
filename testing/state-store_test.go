@@ -589,6 +589,50 @@ func TestCreateAlertRule(t *testing.T) {
 			},
 		},
 
+		"successfully create a greater than alert rule": {
+			wantErr:              false,
+			wantStatus:           http.StatusOK,
+			wantAlertSourceCount: 1,
+			mockAlertStore: alertstore.Schema{
+				DeviceAlerts:    []alertstore.DeviceAlertRule{},
+				AlertRecipients: []alertstore.AlertRecipient{},
+				AlertStates:     []alertstore.AlertState{},
+				AlertRules:      []alertstore.StoredAlertRule{},
+			},
+			wantAlertStore: alertstore.Schema{
+				AlertRecipients: []alertstore.AlertRecipient{
+					{AlertId: AlertId, Email: UserEmail},
+				},
+				DeviceAlerts: []alertstore.DeviceAlertRule{
+					{
+						DeviceId:   RegisteredDeviceId,
+						QueryField: RegisteredQueryField,
+						AlertId:    AlertId,
+					},
+				},
+				AlertRules: []alertstore.StoredAlertRule{
+					{
+						AlertId:     AlertId,
+						RangeValues: []float32{4, 5},
+						Duration:    "24h",
+						AlertRange:  alertstore.GreaterThan,
+					},
+				},
+			},
+			alertRule: alertstore.AlertRule{
+				RangeValues:    []float32{4, 5},
+				Name:           RegisteredAlertName,
+				Duration:       "24h",
+				EmailAddresses: []string{UserEmail},
+				DeviceId:       "device1",
+				QueryField:     "temperature",
+				AlertRange:     alertstore.GreaterThan,
+			},
+			wantResponse: alertstore.CreatedRule{
+				AlertId: AlertId,
+			},
+		},
+
 		"invalid range on less than alert": {
 			wantErr:    true,
 			wantStatus: http.StatusUnprocessableEntity,
