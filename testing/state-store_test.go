@@ -1598,6 +1598,7 @@ func TestUpdateAlertRule(t *testing.T) {
 
 	var err error
 	var got alertstore.AlertRule
+	var alertSetup alertsource.AlertSetupImpl
 	_, api := humatest.New(t)
 	a.RegisterHumaOperations(api)
 	for name, tc := range tests {
@@ -1618,6 +1619,14 @@ func TestUpdateAlertRule(t *testing.T) {
 				}
 				if diff := cmp.Diff(tc.wantAlertStore, a.AlertStore.GetSnapshot()); diff != "" {
 					t.Fatalf("alertstore mismatch (-want +got):\n%s", diff)
+				}
+				alertSetup = alertsource.AlertSetupImpl{
+					Dur: got.Duration,
+					At:  got.AlertType,
+					Rv:  got.RangeValues,
+				}
+				if diff := cmp.Diff(tc.wantAlertSourceSetup, alertSetup); diff != "" {
+					t.Fatalf("wantAlertSourceSetup mismatch:\n%s", diff)
 				}
 			}
 		})
@@ -1798,9 +1807,10 @@ func TestDeleteAlert(t *testing.T) {
 				if diff := cmp.Diff(tc.wantAlertStore, a.AlertStore.GetSnapshot()); diff != "" {
 					t.Fatalf("alertStore mismatch (-want +got):\n%s", diff)
 				}
-				got := a.AlertSource.GetSnapshot()
-				if tc.wantAlertSourceCount != got {
-					t.Fatalf("wantAlertSourceCount: %d, got alertsCount: %d", tc.wantAlertSourceCount, got)
+				alertsCount := a.AlertSource.GetSnapshot()
+				if tc.wantAlertSourceCount != alertsCount {
+					t.Fatalf("wantAlertSourceCount: %d, got alertsCount: %d",
+						tc.wantAlertSourceCount, got)
 				}
 			}
 		})
