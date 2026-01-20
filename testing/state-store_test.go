@@ -1811,6 +1811,7 @@ func SchemaToAlertRules(dbRecord alertstore.Schema) []alertstore.AlertRule {
 			ar.Duration = rule.Duration
 			ar.AlertType = rule.AlertType
 		}
+		ar.Name = fmt.Sprintf("DeviceId: %s, QueryField: %s", ar.DeviceId, ar.QueryField)
 		rules = append(rules, ar)
 	}
 	return rules

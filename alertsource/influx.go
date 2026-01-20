@@ -161,10 +161,78 @@ func (i *Influx) Close() error {
 }
 
 func (i *Influx) CreateAlertRule(ar alertstore.AlertRule) (string, error) {
+	check, err := i.createThresholdCheck(ar)
+	if err != nil {
+		return "", err
+	}
+	params := domain.CreateCheckAllParams{
+		Body: domain.CreateCheckJSONRequestBody(&check),
+	}
+	nc, err := i.client.APIClient().CreateCheck(ctx, &params)
+	if err != nil {
+		return "", err
+	}
+
+	var alertId string
+	if nc.Type() == "threshold" {
+		tc, ok := nc.(*domain.ThresholdCheck)
+		if !ok {
+			return "", fmt.Errorf("invalid check created")
+		}
+		alertId = *tc.CheckBase.Id
+	}
+	if i.mode == alertstore.Testing {
+		i.testingAlertsCount++
+		i.testingAlertIds = append(i.testingAlertIds, alertId)
+	}
+	return alertId, nil
+}
+
+func (i *Influx) UpdateAlertRule(ar alertstore.AlertRule) error {
+	check, err := i.createThresholdCheck(ar)
+	if err != nil {
+		return err
+	}
+	updateParams := domain.PutChecksIDAllParams{
+		CheckID: ar.AlertId,
+		Body:    check,
+	}
+	_, err = i.client.APIClient().PutChecksID(ctx, &updateParams)
+	return err
+}
+
+func (i *Influx) DeleteAlertRule(alertId string) error {
+	return fmt.Errorf("not implemented")
+}
+
+func (i *Influx) PrepareDb(alertsCount int, alerts ...alertstore.AlertRule) error {
+	if i.mode == alertstore.Testing {
+		i.testingAlertsCount = alertsCount
+	}
+	var err error
+	var alertId string
+	for _, rule := range alerts {
+		alertId, err = i.CreateAlertRule(rule)
+		if err != nil {
+			break
+		}
+		if i.mode == alertstore.Testing {
+			i.testingAlertIds = append(i.testingAlertIds, alertId)
+		}
+	}
+	return err
+}
+
+func (i *Influx) GetSnapshot() int {
+	return i.testingAlertsCount
+}
+
+func (i *Influx) createThresholdCheck(ar alertstore.AlertRule) (domain.ThresholdCheck, error) {
 	var lesser domain.LesserThreshold
 	var greater domain.GreaterThreshold
 	var rang domain.RangeThreshold
 	var thresholds []domain.Threshold
+	var check domain.ThresholdCheck
 	lo := domain.CheckStatusLevelOK
 	lc := domain.CheckStatusLevelCRIT
 	allValues := true
@@ -194,7 +262,7 @@ func (i *Influx) CreateAlertRule(ar alertstore.AlertRule) (string, error) {
 
 	case alertstore.Range:
 		if ar.RangeValues[0] >= ar.RangeValues[1] {
-			return "", fmt.Errorf("first boundary is not smaller than the second.")
+			return check, fmt.Errorf("first boundary is not smaller than the second.")
 		}
 		rang = domain.RangeThreshold{
 			ThresholdBase: domain.ThresholdBase{Level: &lc},
@@ -203,12 +271,12 @@ func (i *Influx) CreateAlertRule(ar alertstore.AlertRule) (string, error) {
 		}
 		thresholds = append(thresholds, &rang)
 	default:
-		return "", fmt.Errorf("unknown alert type: %d", ar.AlertType)
+		return check, fmt.Errorf("unknown alert type: %d", ar.AlertType)
 	}
 
 	key := "queryField"
 	hydratedFlux := fmt.Sprintf(Flux, i.org, ar.Duration, ar.DeviceId, ar.QueryField, ar.Duration)
-	check := domain.ThresholdCheck{
+	check = domain.ThresholdCheck{
 		CheckBaseExtend: domain.CheckBaseExtend{
 			CheckBase: domain.CheckBase{
 				Name:   ar.Name,
@@ -225,56 +293,5 @@ func (i *Influx) CreateAlertRule(ar alertstore.AlertRule) (string, error) {
 		},
 		Thresholds: &thresholds,
 	}
-
-	params := domain.CreateCheckAllParams{
-		Body: domain.CreateCheckJSONRequestBody(&check),
-	}
-	nc, err := i.client.APIClient().CreateCheck(ctx, &params)
-	if err != nil {
-		return "", err
-	}
-
-	var alertId string
-	if nc.Type() == "threshold" {
-		tc, ok := nc.(*domain.ThresholdCheck)
-		if !ok {
-			return "", fmt.Errorf("invalid check created")
-		}
-		alertId = *tc.CheckBase.Id
-	}
-	if i.mode == alertstore.Testing {
-		i.testingAlertsCount++
-		i.testingAlertIds = append(i.testingAlertIds, alertId)
-	}
-	return alertId, nil
-}
-
-func (i *Influx) UpdateAlertRule(ar alertstore.AlertRule) error {
-	return fmt.Errorf("not implemented")
-}
-
-func (i *Influx) DeleteAlertRule(alertId string) error {
-	return fmt.Errorf("not implemented")
-}
-
-func (i *Influx) PrepareDb(alertsCount int, alerts ...alertstore.AlertRule) error {
-	if i.mode == alertstore.Testing {
-		i.testingAlertsCount = alertsCount
-	}
-	var err error
-	var alertId string
-	for _, rule := range alerts {
-		alertId, err = i.CreateAlertRule(rule)
-		if err != nil {
-			break
-		}
-		if i.mode == alertstore.Testing {
-			i.testingAlertIds = append(i.testingAlertIds, alertId)
-		}
-	}
-	return err
-}
-
-func (i *Influx) GetSnapshot() int {
-	return i.testingAlertsCount
+	return check, nil
 }

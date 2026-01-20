@@ -480,7 +480,7 @@ func (a *App) UpdateAlertRule(
 		}
 		log.Printf("alertsource update alert rule for id: %s, error: %v", in.AlertId, err)
 		return nil, huma.Error500InternalServerError(
-			"Internal error while storing the updated alert rule.")
+			"Internal error while updating the alert rule with source.")
 	}
 	return &struct{ Body alertstore.AlertRule }{in.Body}, nil
 }
