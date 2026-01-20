@@ -358,6 +358,15 @@ func (a *App) CreateAlertRule(
 	in *struct {
 		Body alertstore.AlertRule
 	}) (*struct{ Body alertstore.CreatedRule }, error) {
+	if in.Body.AlertRange < alertstore.Range && len(in.Body.RangeValues) > 1 {
+		log.Printf("can't have more than one range value on greater or less than alert.")
+		return nil,
+			huma.Error400BadRequest("More than one range value on less than or greater alert.")
+	}
+	if in.Body.AlertRange == alertstore.Range && len(in.Body.RangeValues) != 2 {
+		log.Printf("Need 2 range values for range alert.")
+		return nil, huma.Error400BadRequest("Need 2 range values for range alert.")
+	}
 	existingAlertId, err := a.AlertStore.CheckAlertRuleExists(in.Body)
 	if err != nil {
 		if !errors.Is(err, alertstore.AlertExists) {
@@ -413,6 +422,15 @@ func (a *App) UpdateAlertRule(
 		Body    alertstore.AlertRule
 	},
 ) (*struct{ Body alertstore.AlertRule }, error) {
+	if in.Body.AlertRange < alertstore.Range && len(in.Body.RangeValues) > 1 {
+		log.Printf("can't have more than one range value on greater or less than alert.")
+		return nil,
+			huma.Error400BadRequest("More than one range value on less than or greater alert.")
+	}
+	if in.Body.AlertRange == alertstore.Range && len(in.Body.RangeValues) != 2 {
+		log.Printf("Need 2 range values for range alert.")
+		return nil, huma.Error400BadRequest("Need 2 range values for range alert.")
+	}
 	in.Body.AlertId = in.AlertId
 	existingAlertId, err := a.AlertStore.CheckAlertRuleExists(in.Body)
 	if existingAlertId == "" && err == nil {

@@ -67,9 +67,9 @@ type AlertRecipient struct {
 type AlertState struct {
 	Time        time.Time
 	Duration    time.Duration
-	RangeValues []int  `gorm:"serializer:json"`
-	Name        string `gorm:"-"`
-	Id          string `gorm:"primaryKey;unique;not null;check:length(id)>0"`
+	RangeValues []float32 `gorm:"serializer:json"`
+	Name        string    `gorm:"-"`
+	Id          string    `gorm:"primaryKey;unique;not null;check:length(id)>0"`
 	Level       AlertLevel
 }
 
@@ -83,7 +83,7 @@ type StoredAlertRule struct {
 type AlertRule struct {
 	AlertId        string     `json:"alertId" doc:"Alert Id."`
 	EmailAddresses []string   `gorm:"serializer:json" json:"emailAddresses" minItems:"1" format:"email" doc:"List of email addresses to notify in the event of the alert. If updated, new list will replace old one as an overwrite."` //NOTE: implementation should know to automatically store this in a join table with alertId.
-	RangeValues    []float32  `gorm:"serializer:json" json:"rangeValues" minItems:"2" maxItems:"2" uniqueItems:"true" doc:"First value is the OK level. Second value is the CRIT. If AlertRange is Range, then OK is within the two values, CRIT is outside. Smaller of the two boundaries should be first in the list."`
+	RangeValues    []float32  `gorm:"serializer:json" json:"rangeValues" minItems:"1" maxItems:"2" doc:"One or two values, depending on whether the alertRange is a range or < >"`                                                     //NOTE: this should get stored as a string
 	Name           string     `json:"name" pattern:"^[a-zA-Z0-9 ]+$" doc:"The name of the alert. For easier recognition."`
 	Duration       string     `json:"duration" pattern:"^[0-9]{1,2}[smhd]$" doc:"A duration literal, specifying how often a check should occur."`
 	DeviceId       string     `json:"deviceId" pattern:"^[a-zA-Z0-9]+$" doc:"The device for which data should be checked."`
