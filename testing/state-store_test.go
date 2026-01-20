@@ -1070,16 +1070,19 @@ func TestConvertToRecipients(t *testing.T) {
 
 func TestUpdateAlertRule(t *testing.T) {
 	tests := map[string]struct {
-		wantErr                        bool
-		wantStatus                     int
-		alertId                        string
-		alertRule                      alertstore.AlertRule
-		mockAlertStore, wantAlertStore alertstore.Schema
+		wantErr                                        bool
+		wantStatus                                     int
+		alertId                                        string
+		alertRule                                      alertstore.AlertRule
+		mockAlertStore, wantAlertStore                 alertstore.Schema
+		startingAlertSourceCount, wantAlertSourceCount int
 	}{
 
 		"update the range values of an alert": {
-			wantStatus: http.StatusOK,
-			alertId:    AlertId,
+			wantStatus:               http.StatusOK,
+			startingAlertSourceCount: 1,
+			wantAlertSourceCount:     1,
+			alertId:                  AlertId,
 			alertRule: alertstore.AlertRule{
 				Name:           RegisteredAlertName,
 				AlertId:        AlertId,
@@ -1134,8 +1137,10 @@ func TestUpdateAlertRule(t *testing.T) {
 		},
 
 		"update alert type from less than to greater than": {
-			wantStatus: http.StatusOK,
-			alertId:    AlertId,
+			wantStatus:               http.StatusOK,
+			startingAlertSourceCount: 1,
+			wantAlertSourceCount:     1,
+			alertId:                  AlertId,
 			alertRule: alertstore.AlertRule{
 				Name:           RegisteredAlertName,
 				AlertId:        AlertId,
@@ -1190,8 +1195,10 @@ func TestUpdateAlertRule(t *testing.T) {
 		},
 
 		"update alert type from greater than to less than": {
-			wantStatus: http.StatusOK,
-			alertId:    AlertId,
+			wantStatus:               http.StatusOK,
+			startingAlertSourceCount: 1,
+			wantAlertSourceCount:     1,
+			alertId:                  AlertId,
 			alertRule: alertstore.AlertRule{
 				Name:           RegisteredAlertName,
 				AlertId:        AlertId,
@@ -1246,8 +1253,10 @@ func TestUpdateAlertRule(t *testing.T) {
 		},
 
 		"update alert type from less than to range": {
-			wantStatus: http.StatusOK,
-			alertId:    AlertId,
+			wantStatus:               http.StatusOK,
+			startingAlertSourceCount: 1,
+			wantAlertSourceCount:     1,
+			alertId:                  AlertId,
 			alertRule: alertstore.AlertRule{
 				Name:           RegisteredAlertName,
 				AlertId:        AlertId,
@@ -1302,8 +1311,10 @@ func TestUpdateAlertRule(t *testing.T) {
 		},
 
 		"can't update the queryField of an alert. Constitutes a new alert entirely": {
-			wantStatus: http.StatusNotFound,
-			alertId:    AlertId,
+			wantStatus:               http.StatusNotFound,
+			startingAlertSourceCount: 1,
+			wantAlertSourceCount:     1,
+			alertId:                  AlertId,
 			alertRule: alertstore.AlertRule{
 				Name:           RegisteredAlertName,
 				AlertId:        AlertId,
@@ -1357,8 +1368,10 @@ func TestUpdateAlertRule(t *testing.T) {
 		},
 
 		"can't update the deviceId of an alert. Constitutes a new alert entirely": {
-			wantStatus: http.StatusNotFound,
-			alertId:    AlertId,
+			wantStatus:               http.StatusNotFound,
+			startingAlertSourceCount: 1,
+			wantAlertSourceCount:     1,
+			alertId:                  AlertId,
 			alertRule: alertstore.AlertRule{
 				Name:           RegisteredAlertName,
 				AlertId:        AlertId,
@@ -1469,8 +1482,10 @@ func TestUpdateAlertRule(t *testing.T) {
 		},
 
 		"ignore duplicate emails in recipient list": {
-			wantStatus: http.StatusOK,
-			alertId:    AlertId,
+			wantStatus:               http.StatusOK,
+			startingAlertSourceCount: 1,
+			wantAlertSourceCount:     1,
+			alertId:                  AlertId,
 			alertRule: alertstore.AlertRule{
 				Name:           RegisteredAlertName,
 				AlertId:        AlertId,
@@ -1583,6 +1598,11 @@ func TestUpdateAlertRule(t *testing.T) {
 			defer a.AlertStore.Close()
 			err = a.AlertStore.PrepareDb(tc.mockAlertStore)
 			require.Nil(t, err)
+			a.AlertSource, err = alertsource.NewMockAlertSource()
+			require.Nil(t, err)
+			defer a.AlertSource.Close()
+			err = a.AlertSource.PrepareDb(tc.startingAlertSourceCount)
+			require.Nil(t, err)
 			resp := api.Put(fmt.Sprintf("/alert/%s", tc.alertId), tc.alertRule)
 			if tc.wantStatus != resp.Code {
 				t.Fatalf("wantStatusCode: %d, response code: %d", tc.wantStatus, resp.Code)
@@ -1595,6 +1615,11 @@ func TestUpdateAlertRule(t *testing.T) {
 				}
 				if diff := cmp.Diff(tc.wantAlertStore, a.AlertStore.GetSnapshot()); diff != "" {
 					t.Fatalf("alertstore mismatch (-want +got):\n%s", diff)
+				}
+				alertSourceCount := a.AlertSource.GetSnapshot()
+				if alertSourceCount != tc.wantAlertSourceCount {
+					t.Fatalf("alertSourceCount: %d, wantAlertSourceCount: %d",
+						alertSourceCount, tc.wantAlertSourceCount)
 				}
 			}
 		})

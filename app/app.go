@@ -463,7 +463,16 @@ func (a *App) UpdateAlertRule(
 		},
 	}
 	if err := a.AlertStore.UpdateAlertRule(existingAlertId, dbRecord); err != nil {
-		log.Printf("updating alert rule for id: %s, error: %v", in.AlertId, err)
+		log.Printf("alertstore update alert rule for id: %s, error: %v", in.AlertId, err)
+		return nil, huma.Error500InternalServerError(
+			"Internal error while storing the updated alert rule.")
+	}
+	if err := a.AlertSource.UpdateAlertRule(in.Body); err != nil {
+		if errors.Is(err, alertstore.NoAlert) {
+			return nil, huma.Error404NotFound(
+				"Could not update rule with alertsource. Alert not found.")
+		}
+		log.Printf("alertsource update alert rule for id: %s, error: %v", in.AlertId, err)
 		return nil, huma.Error500InternalServerError(
 			"Internal error while storing the updated alert rule.")
 	}

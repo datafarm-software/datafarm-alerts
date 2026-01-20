@@ -11,8 +11,9 @@ type AlertFromSource interface {
 
 type AlertSource interface {
 	Close() error
-	UpdateAlertRule(alertstore.AlertRule) error
 	CreateAlertRule(alertstore.AlertRule) (string, error)
+	//NOTE: Could return alertstore.NoAlert
+	UpdateAlertRule(alertstore.AlertRule) error
 	//NOTE: Could return alertstore.NoAlert
 	DeleteAlertRule(alertId string) error
 	//NOTE: used in testing
