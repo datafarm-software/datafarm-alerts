@@ -358,12 +358,12 @@ func (a *App) CreateAlertRule(
 	in *struct {
 		Body alertstore.AlertRule
 	}) (*struct{ Body alertstore.CreatedRule }, error) {
-	if in.Body.AlertRange < alertstore.Range && len(in.Body.RangeValues) > 1 {
+	if in.Body.AlertType < alertstore.Range && len(in.Body.RangeValues) > 1 {
 		log.Printf("can't have more than one range value on greater or less than alert.")
 		return nil,
 			huma.Error400BadRequest("More than one range value on less than or greater alert.")
 	}
-	if in.Body.AlertRange == alertstore.Range && len(in.Body.RangeValues) != 2 {
+	if in.Body.AlertType == alertstore.Range && len(in.Body.RangeValues) != 2 {
 		log.Printf("Need 2 range values for range alert.")
 		return nil, huma.Error400BadRequest("Need 2 range values for range alert.")
 	}
@@ -400,7 +400,7 @@ func (a *App) CreateAlertRule(
 				AlertId:     alertId,
 				RangeValues: in.Body.RangeValues,
 				Duration:    in.Body.Duration,
-				AlertRange:  in.Body.AlertRange,
+				AlertType:   in.Body.AlertType,
 			},
 		},
 	}
@@ -422,12 +422,12 @@ func (a *App) UpdateAlertRule(
 		Body    alertstore.AlertRule
 	},
 ) (*struct{ Body alertstore.AlertRule }, error) {
-	if in.Body.AlertRange < alertstore.Range && len(in.Body.RangeValues) > 1 {
+	if in.Body.AlertType < alertstore.Range && len(in.Body.RangeValues) > 1 {
 		log.Printf("can't have more than one range value on greater or less than alert.")
 		return nil,
 			huma.Error400BadRequest("More than one range value on less than or greater alert.")
 	}
-	if in.Body.AlertRange == alertstore.Range && len(in.Body.RangeValues) != 2 {
+	if in.Body.AlertType == alertstore.Range && len(in.Body.RangeValues) != 2 {
 		log.Printf("Need 2 range values for range alert.")
 		return nil, huma.Error400BadRequest("Need 2 range values for range alert.")
 	}
@@ -458,7 +458,7 @@ func (a *App) UpdateAlertRule(
 				AlertId:     in.AlertId,
 				RangeValues: in.Body.RangeValues,
 				Duration:    in.Body.Duration,
-				AlertRange:  in.Body.AlertRange,
+				AlertType:   in.Body.AlertType,
 			},
 		},
 	}

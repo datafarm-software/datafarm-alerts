@@ -169,7 +169,7 @@ func (i *Influx) CreateAlertRule(ar alertstore.AlertRule) (string, error) {
 	lc := domain.CheckStatusLevelCRIT
 	allValues := true
 
-	switch ar.AlertRange {
+	switch ar.AlertType {
 	case alertstore.LessThan:
 		greater = domain.GreaterThreshold{
 			Value:         ar.RangeValues[0],
@@ -203,7 +203,7 @@ func (i *Influx) CreateAlertRule(ar alertstore.AlertRule) (string, error) {
 		}
 		thresholds = append(thresholds, &rang)
 	default:
-		return "", fmt.Errorf("unknown alert range type: %d", ar.AlertRange)
+		return "", fmt.Errorf("unknown alert type: %d", ar.AlertType)
 	}
 
 	key := "queryField"

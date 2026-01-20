@@ -69,7 +69,7 @@ func (m *MockAlertStore) GetAlertRule(alertId string) (AlertRule, error) {
 			continue
 		}
 		ar.RangeValues = append(ar.RangeValues, rule.RangeValues...)
-		ar.AlertRange = rule.AlertRange
+		ar.AlertType = rule.AlertType
 		ar.Duration = rule.Duration
 	}
 	var err error
@@ -154,8 +154,8 @@ func (m *MockAlertStore) CheckAlertRuleExists(ar AlertRule) (string, error) {
 	}
 	if exists {
 		storedAlert := StoredAlertRule{
-			Duration:   ar.Duration,
-			AlertRange: ar.AlertRange,
+			Duration:  ar.Duration,
+			AlertType: ar.AlertType,
 		}
 		for _, rule := range m.Db.AlertRules {
 			rule.RangeValues = nil
@@ -238,7 +238,7 @@ func (m *MockAlertStore) DeleteAlertRule(alertId string) (AlertRule, error) {
 		}
 		rule.RangeValues = r.RangeValues
 		rule.Duration = r.Duration
-		rule.AlertRange = r.AlertRange
+		rule.AlertType = r.AlertType
 		m.Db.AlertRules = slices.Delete(m.Db.AlertRules, i, i+1)
 	}
 	return rule, err

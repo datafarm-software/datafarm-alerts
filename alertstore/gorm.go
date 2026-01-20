@@ -69,7 +69,7 @@ func (g *Gorm) PrepareDb(dbRecord Schema) error {
 			dar.query_field,
 			sar.range_values,
 			sar.duration,
-			sar.alert_range,
+			sar.alert_type,
 			json_group_array(ar.email) AS email_addresses
 		FROM stored_alert_rules sar
 		LEFT JOIN device_alert_rules dar
@@ -82,7 +82,7 @@ func (g *Gorm) PrepareDb(dbRecord Schema) error {
 			dar.query_field,
 			sar.range_values,
 			sar.duration,
-			sar.alert_range
+			sar.alert_type
 		`,
 	}
 	for _, stmt := range stmts {
@@ -245,7 +245,7 @@ func (g *Gorm) CheckAlertRuleExists(ar AlertRule) (string, error) {
 		Where("device_alert_rules.device_id = ?", ar.DeviceId).
 		Where("device_alert_rules.query_field = ?", ar.QueryField).
 		Where("stored_alert_rules.duration = ?", ar.Duration).
-		Where("stored_alert_rules.alert_range = ?", ar.AlertRange).
+		Where("stored_alert_rules.alert_type = ?", ar.AlertType).
 		Select("device_alert_rules.alert_id").
 		Limit(1).
 		Scan(&alertId).Error
