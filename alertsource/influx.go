@@ -3,7 +3,6 @@ package alertsource
 import (
 	"context"
 	"fmt"
-	"log"
 	"time"
 
 	"github.com/geraud22/sensordata-alerts/alertstore"
@@ -15,7 +14,7 @@ var msg string = `
 	Check: ${r._check_name} DeviceId: %s, QueryField: %s
 	State: ${r._level} at Time: %s, due to value ${r._value}`
 
-var flux string = `from(bucket: "%s")
+const Flux string = `from(bucket: "%s")
 	|> range(start: %s)
     |> filter(fn: (r) => r["deviceID"] == "%s")
     |> filter(fn: (r) => r["_field"] == "%s")
@@ -148,7 +147,6 @@ func (i *Influx) CreateAlertRule(ar alertstore.AlertRule) (string, error) {
 		thresholds = append(thresholds, &lesser)
 
 	case alertstore.GreaterThan:
-		log.Println("greater than")
 		greater = domain.GreaterThreshold{
 			Value:         ar.RangeValues[1],
 			ThresholdBase: domain.ThresholdBase{Level: &lc, AllValues: &allValues},
@@ -174,13 +172,13 @@ func (i *Influx) CreateAlertRule(ar alertstore.AlertRule) (string, error) {
 	}
 
 	key := "queryField"
-	flux = fmt.Sprintf(flux, i.org, ar.AlertRange, ar.DeviceId, ar.QueryField, ar.AlertRange)
+	hydratedFlux := fmt.Sprintf(Flux, i.org, ar.Duration, ar.DeviceId, ar.QueryField, ar.Duration)
 	check := domain.ThresholdCheck{
 		CheckBaseExtend: domain.CheckBaseExtend{
 			CheckBase: domain.CheckBase{
 				Name:   ar.Name,
 				OrgID:  i.orgId,
-				Query:  domain.DashboardQuery{Text: &flux},
+				Query:  domain.DashboardQuery{Text: &hydratedFlux},
 				Status: domain.TaskStatusTypeActive,
 			},
 			Every:                 &ar.Duration,
