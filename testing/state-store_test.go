@@ -1187,7 +1187,7 @@ func TestUpdateAlertRule(t *testing.T) {
 				AlertId:        AlertId,
 				EmailAddresses: []string{UserEmail},
 				RangeValues:    []float32{10},
-				Duration:       "24h",
+				Duration:       "29h",
 				DeviceId:       RegisteredDeviceId,
 				QueryField:     RegisteredQueryField,
 				AlertType:      alertstore.LessThan,
@@ -1228,7 +1228,7 @@ func TestUpdateAlertRule(t *testing.T) {
 					{
 						AlertId:     AlertId,
 						RangeValues: []float32{10},
-						Duration:    "24h",
+						Duration:    "29h",
 						AlertType:   alertstore.LessThan,
 					},
 				},
@@ -1581,7 +1581,7 @@ func TestUpdateAlertRule(t *testing.T) {
 	cmpOpts := enforceAlertIdNonEmpty()
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
-			a.AlertStore, err = alertstore.NewMockAlertStore(alertstore.Testing, "testing")
+			a.AlertStore, err = alertstore.NewGorm(alertstore.Testing, "testing")
 			defer a.AlertStore.Close()
 			err = a.AlertStore.PrepareDb(tc.mockAlertStore)
 			require.Nil(t, err)

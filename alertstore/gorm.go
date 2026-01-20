@@ -223,7 +223,7 @@ func (g *Gorm) UpdateAlertRule(alertId string, dbRecord Schema) error {
 		for _, sar := range dbRecord.AlertRules {
 			if err = tx.Table("stored_alert_rules").
 				Where("alert_id = ?", sar.AlertId).
-				Updates(&sar).Error; err != nil {
+				Save(&sar).Error; err != nil {
 				break
 			}
 		}
