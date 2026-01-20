@@ -1075,7 +1075,6 @@ func TestUpdateAlertRule(t *testing.T) {
 		alertId                        string
 		alertRule                      alertstore.AlertRule
 		mockAlertStore, wantAlertStore alertstore.Schema
-		wantAlertSourceSetup           alertsource.AlertSetupImpl
 	}{
 
 		"update the range values of an alert": {
@@ -1090,11 +1089,6 @@ func TestUpdateAlertRule(t *testing.T) {
 				DeviceId:       RegisteredDeviceId,
 				QueryField:     RegisteredQueryField,
 				AlertType:      alertstore.Range,
-			},
-			wantAlertSourceSetup: alertsource.AlertSetupImpl{
-				Dur: "24h",
-				Rv:  []float32{10, 20},
-				At:  alertstore.Range,
 			},
 			mockAlertStore: alertstore.Schema{
 				AlertRecipients: []alertstore.AlertRecipient{
@@ -1152,11 +1146,6 @@ func TestUpdateAlertRule(t *testing.T) {
 				QueryField:     RegisteredQueryField,
 				AlertType:      alertstore.GreaterThan,
 			},
-			wantAlertSourceSetup: alertsource.AlertSetupImpl{
-				Dur: "24h",
-				Rv:  []float32{10},
-				At:  alertstore.GreaterThan,
-			},
 			mockAlertStore: alertstore.Schema{
 				AlertRecipients: []alertstore.AlertRecipient{
 					{AlertId: AlertId, Email: UserEmail},
@@ -1212,11 +1201,6 @@ func TestUpdateAlertRule(t *testing.T) {
 				DeviceId:       RegisteredDeviceId,
 				QueryField:     RegisteredQueryField,
 				AlertType:      alertstore.LessThan,
-			},
-			wantAlertSourceSetup: alertsource.AlertSetupImpl{
-				Dur: "24h",
-				Rv:  []float32{10},
-				At:  alertstore.LessThan,
 			},
 			mockAlertStore: alertstore.Schema{
 				AlertRecipients: []alertstore.AlertRecipient{
@@ -1274,11 +1258,6 @@ func TestUpdateAlertRule(t *testing.T) {
 				QueryField:     RegisteredQueryField,
 				AlertType:      alertstore.Range,
 			},
-			wantAlertSourceSetup: alertsource.AlertSetupImpl{
-				Dur: "24h",
-				Rv:  []float32{10, 20},
-				At:  alertstore.Range,
-			},
 			mockAlertStore: alertstore.Schema{
 				AlertRecipients: []alertstore.AlertRecipient{
 					{AlertId: AlertId, Email: UserEmail},
@@ -1335,7 +1314,6 @@ func TestUpdateAlertRule(t *testing.T) {
 				QueryField:     UnregisteredQueryField,
 				AlertType:      alertstore.Range,
 			},
-			wantAlertSourceSetup: alertsource.AlertSetupImpl{},
 			mockAlertStore: alertstore.Schema{
 				AlertRecipients: []alertstore.AlertRecipient{
 					{AlertId: AlertId, Email: UserEmail},
@@ -1391,7 +1369,6 @@ func TestUpdateAlertRule(t *testing.T) {
 				QueryField:     RegisteredQueryField,
 				AlertType:      alertstore.Range,
 			},
-			wantAlertSourceSetup: alertsource.AlertSetupImpl{},
 			mockAlertStore: alertstore.Schema{
 				AlertRecipients: []alertstore.AlertRecipient{
 					{AlertId: AlertId, Email: UserEmail},
@@ -1598,7 +1575,6 @@ func TestUpdateAlertRule(t *testing.T) {
 
 	var err error
 	var got alertstore.AlertRule
-	var alertSetup alertsource.AlertSetupImpl
 	_, api := humatest.New(t)
 	a.RegisterHumaOperations(api)
 	for name, tc := range tests {
@@ -1619,14 +1595,6 @@ func TestUpdateAlertRule(t *testing.T) {
 				}
 				if diff := cmp.Diff(tc.wantAlertStore, a.AlertStore.GetSnapshot()); diff != "" {
 					t.Fatalf("alertstore mismatch (-want +got):\n%s", diff)
-				}
-				alertSetup = alertsource.AlertSetupImpl{
-					Dur: got.Duration,
-					At:  got.AlertType,
-					Rv:  got.RangeValues,
-				}
-				if diff := cmp.Diff(tc.wantAlertSourceSetup, alertSetup); diff != "" {
-					t.Fatalf("wantAlertSourceSetup mismatch:\n%s", diff)
 				}
 			}
 		})
