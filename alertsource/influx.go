@@ -74,10 +74,10 @@ func (i *InfluxAlert) AlertState() alertstore.AlertState {
 }
 
 type InfluxOpts struct {
-	Org   string          `mapstructure:"org" validate:"required"`
-	Url   string          `mapstructure:"url" validate:"required"`
-	Token string          `mapstructure:"token" validate:"required"`
-	Mode  alertstore.Mode `mapstructure:"mode"`
+	Org   string `mapstructure:"org" validate:"required"`
+	Url   string `mapstructure:"url" validate:"required"`
+	Token string `mapstructure:"token" validate:"required"`
+	Mode  alertstore.Mode
 }
 
 type Influx struct {
@@ -108,6 +108,7 @@ func NewTestingInflux() (*Influx, error) {
 			return
 		}
 		testingInfluxOpts = opts.InfluxOpts
+		testingInfluxOpts.Mode = alertstore.Testing
 	})
 	if topErr != nil {
 		return nil, topErr

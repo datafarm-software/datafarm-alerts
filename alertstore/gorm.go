@@ -15,8 +15,8 @@ var ctx = context.Background()
 type Mode int
 
 const (
-	Testing = iota
-	Production
+	Production = iota
+	Testing
 )
 
 type Gorm struct {
