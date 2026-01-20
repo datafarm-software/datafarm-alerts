@@ -569,14 +569,14 @@ func TestCreateAlertRule(t *testing.T) {
 				AlertRules: []alertstore.StoredAlertRule{
 					{
 						AlertId:     AlertId,
-						RangeValues: []float32{4, 5},
+						RangeValues: []float32{5},
 						Duration:    "24h",
 						AlertRange:  alertstore.LessThan,
 					},
 				},
 			},
 			alertRule: alertstore.AlertRule{
-				RangeValues:    []float32{4, 5},
+				RangeValues:    []float32{5},
 				Name:           RegisteredAlertName,
 				Duration:       "24h",
 				EmailAddresses: []string{UserEmail},
@@ -613,14 +613,14 @@ func TestCreateAlertRule(t *testing.T) {
 				AlertRules: []alertstore.StoredAlertRule{
 					{
 						AlertId:     AlertId,
-						RangeValues: []float32{4, 5},
+						RangeValues: []float32{5},
 						Duration:    "24h",
 						AlertRange:  alertstore.GreaterThan,
 					},
 				},
 			},
 			alertRule: alertstore.AlertRule{
-				RangeValues:    []float32{4, 5},
+				RangeValues:    []float32{5},
 				Name:           RegisteredAlertName,
 				Duration:       "24h",
 				EmailAddresses: []string{UserEmail},
@@ -745,7 +745,7 @@ func TestCreateAlertRule(t *testing.T) {
 				AlertRules: []alertstore.StoredAlertRule{
 					{
 						AlertId:     AlertId,
-						RangeValues: []float32{4, 5},
+						RangeValues: []float32{5},
 						Duration:    "24h",
 						AlertRange:  alertstore.LessThan,
 					},
@@ -765,7 +765,7 @@ func TestCreateAlertRule(t *testing.T) {
 				AlertRules: []alertstore.StoredAlertRule{
 					{
 						AlertId:     AlertId,
-						RangeValues: []float32{4, 5},
+						RangeValues: []float32{5},
 						Duration:    "24h",
 						AlertRange:  alertstore.LessThan,
 					},
@@ -773,7 +773,7 @@ func TestCreateAlertRule(t *testing.T) {
 			},
 			alertRule: alertstore.AlertRule{
 				Name:        RegisteredAlertName,
-				RangeValues: []float32{4, 5},
+				RangeValues: []float32{5},
 				Duration:    "24h",
 				DeviceId:    RegisteredDeviceId,
 				QueryField:  RegisteredQueryField,
@@ -807,13 +807,13 @@ func TestCreateAlertRule(t *testing.T) {
 				AlertRules: []alertstore.StoredAlertRule{
 					{
 						AlertId:     AlertId,
-						RangeValues: []float32{4, 5},
+						RangeValues: []float32{5},
 						Duration:    "24h",
 						AlertRange:  alertstore.LessThan,
 					},
 					{
 						AlertId:     "alert2",
-						RangeValues: []float32{4, 5},
+						RangeValues: []float32{5},
 						Duration:    "24h",
 						AlertRange:  alertstore.LessThan,
 					},
@@ -835,7 +835,7 @@ func TestCreateAlertRule(t *testing.T) {
 				AlertRules: []alertstore.StoredAlertRule{
 					{
 						AlertId:     AlertId,
-						RangeValues: []float32{4, 5},
+						RangeValues: []float32{5},
 						Duration:    "24h",
 						AlertRange:  alertstore.LessThan,
 					},
@@ -843,7 +843,7 @@ func TestCreateAlertRule(t *testing.T) {
 			},
 			alertRule: alertstore.AlertRule{
 				Name:           RegisteredAlertName,
-				RangeValues:    []float32{4, 5},
+				RangeValues:    []float32{5},
 				EmailAddresses: []string{UserEmail},
 				Duration:       "24h",
 				DeviceId:       RegisteredDeviceId,
@@ -879,7 +879,7 @@ func TestCreateAlertRule(t *testing.T) {
 				AlertRules: []alertstore.StoredAlertRule{
 					{
 						AlertId:     AlertId,
-						RangeValues: []float32{4, 5},
+						RangeValues: []float32{5},
 						Duration:    "24h",
 						AlertRange:  alertstore.LessThan,
 					},
@@ -905,7 +905,7 @@ func TestCreateAlertRule(t *testing.T) {
 				AlertRules: []alertstore.StoredAlertRule{
 					{
 						AlertId:     AlertId,
-						RangeValues: []float32{4, 5},
+						RangeValues: []float32{5},
 						Duration:    "24h",
 						AlertRange:  alertstore.LessThan,
 					},
