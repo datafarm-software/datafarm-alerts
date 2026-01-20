@@ -201,7 +201,7 @@ func (i *Influx) UpdateAlertRule(ar alertstore.AlertRule) error {
 	}
 	updateParams := domain.PutChecksIDAllParams{
 		CheckID: ar.AlertId,
-		Body:    check,
+		Body:    &check,
 	}
 	_, err = i.client.APIClient().PutChecksID(ctx, &updateParams)
 	return err
@@ -212,9 +212,6 @@ func (i *Influx) DeleteAlertRule(alertId string) error {
 }
 
 func (i *Influx) PrepareDb(alertsCount int, alerts ...alertstore.AlertRule) error {
-	if i.mode == alertstore.Testing {
-		i.testingAlertsCount = alertsCount
-	}
 	var err error
 	var alertId string
 	for iter, rule := range alerts {
@@ -226,6 +223,9 @@ func (i *Influx) PrepareDb(alertsCount int, alerts ...alertstore.AlertRule) erro
 			i.testingAlertIds = append(i.testingAlertIds, alertId)
 			i.testingAlertIdsMap[fmt.Sprintf("alert%d", iter+1)] = alertId
 		}
+	}
+	if i.mode == alertstore.Testing {
+		i.testingAlertsCount = alertsCount
 	}
 	return err
 }
