@@ -132,7 +132,7 @@ func (g *Gorm) GetSnapshot() Schema {
 func (g *Gorm) GetAlertState(alertId string) (AlertState, error) {
 	var as AlertState
 	var err error
-	db := g.db.Debug().First(&as, AlertState{Id: alertId})
+	db := g.db.First(&as, AlertState{Id: alertId})
 	err = db.Error
 	if db.RowsAffected < 1 {
 		err = NoAlert
@@ -237,7 +237,7 @@ func (g *Gorm) UpdateAlertRule(alertId string, dbRecord Schema) error {
 // NOTE: could return alertstore.AlertExists
 func (g *Gorm) CheckAlertRuleExists(ar AlertRule) (string, error) {
 	var alertId string
-	err := g.db.Debug().Table("stored_alert_rules").
+	err := g.db.Table("stored_alert_rules").
 		Joins(
 			`JOIN device_alert_rules ON
 			stored_alert_rules.alert_id = device_alert_rules.alert_id`,

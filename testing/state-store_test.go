@@ -1585,7 +1585,7 @@ func TestUpdateAlertRule(t *testing.T) {
 			defer a.AlertStore.Close()
 			err = a.AlertStore.PrepareDb(tc.mockAlertStore)
 			require.Nil(t, err)
-			a.AlertSource, err = alertsource.NewMockAlertSource()
+			a.AlertSource, err = alertsource.NewTestingInflux()
 			require.Nil(t, err)
 			defer a.AlertSource.Close()
 			alertRules = SchemaToAlertRules(tc.mockAlertStore)
