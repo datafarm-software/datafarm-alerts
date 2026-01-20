@@ -20,6 +20,18 @@ func (m *MockAlertStore) Close() error {
 }
 
 func (m *MockAlertStore) PrepareDb(db Schema) error {
+	if db.DeviceAlerts == nil {
+		db.DeviceAlerts = []DeviceAlertRule{}
+	}
+	if db.AlertRecipients == nil {
+		db.AlertRecipients = []AlertRecipient{}
+	}
+	if db.AlertRules == nil {
+		db.AlertRules = []StoredAlertRule{}
+	}
+	if db.AlertStates == nil {
+		db.AlertStates = []AlertState{}
+	}
 	m.Db = &db
 	return nil
 }

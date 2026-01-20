@@ -34,6 +34,7 @@ type AlertStore interface {
 	GetSnapshot() Schema
 	//NOTE: could return alertstore.NoAlert
 	GetAlertState(alertId string) (AlertState, error)
+	//NOTE: could return alertstore.NoAlert
 	GetAlertRule(alertId string) (AlertRule, error)
 	GetAlertRecipients(alertId string) ([]string, error)
 	UpdateAlertState(alert AlertState) error

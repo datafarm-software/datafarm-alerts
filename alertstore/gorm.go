@@ -237,7 +237,7 @@ func (g *Gorm) UpdateAlertRule(alertId string, dbRecord Schema) error {
 // NOTE: could return alertstore.AlertExists
 func (g *Gorm) CheckAlertRuleExists(ar AlertRule) (string, error) {
 	var alertId string
-	err := g.db.Table("stored_alert_rules").
+	err := g.db.Debug().Table("stored_alert_rules").
 		Joins(
 			`JOIN device_alert_rules ON
 			stored_alert_rules.alert_id = device_alert_rules.alert_id`,

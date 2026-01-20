@@ -432,16 +432,22 @@ func (a *App) UpdateAlertRule(
 		return nil, huma.Error400BadRequest("Need 2 range values for range alert.")
 	}
 	in.Body.AlertId = in.AlertId
-	existingAlertId, err := a.AlertStore.CheckAlertRuleExists(in.Body)
-	if existingAlertId == "" && err == nil {
-		log.Printf("tried to update an alert that does not exist.")
-		return nil,
-			huma.Error404NotFound("Tried to update an alert that does not exist.")
+	existingAlert, err := a.AlertStore.GetAlertRule(in.AlertId)
+	if err != nil {
+		if errors.Is(err, alertstore.NoAlert) {
+			return nil, huma.Error404NotFound("Alert not found.")
+		}
+		log.Printf("unexpected error while getting alert rule for: %s, error: %v", in.AlertId, err)
+		return nil, huma.Error500InternalServerError(
+			"Internal error while getting the alert.")
 	}
-	if err != nil && !errors.Is(err, alertstore.AlertExists) {
-		log.Printf("checking alert exists: %v", err)
-		return nil,
-			huma.Error500InternalServerError("Internal error checking if alert exists.")
+	if existingAlert.DeviceId != in.Body.DeviceId {
+		return nil, huma.Error404NotFound(
+			"Not allowed to update DeviceId. Recommended to use Create route instead.")
+	}
+	if existingAlert.QueryField != in.Body.QueryField {
+		return nil, huma.Error404NotFound(
+			"Not allowed to update QueryField. Recommended to use Create route instead.")
 	}
 	recipients := a.ConvertToRecipients(in.AlertId, in.Body.EmailAddresses)
 	dbRecord := alertstore.Schema{
@@ -462,7 +468,7 @@ func (a *App) UpdateAlertRule(
 			},
 		},
 	}
-	if err := a.AlertStore.UpdateAlertRule(existingAlertId, dbRecord); err != nil {
+	if err := a.AlertStore.UpdateAlertRule(in.Body.AlertId, dbRecord); err != nil {
 		log.Printf("alertstore update alert rule for id: %s, error: %v", in.AlertId, err)
 		return nil, huma.Error500InternalServerError(
 			"Internal error while storing the updated alert rule.")
