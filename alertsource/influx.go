@@ -1,10 +1,14 @@
 package alertsource
 
 import (
+	"bytes"
 	"context"
 	"fmt"
+	"os"
+	"sync"
 	"time"
 
+	cfy "github.com/geraud22/config-from-yaml"
 	"github.com/geraud22/sensordata-alerts/alertstore"
 	influxdb2 "github.com/influxdata/influxdb-client-go/v2"
 	"github.com/influxdata/influxdb-client-go/v2/domain"
@@ -83,6 +87,32 @@ type Influx struct {
 	orgId, org         string
 	testingAlertsCount int
 	testingAlertIds    []string
+}
+
+var once sync.Once
+var testingInfluxOpts InfluxOpts
+
+func NewTestingInflux() (*Influx, error) {
+	var topErr error
+	once.Do(func() {
+		config, err := os.ReadFile("../config.yml")
+		if err != nil {
+			topErr = err
+			return
+		}
+		opts, err := cfy.LoadConfig[struct {
+			InfluxOpts InfluxOpts `mapstructure:"influx"`
+		}](bytes.NewReader(config), "yaml", nil)
+		if err != nil {
+			topErr = err
+			return
+		}
+		testingInfluxOpts = opts.InfluxOpts
+	})
+	if topErr != nil {
+		return nil, topErr
+	}
+	return NewInflux(testingInfluxOpts)
 }
 
 func NewInflux(opts InfluxOpts) (*Influx, error) {

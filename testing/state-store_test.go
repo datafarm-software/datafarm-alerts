@@ -1,11 +1,9 @@
 package testing
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"os"
 	"reflect"
 	"testing"
 	"time"
@@ -13,7 +11,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/danielgtaylor/huma/v2/humatest"
-	cfy "github.com/geraud22/config-from-yaml"
 	"github.com/geraud22/sensordata-alerts/alertsource"
 	"github.com/geraud22/sensordata-alerts/alertstore"
 	"github.com/geraud22/sensordata-alerts/app"
@@ -929,12 +926,6 @@ func TestCreateAlertRule(t *testing.T) {
 	var err error
 	_, api := humatest.New(t)
 	a.RegisterHumaOperations(api)
-	var influxOpts alertsource.InfluxOpts
-	config, err := os.ReadFile("../config.yml")
-	require.Nil(t, err)
-	appOpts, err := cfy.LoadConfig[app.Opts](bytes.NewReader(config), "yaml", nil)
-	require.Nil(t, err)
-	influxOpts = appOpts.Influx
 
 	//NOTE: these opts are used to enforce that AlertId not be empty. This reflects that implementations do not necessarily have to exactly match 'Alert1' with returned alert ids.
 	cmpOpts := cmp.Options{
@@ -961,16 +952,11 @@ func TestCreateAlertRule(t *testing.T) {
 			defer a.AlertStore.Close()
 			err = a.AlertStore.PrepareDb(tc.mockAlertStore)
 			require.Nil(t, err)
-			influxTest := true
-			if influxTest {
-				a.AlertSource, err = alertsource.NewInflux(influxOpts)
-			} else {
-				a.AlertSource, err = alertsource.NewMockAlertSource()
-			}
-			require.Nil(t, err)
-			err = a.AlertSource.PrepareDb(tc.startingAlertSourceCount)
+			a.AlertSource, err = alertsource.NewTestingInflux()
 			require.Nil(t, err)
 			defer a.AlertSource.Close()
+			err = a.AlertSource.PrepareDb(tc.startingAlertSourceCount)
+			require.Nil(t, err)
 			resp := api.Post("/alert", tc.alertRule)
 			if tc.wantStatus != resp.Code {
 				t.Fatalf("wantStatusCode: %d, response code: %d", tc.wantStatus, resp.Code)
