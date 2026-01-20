@@ -926,24 +926,7 @@ func TestCreateAlertRule(t *testing.T) {
 	var err error
 	_, api := humatest.New(t)
 	a.RegisterHumaOperations(api)
-
-	//NOTE: these opts are used to enforce that AlertId not be empty. This reflects that implementations do not necessarily have to exactly match 'Alert1' with returned alert ids.
-	cmpOpts := cmp.Options{
-		cmp.FilterPath(
-			func(p cmp.Path) bool {
-				_, ok := p.Last().(cmp.StructField)
-				return ok &&
-					(p.Last().String() == "AlertId" || p.Last().String() == "Id")
-			},
-			cmp.Comparer(func(x, y string) bool { return x != "" }),
-		),
-		cmpopts.IgnoreFields(alertstore.AlertRule{}, "AlertId"),
-		cmpopts.IgnoreFields(alertstore.StoredAlertRule{}, "AlertId"),
-		cmpopts.IgnoreFields(alertstore.AlertState{}, "Id"),
-		cmpopts.IgnoreFields(alertstore.AlertRecipient{}, "AlertId"),
-		cmpopts.IgnoreFields(alertstore.DeviceAlertRule{}, "AlertId"),
-		cmpopts.IgnoreFields(alertstore.CreatedRule{}, "AlertId"),
-	}
+	cmpOpts := enforceAlertIdNonEmpty()
 
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
@@ -1592,6 +1575,7 @@ func TestUpdateAlertRule(t *testing.T) {
 	var got alertstore.AlertRule
 	_, api := humatest.New(t)
 	a.RegisterHumaOperations(api)
+	cmpOpts := enforceAlertIdNonEmpty()
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
 			a.AlertStore, err = alertstore.NewGorm(alertstore.Testing, "testing")
@@ -1610,7 +1594,7 @@ func TestUpdateAlertRule(t *testing.T) {
 			if !tc.wantErr {
 				err = json.Unmarshal(resp.Body.Bytes(), &got)
 				require.Nil(t, err)
-				if diff := cmp.Diff(tc.alertRule, got); diff != "" {
+				if diff := cmp.Diff(tc.alertRule, got, cmpOpts); diff != "" {
 					t.Fatalf("response mismatch (-want +got):\n%s", diff)
 				}
 				if diff := cmp.Diff(tc.wantAlertStore, a.AlertStore.GetSnapshot()); diff != "" {
@@ -1770,21 +1754,21 @@ func TestDeleteAlert(t *testing.T) {
 	}
 
 	var got alertstore.AlertRule
+	var alertRules []alertstore.AlertRule
 	var err error
-	var m alertsource.AlertSource
 	_, api := humatest.New(t)
 	a.RegisterHumaOperations(api)
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
-			m, err = alertsource.NewMockAlertSource()
+			a.AlertSource, err = alertsource.NewMockAlertSource()
 			require.Nil(t, err)
-			a.AlertSource = m
 			defer a.AlertSource.Close()
+			alertRules = SchemaToAlertRules(tc.mockAlertStore)
+			err = a.AlertSource.PrepareDb(tc.startingAlertSourceCount, alertRules...)
+			require.Nil(t, err)
 			a.AlertStore, err = alertstore.NewGorm(alertstore.Testing, "testing")
 			require.Nil(t, err)
 			defer a.AlertStore.Close()
-			err = a.AlertSource.PrepareDb(tc.startingAlertSourceCount)
-			require.Nil(t, err)
 			err = a.AlertStore.PrepareDb(tc.mockAlertStore)
 			require.Nil(t, err)
 			resp := api.Delete(fmt.Sprintf("/alert/%s", tc.alertId))
@@ -1803,9 +1787,47 @@ func TestDeleteAlert(t *testing.T) {
 				alertsCount := a.AlertSource.GetSnapshot()
 				if tc.wantAlertSourceCount != alertsCount {
 					t.Fatalf("wantAlertSourceCount: %d, got alertsCount: %d",
-						tc.wantAlertSourceCount, got)
+						tc.wantAlertSourceCount, alertsCount)
 				}
 			}
 		})
+	}
+}
+
+func SchemaToAlertRules(dbRecord alertstore.Schema) []alertstore.AlertRule {
+	var ar alertstore.AlertRule
+	rules := make([]alertstore.AlertRule, 0, len(dbRecord.DeviceAlerts))
+	for _, da := range dbRecord.DeviceAlerts {
+		ar.AlertId = da.AlertId
+		ar.DeviceId = da.DeviceId
+		ar.QueryField = da.QueryField
+
+		for _, rule := range dbRecord.AlertRules {
+			ar.RangeValues = rule.RangeValues
+			ar.Duration = rule.Duration
+			ar.AlertType = rule.AlertType
+		}
+		rules = append(rules, ar)
+	}
+	return rules
+}
+
+func enforceAlertIdNonEmpty() cmp.Options {
+	//NOTE: these opts are used to enforce that AlertId not be empty. This reflects that implementations do not necessarily have to exactly match 'Alert1' with returned alert ids.
+	return cmp.Options{
+		cmp.FilterPath(
+			func(p cmp.Path) bool {
+				_, ok := p.Last().(cmp.StructField)
+				return ok &&
+					(p.Last().String() == "AlertId" || p.Last().String() == "Id")
+			},
+			cmp.Comparer(func(x, y string) bool { return x != "" }),
+		),
+		cmpopts.IgnoreFields(alertstore.AlertRule{}, "AlertId"),
+		cmpopts.IgnoreFields(alertstore.StoredAlertRule{}, "AlertId"),
+		cmpopts.IgnoreFields(alertstore.AlertState{}, "Id"),
+		cmpopts.IgnoreFields(alertstore.AlertRecipient{}, "AlertId"),
+		cmpopts.IgnoreFields(alertstore.DeviceAlertRule{}, "AlertId"),
+		cmpopts.IgnoreFields(alertstore.CreatedRule{}, "AlertId"),
 	}
 }

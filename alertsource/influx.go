@@ -257,9 +257,22 @@ func (i *Influx) DeleteAlertRule(alertId string) error {
 	return fmt.Errorf("not implemented")
 }
 
-func (i *Influx) PrepareDb(alertsCount int) error {
-	i.testingAlertsCount = alertsCount
-	return nil
+func (i *Influx) PrepareDb(alertsCount int, alerts ...alertstore.AlertRule) error {
+	if i.mode == alertstore.Testing {
+		i.testingAlertsCount = alertsCount
+	}
+	var err error
+	var alertId string
+	for _, rule := range alerts {
+		alertId, err = i.CreateAlertRule(rule)
+		if err != nil {
+			break
+		}
+		if i.mode == alertstore.Testing {
+			i.testingAlertIds = append(i.testingAlertIds, alertId)
+		}
+	}
+	return err
 }
 
 func (i *Influx) GetSnapshot() int {

@@ -18,7 +18,7 @@ func (m *MockAlertSource) Close() error {
 	return nil
 }
 
-func (m *MockAlertSource) PrepareDb(alertsCount int) error {
+func (m *MockAlertSource) PrepareDb(alertsCount int, _ ...alertstore.AlertRule) error {
 	m.alertsCount = alertsCount
 	return nil
 }
@@ -28,7 +28,7 @@ func (m *MockAlertSource) GetSnapshot() int {
 }
 
 func (m *MockAlertSource) UpdateAlertRule(ar alertstore.AlertRule) error {
-	return fmt.Errorf("not implemented")
+	return nil
 }
 
 func (m *MockAlertSource) CreateAlertRule(ar alertstore.AlertRule) (string, error) {
