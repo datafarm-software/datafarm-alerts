@@ -10,6 +10,24 @@ type AlertSetup interface {
 	AlertType() alertstore.AlertType
 }
 
+type AlertSetupImpl struct {
+	Dur string
+	At  alertstore.AlertType
+	Rv  []float32
+}
+
+func (a *AlertSetupImpl) RangeValues() []float32 {
+	return a.Rv
+}
+
+func (a *AlertSetupImpl) AlertType() alertstore.AlertType {
+	return a.At
+}
+
+func (a *AlertSetupImpl) Duration() string {
+	return a.Dur
+}
+
 type AlertFromSource interface {
 	AlertState() alertstore.AlertState
 	AlertLevel() alertstore.AlertLevel
