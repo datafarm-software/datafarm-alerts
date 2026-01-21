@@ -21,6 +21,13 @@ const (
 
 type AlertLevel int
 
+var AlertLevelString = []string{
+	"OK",
+	"WARN",
+	"CRIT",
+	"INVALID",
+}
+
 const (
 	Ok AlertLevel = iota
 	Warn

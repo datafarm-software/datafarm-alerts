@@ -313,7 +313,7 @@ var once sync.Once
 var testingInfluxOpts InfluxOpts
 
 type TestingInflux struct {
-	influx             *Influx
+	influx             AlertSource
 	testingAlertsCount int
 	testingAlertIdsMap map[string]string
 }
