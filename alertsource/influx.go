@@ -16,15 +16,15 @@ import (
 	"github.com/influxdata/influxdb-client-go/v2/domain"
 )
 
-var msg string = `
-	Check: ${r._check_name} DeviceId: %s, QueryField: %s
-	State: ${r._level} at Time: %s, due to value ${r._value}`
+var msg string = `Check: ${r._check_name} State: ${r._level}.`
+
+var ZeroSeconds = "0s"
 
 const Flux string = `from(bucket: "%s")
-	|> range(start: %s)
+	|> range(start: v.timeRangeStart, stop: v.timeRangeStop)
     |> filter(fn: (r) => r["deviceID"] == "%s")
     |> filter(fn: (r) => r["_field"] == "%s")
-    |> aggregateWindow(every: %s, fn: mean, createEmpty: false)`
+    |> aggregateWindow(every: %s, fn: last, createEmpty: false)`
 
 var ctx context.Context
 
@@ -288,7 +288,7 @@ func (i *Influx) createThresholdCheck(ar alertstore.AlertRule) (domain.Threshold
 	}
 
 	key := "queryField"
-	hydratedFlux := fmt.Sprintf(Flux, i.org, ar.Duration, ar.DeviceId, ar.QueryField, ar.Duration)
+	hydratedFlux := fmt.Sprintf(Flux, i.org, ar.DeviceId, ar.QueryField, ar.Duration)
 	check = domain.ThresholdCheck{
 		CheckBaseExtend: domain.CheckBaseExtend{
 			CheckBase: domain.CheckBase{
@@ -298,6 +298,7 @@ func (i *Influx) createThresholdCheck(ar alertstore.AlertRule) (domain.Threshold
 				Status: domain.TaskStatusTypeActive,
 			},
 			Every:                 &ar.Duration,
+			Offset:                &ZeroSeconds,
 			StatusMessageTemplate: &msg,
 			Tags: &[]struct {
 				Key   *string `json:"key,omitempty"`
