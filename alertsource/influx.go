@@ -83,45 +83,9 @@ type InfluxOpts struct {
 }
 
 type Influx struct {
-	ctxCancel          context.CancelFunc
-	client             influxdb2.Client
-	mode               alertstore.Mode
-	orgId, org         string
-	testingAlertsCount int
-	testingAlertIds    []string
-	testingAlertIdsMap map[string]string
-}
-
-var once sync.Once
-var testingInfluxOpts InfluxOpts
-
-func NewTestingInflux() (*Influx, error) {
-	var topErr error
-	once.Do(func() {
-		config, err := os.ReadFile("../config.yml")
-		if err != nil {
-			topErr = err
-			return
-		}
-		opts, err := cfy.LoadConfig[struct {
-			InfluxOpts InfluxOpts `mapstructure:"influx"`
-		}](bytes.NewReader(config), "yaml", nil)
-		if err != nil {
-			topErr = err
-			return
-		}
-		testingInfluxOpts = opts.InfluxOpts
-		testingInfluxOpts.Mode = alertstore.Testing
-	})
-	if topErr != nil {
-		return nil, topErr
-	}
-	influx, err := NewInflux(testingInfluxOpts)
-	if err != nil {
-		return nil, err
-	}
-	influx.testingAlertIdsMap = make(map[string]string)
-	return influx, nil
+	ctxCancel  context.CancelFunc
+	client     influxdb2.Client
+	orgId, org string
 }
 
 func NewInflux(opts InfluxOpts) (*Influx, error) {
@@ -188,10 +152,6 @@ func (i *Influx) CreateAlertRule(ar alertstore.AlertRule) (string, error) {
 			return "", fmt.Errorf("invalid check created")
 		}
 		alertId = *tc.CheckBase.Id
-	}
-	if i.mode == alertstore.Testing {
-		i.testingAlertsCount++
-		i.testingAlertIds = append(i.testingAlertIds, alertId)
 	}
 	return alertId, nil
 }
@@ -306,22 +266,7 @@ func (i *Influx) DeleteAllAlertRules() error {
 }
 
 func (i *Influx) PrepareDb(alertsCount int, alerts ...alertstore.AlertRule) error {
-	var err error
-	var alertId string
-	for iter, rule := range alerts {
-		alertId, err = i.CreateAlertRule(rule)
-		if err != nil {
-			break
-		}
-		if i.mode == alertstore.Testing {
-			i.testingAlertIds = append(i.testingAlertIds, alertId)
-			i.testingAlertIdsMap[fmt.Sprintf("alert%d", iter+1)] = alertId
-		}
-	}
-	if i.mode == alertstore.Testing {
-		i.testingAlertsCount = alertsCount
-	}
-	return err
+	return nil
 }
 
 func (i *Influx) GetSnapshot() int {
@@ -395,4 +340,69 @@ func (i *Influx) createThresholdCheck(ar alertstore.AlertRule) (domain.Threshold
 		Thresholds: &thresholds,
 	}
 	return check, nil
+}
+
+var once sync.Once
+var testingInfluxOpts InfluxOpts
+
+type TestingInflux struct {
+	influx             *Influx
+	testingAlertsCount int
+	testingAlertIdsMap map[string]string
+}
+
+func NewTestingInflux() (*TestingInflux, error) {
+	var topErr error
+	once.Do(func() {
+		config, err := os.ReadFile("../config.yml")
+		if err != nil {
+			topErr = err
+			return
+		}
+		opts, err := cfy.LoadConfig[struct {
+			InfluxOpts InfluxOpts `mapstructure:"influx"`
+		}](bytes.NewReader(config), "yaml", nil)
+		if err != nil {
+			topErr = err
+			return
+		}
+		testingInfluxOpts = opts.InfluxOpts
+		testingInfluxOpts.Mode = alertstore.Testing
+	})
+	if topErr != nil {
+		return nil, topErr
+	}
+	db, err := NewInflux(testingInfluxOpts)
+	if err != nil {
+		return nil, err
+	}
+	return &TestingInflux{
+		testingAlertIdsMap: make(map[string]string),
+		db:                 db,
+	}, nil
+}
+
+func (i *TestingInflux) PrepareDb(alertsCount int, alerts ...alertstore.AlertRule) error {
+	if alertsCount != len(alerts) {
+		return fmt.Errorf("alertsCount: %d, len(alerts): %d", alertsCount, len(alerts))
+	}
+	var err error
+	for _, rule := range alerts {
+		_, err = i.CreateAlertRule(rule)
+		if err != nil {
+			break
+		}
+	}
+	return err
+}
+
+func (i *TestingInflux) CreateAlertRule(ar alertstore.AlertRule) (string, error) {
+	alertId, err := i.influx.CreateAlertRule(ar)
+	if err != nil {
+		return "", err
+	}
+	i.testingAlertsCount++
+	testingAlertId := fmt.Sprintf("alert%d", i.testingAlertsCount)
+	i.testingAlertIdsMap[testingAlertId] = alertId
+	return testingAlertId, nil
 }

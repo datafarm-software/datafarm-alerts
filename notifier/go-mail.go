@@ -1,13 +1,22 @@
 package notifier
 
-import "fmt"
+import (
+	"fmt"
 
-type Gomail struct{}
+	"github.com/geraud22/sensordata-alerts/alertstore"
+)
 
-func NewGoMail() *Gomail {
-	return &Gomail{}
+type Gomail struct {
+	testingInboxes map[string][]AlertMessage
+	mode           alertstore.Mode
 }
 
-func (g *Gomail) Notify(emails []string, message string) error {
+func NewGoMail() (*Gomail, error) {
+	return &Gomail{}, nil
+}
+
+func (g *Gomail) Notify(message AlertMessage, emails ...string) error {
 	return fmt.Errorf("not implemented")
 }
+
+func (g *Gomail) GetUserInboxes()
