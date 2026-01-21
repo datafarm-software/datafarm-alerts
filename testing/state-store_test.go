@@ -101,7 +101,6 @@ func TestRespondToAlert(t *testing.T) {
 	tests := map[string]struct {
 		wantStatus                     int
 		wantUserInboxes                map[string][]notifier.AlertMessage
-		mockNotifierStore              map[any]any
 		mockAlertStore, wantAlertStore alertstore.Schema
 		alert                          alertsource.InfluxAlert
 	}{
@@ -502,14 +501,12 @@ func TestRespondToAlert(t *testing.T) {
 		},
 	}
 
-	var n *notifier.MockNotifier
 	var err error
 	_, api := humatest.New(t)
 	a.RegisterHumaOperations(api)
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
-			n = notifier.NewMockNotifier(tc.mockNotifierStore)
-			a.Notifier = n
+			a.Notifier = notifier.NewMockNotifier()
 			a.AlertStore, err = alertstore.NewGorm(alertstore.Testing, "testing")
 			require.Nil(t, err)
 			defer a.AlertStore.Close()
@@ -520,7 +517,7 @@ func TestRespondToAlert(t *testing.T) {
 				t.Fatalf("wantStatus: %d, response status: %d", tc.wantStatus, resp.Code)
 			}
 			if tc.wantStatus < 300 {
-				if diff := cmp.Diff(tc.wantUserInboxes, n.GetUserInboxes()); diff != "" {
+				if diff := cmp.Diff(tc.wantUserInboxes, a.Notifier.GetUserInboxes()); diff != "" {
 					t.Fatalf("user inboxes mismatch (-want +got):\n%s", diff)
 				}
 				if diff := cmp.Diff(tc.wantAlertStore, a.AlertStore.GetSnapshot(),

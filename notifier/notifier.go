@@ -16,4 +16,6 @@ type AlertMessage struct {
 
 type Notifier interface {
 	Notify(message AlertMessage, emails ...string) error
+	//NOTE: used in testing
+	GetUserInboxes() map[string][]AlertMessage
 }
