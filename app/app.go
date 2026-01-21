@@ -24,6 +24,7 @@ type HttpOpts struct {
 type Opts struct {
 	Http   HttpOpts               `mapstructure:"http" validate:"required"`
 	Influx alertsource.InfluxOpts `mapstructure:"influx" validate:"required"`
+	Gomail notifier.GomailOpts    `mapstructure:"gomail" validate:"required"`
 }
 
 type App struct {
@@ -35,11 +36,11 @@ type App struct {
 func Start(opts Opts) error {
 	var err error
 	app := &App{}
-	app.Notifier, err = notifier.NewMockNotifier()
+	app.Notifier, err = notifier.NewGomail(opts.Gomail)
 	if err != nil {
 		return err
 	}
-	app.AlertStore, err = alertstore.NewMockAlertStore(alertstore.Production, "prod")
+	app.AlertStore, err = alertstore.NewGorm(alertstore.Production, "prod")
 	if err != nil {
 		return err
 	}
