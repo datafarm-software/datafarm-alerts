@@ -117,8 +117,11 @@ func NewTestingInflux() (*Influx, error) {
 		return nil, topErr
 	}
 	influx, err := NewInflux(testingInfluxOpts)
+	if err != nil {
+		return nil, err
+	}
 	influx.testingAlertIdsMap = make(map[string]string)
-	return influx, err
+	return influx, nil
 }
 
 func NewInflux(opts InfluxOpts) (*Influx, error) {
@@ -277,6 +280,9 @@ func (i *Influx) DeleteAlertRule(alertId string) error {
 		}
 		if err = i.client.APIClient().DeleteChecksID(ctx, &dp); err != nil {
 			break
+		}
+		if i.mode == alertstore.Testing {
+			i.testingAlertsCount--
 		}
 	}
 	return err
