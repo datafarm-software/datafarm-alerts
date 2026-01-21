@@ -18,8 +18,8 @@ func (m *MockAlertSource) Close() error {
 	return nil
 }
 
-func (m *MockAlertSource) PrepareDb(alertsCount int, _ ...alertstore.AlertRule) error {
-	m.alertsCount = alertsCount
+func (m *MockAlertSource) PrepareDb(alerts ...alertstore.AlertRule) error {
+	m.alertsCount = len(alerts)
 	return nil
 }
 

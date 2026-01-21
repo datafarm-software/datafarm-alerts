@@ -19,4 +19,6 @@ func (g *Gomail) Notify(message AlertMessage, emails ...string) error {
 	return fmt.Errorf("not implemented")
 }
 
-func (g *Gomail) GetUserInboxes()
+func (g *Gomail) GetUserInboxes() map[string][]AlertMessage {
+	return g.testingInboxes
+}

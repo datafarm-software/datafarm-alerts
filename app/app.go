@@ -172,7 +172,7 @@ func (a *App) RegisterHumaOperations(api huma.API) {
 				Description: "Internal Server Error",
 				Content: map[string]*huma.MediaType{
 					"application/json": {
-						Schema: huma.SchemaFromType(registry, reflect.TypeOf(HumaError{})),
+						Schema: huma.SchemaFromType(registry, reflect.TypeFor[HumaError]()),
 						Example: HumaError{
 							Schema: "http://localhost:3030/schemas/ErrorModel.json",
 							Title:  "Internal Server Error",
@@ -290,7 +290,6 @@ func (a *App) RespondToAlert(
 	in *struct{ Body alertsource.InfluxAlert }) (*struct{}, error) {
 	source := alertsource.AlertFromSource(&in.Body)
 	alert := source.AlertState()
-	log.Println("alert: ", alert)
 	alertRule, err := a.AlertStore.GetAlertRule(alert.Id)
 	if err != nil {
 		if !errors.Is(err, alertstore.NoAlert) {

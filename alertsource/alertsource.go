@@ -17,6 +17,6 @@ type AlertSource interface {
 	//NOTE: Could return alertstore.NoAlert
 	DeleteAlertRule(alertId string) error
 	//NOTE: used in testing
-	PrepareDb(int, ...alertstore.AlertRule) error
+	PrepareDb(...alertstore.AlertRule) error
 	GetSnapshot() int
 }

@@ -506,7 +506,7 @@ func TestRespondToAlert(t *testing.T) {
 	a.RegisterHumaOperations(api)
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
-			a.Notifier, err = notifier.NewGoMail()
+			a.Notifier, err = notifier.NewMockNotifier()
 			require.Nil(t, err)
 			a.AlertStore, err = alertstore.NewGorm(alertstore.Testing, "testing")
 			require.Nil(t, err)
@@ -924,7 +924,7 @@ func TestCreateAlertRule(t *testing.T) {
 	var err error
 	_, api := humatest.New(t)
 	a.RegisterHumaOperations(api)
-	cmpOpts := enforceAlertIdNonEmpty()
+	var alertRules []alertstore.AlertRule
 
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
@@ -936,7 +936,8 @@ func TestCreateAlertRule(t *testing.T) {
 			a.AlertSource, err = alertsource.NewTestingInflux()
 			require.Nil(t, err)
 			defer a.AlertSource.Close()
-			err = a.AlertSource.PrepareDb(tc.startingAlertSourceCount)
+			alertRules = SchemaToAlertRules(tc.mockAlertStore)
+			err = a.AlertSource.PrepareDb(alertRules...)
 			require.Nil(t, err)
 			resp := api.Post("/alert", tc.alertRule)
 			if tc.wantStatus != resp.Code {
@@ -951,7 +952,7 @@ func TestCreateAlertRule(t *testing.T) {
 						"wantAlertSourceCount: %d, got alertsCount: %d",
 						tc.wantAlertSourceCount, gotAlertSourceCount)
 				}
-				if diff := cmp.Diff(tc.wantResponse, got, cmpOpts); diff != "" {
+				if diff := cmp.Diff(tc.wantResponse, got); diff != "" {
 					t.Fatalf("response mismatch (-want +got):\n%s", diff)
 				}
 			}
@@ -1051,19 +1052,18 @@ func TestConvertToRecipients(t *testing.T) {
 
 func TestUpdateAlertRule(t *testing.T) {
 	tests := map[string]struct {
-		wantErr                                        bool
-		wantStatus                                     int
-		alertId                                        string
-		wantAlertRule                                  alertstore.AlertRule
-		mockAlertStore, wantAlertStore                 alertstore.Schema
-		startingAlertSourceCount, wantAlertSourceCount int
+		wantErr                        bool
+		wantStatus                     int
+		alertId                        string
+		wantAlertRule                  alertstore.AlertRule
+		mockAlertStore, wantAlertStore alertstore.Schema
+		wantAlertSourceCount           int
 	}{
 
 		"update the range values of an alert": {
-			wantStatus:               http.StatusOK,
-			startingAlertSourceCount: 1,
-			wantAlertSourceCount:     1,
-			alertId:                  AlertId,
+			wantStatus:           http.StatusOK,
+			wantAlertSourceCount: 1,
+			alertId:              AlertId,
 			wantAlertRule: alertstore.AlertRule{
 				Name:           RegisteredAlertName,
 				AlertId:        AlertId,
@@ -1118,10 +1118,9 @@ func TestUpdateAlertRule(t *testing.T) {
 		},
 
 		"update alert type from less than to greater than": {
-			wantStatus:               http.StatusOK,
-			startingAlertSourceCount: 1,
-			wantAlertSourceCount:     1,
-			alertId:                  AlertId,
+			wantStatus:           http.StatusOK,
+			wantAlertSourceCount: 1,
+			alertId:              AlertId,
 			wantAlertRule: alertstore.AlertRule{
 				Name:           RegisteredAlertName,
 				AlertId:        AlertId,
@@ -1176,10 +1175,9 @@ func TestUpdateAlertRule(t *testing.T) {
 		},
 
 		"update alert type from greater than to less than": {
-			wantStatus:               http.StatusOK,
-			startingAlertSourceCount: 1,
-			wantAlertSourceCount:     1,
-			alertId:                  AlertId,
+			wantStatus:           http.StatusOK,
+			wantAlertSourceCount: 1,
+			alertId:              AlertId,
 			wantAlertRule: alertstore.AlertRule{
 				Name:           RegisteredAlertName,
 				AlertId:        AlertId,
@@ -1234,10 +1232,9 @@ func TestUpdateAlertRule(t *testing.T) {
 		},
 
 		"update alert type from less than to range": {
-			wantStatus:               http.StatusOK,
-			startingAlertSourceCount: 1,
-			wantAlertSourceCount:     1,
-			alertId:                  AlertId,
+			wantStatus:           http.StatusOK,
+			wantAlertSourceCount: 1,
+			alertId:              AlertId,
 			wantAlertRule: alertstore.AlertRule{
 				Name:           RegisteredAlertName,
 				AlertId:        AlertId,
@@ -1292,11 +1289,10 @@ func TestUpdateAlertRule(t *testing.T) {
 		},
 
 		"can't update the queryField of an alert. Constitutes a new alert entirely": {
-			wantStatus:               http.StatusNotFound,
-			wantErr:                  true,
-			startingAlertSourceCount: 1,
-			wantAlertSourceCount:     1,
-			alertId:                  AlertId,
+			wantStatus:           http.StatusNotFound,
+			wantErr:              true,
+			wantAlertSourceCount: 1,
+			alertId:              AlertId,
 			wantAlertRule: alertstore.AlertRule{
 				Name:           RegisteredAlertName,
 				AlertId:        AlertId,
@@ -1350,11 +1346,10 @@ func TestUpdateAlertRule(t *testing.T) {
 		},
 
 		"can't update the deviceId of an alert. Constitutes a new alert entirely": {
-			wantStatus:               http.StatusNotFound,
-			wantErr:                  true,
-			startingAlertSourceCount: 1,
-			wantAlertSourceCount:     1,
-			alertId:                  AlertId,
+			wantStatus:           http.StatusNotFound,
+			wantErr:              true,
+			wantAlertSourceCount: 1,
+			alertId:              AlertId,
 			wantAlertRule: alertstore.AlertRule{
 				Name:           RegisteredAlertName,
 				AlertId:        AlertId,
@@ -1408,8 +1403,9 @@ func TestUpdateAlertRule(t *testing.T) {
 		},
 
 		"add more emails to the recipient list of an alert rule": {
-			wantStatus: http.StatusOK,
-			alertId:    AlertId,
+			wantStatus:           http.StatusOK,
+			alertId:              AlertId,
+			wantAlertSourceCount: 1,
 			wantAlertRule: alertstore.AlertRule{
 				Name:           RegisteredAlertName,
 				AlertId:        AlertId,
@@ -1465,10 +1461,9 @@ func TestUpdateAlertRule(t *testing.T) {
 		},
 
 		"ignore duplicate emails in recipient list": {
-			wantStatus:               http.StatusOK,
-			startingAlertSourceCount: 1,
-			wantAlertSourceCount:     1,
-			alertId:                  AlertId,
+			wantStatus:           http.StatusOK,
+			wantAlertSourceCount: 1,
+			alertId:              AlertId,
 			wantAlertRule: alertstore.AlertRule{
 				Name:           RegisteredAlertName,
 				AlertId:        AlertId,
@@ -1576,7 +1571,6 @@ func TestUpdateAlertRule(t *testing.T) {
 	var alertRules []alertstore.AlertRule
 	_, api := humatest.New(t)
 	a.RegisterHumaOperations(api)
-	cmpOpts := enforceAlertIdNonEmpty()
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
 			a.AlertStore, err = alertstore.NewGorm(alertstore.Testing, "testing")
@@ -1587,7 +1581,7 @@ func TestUpdateAlertRule(t *testing.T) {
 			require.Nil(t, err)
 			defer a.AlertSource.Close()
 			alertRules = SchemaToAlertRules(tc.mockAlertStore)
-			err = a.AlertSource.PrepareDb(tc.startingAlertSourceCount, alertRules...)
+			err = a.AlertSource.PrepareDb(alertRules...)
 			require.Nil(t, err)
 			resp := api.Put(fmt.Sprintf("/alert/%s", tc.alertId), tc.wantAlertRule)
 			if tc.wantStatus != resp.Code {
@@ -1596,7 +1590,7 @@ func TestUpdateAlertRule(t *testing.T) {
 			if !tc.wantErr {
 				err = json.Unmarshal(resp.Body.Bytes(), &got)
 				require.Nil(t, err)
-				if diff := cmp.Diff(tc.wantAlertRule, got, cmpOpts); diff != "" {
+				if diff := cmp.Diff(tc.wantAlertRule, got); diff != "" {
 					t.Fatalf("response alertrule mismatch (-want +got):\n%s", diff)
 				}
 				if diff := cmp.Diff(tc.wantAlertStore, a.AlertStore.GetSnapshot()); diff != "" {
@@ -1691,20 +1685,19 @@ func TestGetAlertRule(t *testing.T) {
 
 func TestDeleteAlert(t *testing.T) {
 	tests := map[string]struct {
-		wantErr                                        bool
-		wantStatus                                     int
-		alertId                                        string
-		wantAlertRule                                  alertstore.AlertRule
-		mockAlertStore, wantAlertStore                 alertstore.Schema
-		startingAlertSourceCount, wantAlertSourceCount int
+		wantErr                        bool
+		wantStatus                     int
+		alertId                        string
+		wantAlertRule                  alertstore.AlertRule
+		mockAlertStore, wantAlertStore alertstore.Schema
+		wantAlertSourceCount           int
 	}{
 
 		"successfully delete an alert": {
-			wantErr:                  false,
-			wantStatus:               http.StatusOK,
-			alertId:                  AlertId,
-			startingAlertSourceCount: 1,
-			wantAlertSourceCount:     0,
+			wantErr:              false,
+			wantStatus:           http.StatusOK,
+			alertId:              AlertId,
+			wantAlertSourceCount: 0,
 			mockAlertStore: alertstore.Schema{
 				AlertRecipients: []alertstore.AlertRecipient{
 					{AlertId: AlertId, Email: UserEmail},
@@ -1748,11 +1741,10 @@ func TestDeleteAlert(t *testing.T) {
 		},
 
 		"successfully delete a specific alert": {
-			wantErr:                  false,
-			wantStatus:               http.StatusOK,
-			alertId:                  "alert2",
-			startingAlertSourceCount: 2,
-			wantAlertSourceCount:     1,
+			wantErr:              false,
+			wantStatus:           http.StatusOK,
+			alertId:              "alert2",
+			wantAlertSourceCount: 1,
 			mockAlertStore: alertstore.Schema{
 				AlertRecipients: []alertstore.AlertRecipient{
 					{AlertId: AlertId, Email: UserEmail},
@@ -1848,7 +1840,7 @@ func TestDeleteAlert(t *testing.T) {
 			require.Nil(t, err)
 			defer a.AlertSource.Close()
 			alertRules = SchemaToAlertRules(tc.mockAlertStore)
-			err = a.AlertSource.PrepareDb(tc.startingAlertSourceCount, alertRules...)
+			err = a.AlertSource.PrepareDb(alertRules...)
 			require.Nil(t, err)
 			a.AlertStore, err = alertstore.NewGorm(alertstore.Testing, "testing")
 			require.Nil(t, err)
@@ -1895,24 +1887,4 @@ func SchemaToAlertRules(dbRecord alertstore.Schema) []alertstore.AlertRule {
 		rules = append(rules, ar)
 	}
 	return rules
-}
-
-func enforceAlertIdNonEmpty() cmp.Options {
-	//NOTE: these opts are used to enforce that AlertId not be empty. This reflects that implementations do not necessarily have to exactly match 'Alert1' with returned alert ids.
-	return cmp.Options{
-		cmp.FilterPath(
-			func(p cmp.Path) bool {
-				_, ok := p.Last().(cmp.StructField)
-				return ok &&
-					(p.Last().String() == "AlertId" || p.Last().String() == "Id")
-			},
-			cmp.Comparer(func(x, y string) bool { return x != "" }),
-		),
-		cmpopts.IgnoreFields(alertstore.AlertRule{}, "AlertId"),
-		cmpopts.IgnoreFields(alertstore.StoredAlertRule{}, "AlertId"),
-		cmpopts.IgnoreFields(alertstore.AlertState{}, "Id"),
-		cmpopts.IgnoreFields(alertstore.AlertRecipient{}, "AlertId"),
-		cmpopts.IgnoreFields(alertstore.DeviceAlertRule{}, "AlertId"),
-		cmpopts.IgnoreFields(alertstore.CreatedRule{}, "AlertId"),
-	}
 }

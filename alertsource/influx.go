@@ -79,7 +79,6 @@ type InfluxOpts struct {
 	Org   string `mapstructure:"org" validate:"required"`
 	Url   string `mapstructure:"url" validate:"required"`
 	Token string `mapstructure:"token" validate:"required"`
-	Mode  alertstore.Mode
 }
 
 type Influx struct {
@@ -108,28 +107,15 @@ func NewInflux(opts InfluxOpts) (*Influx, error) {
 	return &Influx{
 		ctxCancel: cancel,
 		client:    client,
-		mode:      opts.Mode,
 		org:       opts.Org,
 		orgId:     *org.Id,
 	}, nil
 }
 
 func (i *Influx) Close() error {
-	var err error
-	if i.mode == alertstore.Testing {
-		var dp domain.DeleteChecksIDAllParams
-		for _, id := range i.testingAlertIds {
-			dp = domain.DeleteChecksIDAllParams{
-				CheckID: id,
-			}
-			if err = i.client.APIClient().DeleteChecksID(ctx, &dp); err != nil {
-				break
-			}
-		}
-	}
 	i.ctxCancel()
 	i.client.Close()
-	return err
+	return nil
 }
 
 func (i *Influx) CreateAlertRule(ar alertstore.AlertRule) (string, error) {
@@ -157,9 +143,6 @@ func (i *Influx) CreateAlertRule(ar alertstore.AlertRule) (string, error) {
 }
 
 func (i *Influx) UpdateAlertRule(ar alertstore.AlertRule) error {
-	if i.mode == alertstore.Testing {
-		ar.AlertId = i.testingAlertIdsMap[ar.AlertId]
-	}
 	check, err := i.createThresholdCheck(ar)
 	if err != nil {
 		return err
@@ -173,18 +156,11 @@ func (i *Influx) UpdateAlertRule(ar alertstore.AlertRule) error {
 }
 
 func (i *Influx) DeleteAlertRule(alertId string) error {
-	if i.mode == alertstore.Testing {
-		alertId = i.testingAlertIdsMap[alertId]
-	}
 	gp := domain.DeleteChecksIDAllParams{
 		CheckID: alertId,
 	}
-	err := i.client.APIClient().DeleteChecksID(ctx, &gp)
-	if err != nil {
+	if err := i.client.APIClient().DeleteChecksID(ctx, &gp); err != nil {
 		return err
-	}
-	if i.mode == alertstore.Testing {
-		i.testingAlertsCount--
 	}
 	return nil
 }
@@ -192,63 +168,57 @@ func (i *Influx) DeleteAlertRule(alertId string) error {
 func (i *Influx) DeleteAllAlertRules() error {
 	var err error
 	var checkIds []string
-	if i.mode == alertstore.Testing {
-		for _, id := range i.testingAlertIdsMap {
-			checkIds = append(checkIds, id)
-		}
-	} else {
-		var allChecks []domain.Check
-		var resp *domain.Checks
-		var nextUrl, nextOffsetStr string
-		var nextOffset int
-		var o domain.Offset
-		var u *url.URL
-		gp := domain.GetChecksParams{
-			OrgID: i.orgId,
-		}
-		for {
-			resp, err = i.client.APIClient().GetChecks(ctx, &gp)
-			if err != nil {
-				break
-			}
-			if resp.Checks != nil {
-				allChecks = append(allChecks, *resp.Checks...)
-			}
-			if resp.Links == nil || resp.Links.Next == nil {
-				break
-			}
-			nextUrl = string(*resp.Links.Next)
-			u, err = url.Parse(nextUrl)
-			if err != nil {
-				break
-			}
-			nextOffsetStr = u.Query().Get("offset")
-			if nextOffsetStr == "" {
-				break
-			}
-			nextOffset, err = strconv.Atoi(nextOffsetStr)
-			if err != nil {
-				break
-			}
-			o = domain.Offset(nextOffset)
-			gp.Offset = &o
-		}
+	var allChecks []domain.Check
+	var resp *domain.Checks
+	var nextUrl, nextOffsetStr string
+	var nextOffset int
+	var o domain.Offset
+	var u *url.URL
+	gp := domain.GetChecksParams{
+		OrgID: i.orgId,
+	}
+	for {
+		resp, err = i.client.APIClient().GetChecks(ctx, &gp)
 		if err != nil {
-			return err
+			break
 		}
-		var tc *domain.ThresholdCheck
-		var ok bool
-		for _, c := range allChecks {
-			tc, ok = c.(*domain.ThresholdCheck)
-			if !ok {
-				err = fmt.Errorf("check could not be type asserted to domain.ThresholdCheck")
-				break
-			}
-			checkIds = append(checkIds, *tc.Id)
+		if resp.Checks != nil {
+			allChecks = append(allChecks, *resp.Checks...)
 		}
+		if resp.Links == nil || resp.Links.Next == nil {
+			break
+		}
+		nextUrl = string(*resp.Links.Next)
+		u, err = url.Parse(nextUrl)
 		if err != nil {
-			return err
+			break
 		}
+		nextOffsetStr = u.Query().Get("offset")
+		if nextOffsetStr == "" {
+			break
+		}
+		nextOffset, err = strconv.Atoi(nextOffsetStr)
+		if err != nil {
+			break
+		}
+		o = domain.Offset(nextOffset)
+		gp.Offset = &o
+	}
+	if err != nil {
+		return err
+	}
+	var tc *domain.ThresholdCheck
+	var ok bool
+	for _, c := range allChecks {
+		tc, ok = c.(*domain.ThresholdCheck)
+		if !ok {
+			err = fmt.Errorf("check could not be type asserted to domain.ThresholdCheck")
+			break
+		}
+		checkIds = append(checkIds, *tc.Id)
+	}
+	if err != nil {
+		return err
 	}
 	var dp domain.DeleteChecksIDAllParams
 	for _, id := range checkIds {
@@ -258,19 +228,16 @@ func (i *Influx) DeleteAllAlertRules() error {
 		if err = i.client.APIClient().DeleteChecksID(ctx, &dp); err != nil {
 			break
 		}
-		if i.mode == alertstore.Testing {
-			i.testingAlertsCount--
-		}
 	}
 	return err
 }
 
-func (i *Influx) PrepareDb(alertsCount int, alerts ...alertstore.AlertRule) error {
+func (i *Influx) PrepareDb(...alertstore.AlertRule) error {
 	return nil
 }
 
 func (i *Influx) GetSnapshot() int {
-	return i.testingAlertsCount
+	return 0
 }
 
 func (i *Influx) createThresholdCheck(ar alertstore.AlertRule) (domain.ThresholdCheck, error) {
@@ -367,7 +334,6 @@ func NewTestingInflux() (*TestingInflux, error) {
 			return
 		}
 		testingInfluxOpts = opts.InfluxOpts
-		testingInfluxOpts.Mode = alertstore.Testing
 	})
 	if topErr != nil {
 		return nil, topErr
@@ -378,14 +344,24 @@ func NewTestingInflux() (*TestingInflux, error) {
 	}
 	return &TestingInflux{
 		testingAlertIdsMap: make(map[string]string),
-		db:                 db,
+		influx:             db,
 	}, nil
 }
 
-func (i *TestingInflux) PrepareDb(alertsCount int, alerts ...alertstore.AlertRule) error {
-	if alertsCount != len(alerts) {
-		return fmt.Errorf("alertsCount: %d, len(alerts): %d", alertsCount, len(alerts))
+func (i *TestingInflux) Close() error {
+	var err error
+	for _, id := range i.testingAlertIdsMap {
+		if err = i.influx.DeleteAlertRule(id); err != nil {
+			break
+		}
 	}
+	if err != nil {
+		return err
+	}
+	return i.influx.Close()
+}
+
+func (i *TestingInflux) PrepareDb(alerts ...alertstore.AlertRule) error {
 	var err error
 	for _, rule := range alerts {
 		_, err = i.CreateAlertRule(rule)
@@ -405,4 +381,22 @@ func (i *TestingInflux) CreateAlertRule(ar alertstore.AlertRule) (string, error)
 	testingAlertId := fmt.Sprintf("alert%d", i.testingAlertsCount)
 	i.testingAlertIdsMap[testingAlertId] = alertId
 	return testingAlertId, nil
+}
+
+func (i *TestingInflux) UpdateAlertRule(ar alertstore.AlertRule) error {
+	ar.AlertId = i.testingAlertIdsMap[ar.AlertId]
+	return i.influx.UpdateAlertRule(ar)
+}
+
+func (i *TestingInflux) DeleteAlertRule(alertId string) error {
+	alertId = i.testingAlertIdsMap[alertId]
+	if err := i.influx.DeleteAlertRule(alertId); err != nil {
+		return err
+	}
+	i.testingAlertsCount--
+	return nil
+}
+
+func (i *TestingInflux) GetSnapshot() int {
+	return i.testingAlertsCount
 }
