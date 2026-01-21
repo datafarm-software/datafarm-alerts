@@ -15,7 +15,7 @@ const AlertMessageString = `
 	- Name: %s
 	- DeviceId: %s
 	- QueryField: %s
-	- Time Alert Started: %s
+	- Time Alert Triggered: %s
 `
 
 type AlertMessage struct {
@@ -33,8 +33,11 @@ func (a AlertMessage) ToHtml(username string) string {
 		a.Name, a.DeviceId, a.QueryField, a.Timestamp.String())
 }
 
-type Notifier interface {
-	Notify(message AlertMessage, emails ...string) error
-	//NOTE: used in testing
+type TestingNotifier interface {
 	GetUserInboxes() map[string][]AlertMessage
+}
+
+type Notifier interface {
+	TestingNotifier
+	Notify(message AlertMessage, emails ...string) error
 }

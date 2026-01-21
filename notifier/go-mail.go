@@ -8,7 +8,6 @@ import (
 )
 
 type TestingGomail struct {
-	gomail.Sender
 	testingInboxes map[string][]AlertMessage
 }
 
