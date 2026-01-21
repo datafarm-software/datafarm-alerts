@@ -1733,29 +1733,10 @@ func TestDeleteAlert(t *testing.T) {
 				},
 			},
 			wantAlertStore: alertstore.Schema{
-				AlertRecipients: []alertstore.AlertRecipient{
-					{AlertId: AlertId, Email: UserEmail},
-				},
-				DeviceAlerts: []alertstore.DeviceAlertRule{
-					{
-						DeviceId:   RegisteredDeviceId,
-						QueryField: RegisteredQueryField,
-						AlertId:    AlertId,
-					},
-				},
-				AlertRules: []alertstore.StoredAlertRule{
-					{
-						AlertId:     AlertId,
-						Duration:    "24h",
-						RangeValues: []float32{10, 20},
-						AlertType:   alertstore.Range,
-					},
-				},
-				AlertStates: []alertstore.AlertState{
-					{
-						Id: AlertId,
-					},
-				},
+				DeviceAlerts:    []alertstore.DeviceAlertRule{},
+				AlertRecipients: []alertstore.AlertRecipient{},
+				AlertStates:     []alertstore.AlertState{},
+				AlertRules:      []alertstore.StoredAlertRule{},
 			},
 			wantAlertRule: alertstore.AlertRule{
 				AlertId:        AlertId,
@@ -1815,10 +1796,29 @@ func TestDeleteAlert(t *testing.T) {
 				},
 			},
 			wantAlertStore: alertstore.Schema{
-				DeviceAlerts:    []alertstore.DeviceAlertRule{},
-				AlertRecipients: []alertstore.AlertRecipient{},
-				AlertStates:     []alertstore.AlertState{},
-				AlertRules:      []alertstore.StoredAlertRule{},
+				AlertRecipients: []alertstore.AlertRecipient{
+					{AlertId: AlertId, Email: UserEmail},
+				},
+				DeviceAlerts: []alertstore.DeviceAlertRule{
+					{
+						DeviceId:   RegisteredDeviceId,
+						QueryField: RegisteredQueryField,
+						AlertId:    AlertId,
+					},
+				},
+				AlertRules: []alertstore.StoredAlertRule{
+					{
+						AlertId:     AlertId,
+						Duration:    "24h",
+						RangeValues: []float32{10, 20},
+						AlertType:   alertstore.Range,
+					},
+				},
+				AlertStates: []alertstore.AlertState{
+					{
+						Id: AlertId,
+					},
+				},
 			},
 			wantAlertRule: alertstore.AlertRule{
 				AlertId:        "alert2",

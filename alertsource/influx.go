@@ -213,6 +213,23 @@ func (i *Influx) UpdateAlertRule(ar alertstore.AlertRule) error {
 }
 
 func (i *Influx) DeleteAlertRule(alertId string) error {
+	if i.mode == alertstore.Testing {
+		alertId = i.testingAlertIdsMap[alertId]
+	}
+	gp := domain.DeleteChecksIDAllParams{
+		CheckID: alertId,
+	}
+	err := i.client.APIClient().DeleteChecksID(ctx, &gp)
+	if err != nil {
+		return err
+	}
+	if i.mode == alertstore.Testing {
+		i.testingAlertsCount--
+	}
+	return nil
+}
+
+func (i *Influx) DeleteAllAlertRules() error {
 	var err error
 	var checkIds []string
 	if i.mode == alertstore.Testing {
