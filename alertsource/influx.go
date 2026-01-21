@@ -4,7 +4,9 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"net/url"
 	"os"
+	"strconv"
 	"sync"
 	"time"
 
@@ -208,7 +210,76 @@ func (i *Influx) UpdateAlertRule(ar alertstore.AlertRule) error {
 }
 
 func (i *Influx) DeleteAlertRule(alertId string) error {
-	return fmt.Errorf("not implemented")
+	var err error
+	var checkIds []string
+	if i.mode == alertstore.Testing {
+		for _, id := range i.testingAlertIdsMap {
+			checkIds = append(checkIds, id)
+		}
+	} else {
+		var allChecks []domain.Check
+		var resp *domain.Checks
+		var nextUrl, nextOffsetStr string
+		var nextOffset int
+		var o domain.Offset
+		var u *url.URL
+		gp := domain.GetChecksParams{
+			OrgID: i.orgId,
+		}
+		for {
+			resp, err = i.client.APIClient().GetChecks(ctx, &gp)
+			if err != nil {
+				break
+			}
+			if resp.Checks != nil {
+				allChecks = append(allChecks, *resp.Checks...)
+			}
+			if resp.Links == nil || resp.Links.Next == nil {
+				break
+			}
+			nextUrl = string(*resp.Links.Next)
+			u, err = url.Parse(nextUrl)
+			if err != nil {
+				break
+			}
+			nextOffsetStr = u.Query().Get("offset")
+			if nextOffsetStr == "" {
+				break
+			}
+			nextOffset, err = strconv.Atoi(nextOffsetStr)
+			if err != nil {
+				break
+			}
+			o = domain.Offset(nextOffset)
+			gp.Offset = &o
+		}
+		if err != nil {
+			return err
+		}
+		var tc *domain.ThresholdCheck
+		var ok bool
+		for _, c := range allChecks {
+			tc, ok = c.(*domain.ThresholdCheck)
+			if !ok {
+				err = fmt.Errorf("check could not be type asserted to domain.ThresholdCheck")
+				break
+			}
+			checkIds = append(checkIds, *tc.Id)
+		}
+		if err != nil {
+			return err
+		}
+	}
+	var dp domain.DeleteChecksIDAllParams
+	for _, id := range checkIds {
+		dp = domain.DeleteChecksIDAllParams{
+			CheckID: id,
+		}
+		if err = i.client.APIClient().DeleteChecksID(ctx, &dp); err != nil {
+			break
+		}
+	}
+	return err
 }
 
 func (i *Influx) PrepareDb(alertsCount int, alerts ...alertstore.AlertRule) error {

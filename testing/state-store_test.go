@@ -1764,7 +1764,7 @@ func TestDeleteAlert(t *testing.T) {
 	a.RegisterHumaOperations(api)
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
-			a.AlertSource, err = alertsource.NewMockAlertSource()
+			a.AlertSource, err = alertsource.NewTestingInflux()
 			require.Nil(t, err)
 			defer a.AlertSource.Close()
 			alertRules = SchemaToAlertRules(tc.mockAlertStore)
