@@ -1733,10 +1733,29 @@ func TestDeleteAlert(t *testing.T) {
 				},
 			},
 			wantAlertStore: alertstore.Schema{
-				DeviceAlerts:    []alertstore.DeviceAlertRule{},
-				AlertRecipients: []alertstore.AlertRecipient{},
-				AlertStates:     []alertstore.AlertState{},
-				AlertRules:      []alertstore.StoredAlertRule{},
+				AlertRecipients: []alertstore.AlertRecipient{
+					{AlertId: AlertId, Email: UserEmail},
+				},
+				DeviceAlerts: []alertstore.DeviceAlertRule{
+					{
+						DeviceId:   RegisteredDeviceId,
+						QueryField: RegisteredQueryField,
+						AlertId:    AlertId,
+					},
+				},
+				AlertRules: []alertstore.StoredAlertRule{
+					{
+						AlertId:     AlertId,
+						Duration:    "24h",
+						RangeValues: []float32{10, 20},
+						AlertType:   alertstore.Range,
+					},
+				},
+				AlertStates: []alertstore.AlertState{
+					{
+						Id: AlertId,
+					},
+				},
 			},
 			wantAlertRule: alertstore.AlertRule{
 				AlertId:        AlertId,
@@ -1746,6 +1765,69 @@ func TestDeleteAlert(t *testing.T) {
 				DeviceId:       RegisteredDeviceId,
 				QueryField:     RegisteredQueryField,
 				AlertType:      alertstore.Range,
+			},
+		},
+
+		"successfully delete a specific alert": {
+			wantErr:                  false,
+			wantStatus:               http.StatusOK,
+			alertId:                  "alert2",
+			startingAlertSourceCount: 2,
+			wantAlertSourceCount:     1,
+			mockAlertStore: alertstore.Schema{
+				AlertRecipients: []alertstore.AlertRecipient{
+					{AlertId: AlertId, Email: UserEmail},
+					{AlertId: "alert2", Email: UserEmail},
+				},
+				DeviceAlerts: []alertstore.DeviceAlertRule{
+					{
+						DeviceId:   RegisteredDeviceId,
+						QueryField: RegisteredQueryField,
+						AlertId:    AlertId,
+					},
+					{
+						DeviceId:   "device2",
+						QueryField: "humidity",
+						AlertId:    "alert2",
+					},
+				},
+				AlertRules: []alertstore.StoredAlertRule{
+					{
+						AlertId:     AlertId,
+						Duration:    "24h",
+						RangeValues: []float32{10, 20},
+						AlertType:   alertstore.Range,
+					},
+					{
+						AlertId:     "alert2",
+						Duration:    "48h",
+						RangeValues: []float32{10},
+						AlertType:   alertstore.LessThan,
+					},
+				},
+				AlertStates: []alertstore.AlertState{
+					{
+						Id: AlertId,
+					},
+					{
+						Id: "alert2",
+					},
+				},
+			},
+			wantAlertStore: alertstore.Schema{
+				DeviceAlerts:    []alertstore.DeviceAlertRule{},
+				AlertRecipients: []alertstore.AlertRecipient{},
+				AlertStates:     []alertstore.AlertState{},
+				AlertRules:      []alertstore.StoredAlertRule{},
+			},
+			wantAlertRule: alertstore.AlertRule{
+				AlertId:        "alert2",
+				EmailAddresses: []string{UserEmail},
+				RangeValues:    []float32{10},
+				Duration:       "48h",
+				DeviceId:       "device2",
+				QueryField:     "humidity",
+				AlertType:      alertstore.LessThan,
 			},
 		},
 
