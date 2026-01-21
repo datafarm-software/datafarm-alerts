@@ -87,7 +87,7 @@ type Influx struct {
 	orgId, org string
 }
 
-func NewInflux(opts InfluxOpts) (*Influx, error) {
+func NewInflux(opts InfluxOpts) (AlertSource, error) {
 	c, cancel := context.WithCancel(context.Background())
 	ctx = c
 	client := influxdb2.NewClientWithOptions(opts.Url, opts.Token, influxdb2.DefaultOptions())
@@ -318,7 +318,7 @@ type TestingInflux struct {
 	testingAlertIdsMap map[string]string
 }
 
-func NewTestingInflux() (*TestingInflux, error) {
+func NewTestingInflux() (AlertSource, error) {
 	var topErr error
 	once.Do(func() {
 		config, err := os.ReadFile("../config.yml")

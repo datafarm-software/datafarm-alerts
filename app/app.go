@@ -46,7 +46,7 @@ func Start(opts Opts) error {
 	if err = app.AlertStore.PrepareDb(alertstore.Schema{}); err != nil {
 		return err
 	}
-	app.AlertSource, err = alertsource.NewMockAlertSource()
+	app.AlertSource, err = alertsource.NewInflux(opts.Influx)
 	if err != nil {
 		return err
 	}
@@ -208,7 +208,7 @@ func (a *App) RegisterHumaOperations(api huma.API) {
 				Description: "Internal Server Error",
 				Content: map[string]*huma.MediaType{
 					"application/json": {
-						Schema: huma.SchemaFromType(registry, reflect.TypeOf(HumaError{})),
+						Schema: huma.SchemaFromType(registry, reflect.TypeFor[HumaError]()),
 						Example: HumaError{
 							Schema: "http://localhost:3030/schemas/ErrorModel.json",
 							Title:  "Internal Server Error",
@@ -220,7 +220,7 @@ func (a *App) RegisterHumaOperations(api huma.API) {
 				Description: "Bad Request",
 				Content: map[string]*huma.MediaType{
 					"application/json": {
-						Schema: huma.SchemaFromType(registry, reflect.TypeOf(HumaError{})),
+						Schema: huma.SchemaFromType(registry, reflect.TypeFor[HumaError]()),
 						Example: HumaError{
 							Schema: "http://localhost:3030/schemas/ErrorModel.json",
 							Title:  "Bad Request",

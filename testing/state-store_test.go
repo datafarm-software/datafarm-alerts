@@ -506,7 +506,7 @@ func TestRespondToAlert(t *testing.T) {
 	a.RegisterHumaOperations(api)
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
-			a.Notifier, err = notifier.NewMockNotifier()
+			a.Notifier, err = notifier.NewTestingGoMail()
 			require.Nil(t, err)
 			a.AlertStore, err = alertstore.NewGorm(alertstore.Testing, "testing")
 			require.Nil(t, err)

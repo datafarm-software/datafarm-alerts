@@ -9,14 +9,17 @@ type AlertFromSource interface {
 	AlertLevel() alertstore.AlertLevel
 }
 
+type TestingAlertSource interface {
+	PrepareDb(...alertstore.AlertRule) error
+	GetSnapshot() int
+}
+
 type AlertSource interface {
+	TestingAlertSource
 	Close() error
 	CreateAlertRule(alertstore.AlertRule) (string, error)
 	//NOTE: Could return alertstore.NoAlert
 	UpdateAlertRule(alertstore.AlertRule) error
 	//NOTE: Could return alertstore.NoAlert
 	DeleteAlertRule(alertId string) error
-	//NOTE: used in testing
-	PrepareDb(...alertstore.AlertRule) error
-	GetSnapshot() int
 }

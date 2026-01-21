@@ -25,7 +25,7 @@ type Gorm struct {
 	dbFilename string
 }
 
-func NewGorm(mode Mode, dbName string) (*Gorm, error) {
+func NewGorm(mode Mode, dbName string) (AlertStore, error) {
 	dbFilename := fmt.Sprintf("%s.db", dbName)
 	db, err := gorm.Open(sqlite.Open(dbFilename), &gorm.Config{})
 	if err != nil {

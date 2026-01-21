@@ -11,7 +11,7 @@ type MockAlertStore struct {
 	Db *Schema
 }
 
-func NewMockAlertStore(mode Mode, dbName string) (*MockAlertStore, error) {
+func NewMockAlertStore(mode Mode, dbName string) (AlertStore, error) {
 	return &MockAlertStore{}, nil
 }
 
