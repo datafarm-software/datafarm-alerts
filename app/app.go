@@ -35,7 +35,10 @@ type App struct {
 func Start(opts Opts) error {
 	var err error
 	app := &App{}
-	app.Notifier = notifier.NewMockNotifier()
+	app.Notifier, err = notifier.NewMockNotifier()
+	if err != nil {
+		return err
+	}
 	app.AlertStore, err = alertstore.NewMockAlertStore(alertstore.Production, "prod")
 	if err != nil {
 		return err

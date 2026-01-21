@@ -4,10 +4,10 @@ type MockNotifier struct {
 	inboxes map[string][]AlertMessage
 }
 
-func NewMockNotifier() *MockNotifier {
+func NewMockNotifier() (*MockNotifier, error) {
 	return &MockNotifier{
 		inboxes: make(map[string][]AlertMessage),
-	}
+	}, nil
 }
 
 func (m *MockNotifier) Notify(message AlertMessage, emails ...string) error {
