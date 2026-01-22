@@ -306,7 +306,7 @@ func (i *Influx) createThresholdCheck(ar alertstore.AlertRule) (domain.Threshold
 		return check, fmt.Errorf("unknown alert type: %d", ar.AlertType)
 	}
 
-	key := "queryField"
+	key := "query_field"
 	hydratedFlux := fmt.Sprintf(Flux, i.org, ar.DeviceId, ar.QueryField, ar.Duration)
 	check = domain.ThresholdCheck{
 		CheckBaseExtend: domain.CheckBaseExtend{

@@ -2,7 +2,6 @@ package notifier
 
 import (
 	"io"
-	"log"
 	"strings"
 
 	"gopkg.in/gomail.v2"
@@ -50,9 +49,9 @@ func (g *TestingGomail) GetUserInboxes() map[string][]AlertMessage {
 
 type GomailOpts struct {
 	SmtpServer string `mapstructure:"smtpServer" validate:"required"`
-	SmtpPort   int    `mapstructure:"stmpPort"`
+	SmtpPort   int    `mapstructure:"smtpPort"`
 	Username   string `mapstructure:"username"`
-	Password   string `mapstructure:"port"`
+	Password   string `mapstructure:"password"`
 }
 
 type Gomail struct {
@@ -89,7 +88,6 @@ func (g *Gomail) Notify(message AlertMessage, emails ...string) error {
 		if err = sender.Send(g.username, []string{email}, m); err != nil {
 			break
 		}
-		log.Println("sent to: ", email)
 	}
 	return err
 }
