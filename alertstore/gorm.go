@@ -132,7 +132,7 @@ func (g *Gorm) GetSnapshot() Schema {
 func (g *Gorm) GetAlertState(alertId string) (AlertState, error) {
 	var as AlertState
 	var err error
-	db := g.db.First(&as, AlertState{Id: alertId})
+	db := g.db.Where("id = ?", alertId).First(&as)
 	err = db.Error
 	if db.RowsAffected < 1 {
 		err = NoAlert
