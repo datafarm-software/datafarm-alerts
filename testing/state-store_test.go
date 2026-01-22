@@ -5,7 +5,6 @@ import (
 	"net/http"
 	"os"
 	"reflect"
-	"strconv"
 	"testing"
 	"time"
 
@@ -151,7 +150,7 @@ func TestRespondToAlert(t *testing.T) {
 				Id:              AlertId,
 				Level:           "crit",
 				Name:            RegisteredAlertName,
-				SourceTimestamp: json.Number(strconv.FormatInt(AfterDuration.UnixNano(), 10)),
+				SourceTimestamp: alertsource.EpochNano(AfterDuration.UnixNano()),
 				DeviceId:        RegisteredDeviceId,
 				QueryField:      RegisteredQueryField,
 			},
@@ -214,7 +213,7 @@ func TestRespondToAlert(t *testing.T) {
 				Id:              AlertId,
 				Name:            RegisteredAlertName,
 				Level:           "crit",
-				SourceTimestamp: json.Number(strconv.FormatInt(WithinDuration.UnixNano(), 10)),
+				SourceTimestamp: alertsource.EpochNano(WithinDuration.UnixNano()),
 				DeviceId:        RegisteredDeviceId,
 				QueryField:      RegisteredQueryField,
 			},
@@ -287,7 +286,7 @@ func TestRespondToAlert(t *testing.T) {
 				Id:              AlertId,
 				Level:           "crit",
 				Name:            RegisteredAlertName,
-				SourceTimestamp: json.Number(strconv.FormatInt(WithinDuration.UnixNano(), 10)),
+				SourceTimestamp: alertsource.EpochNano(WithinDuration.UnixNano()),
 				DeviceId:        RegisteredDeviceId,
 				QueryField:      RegisteredQueryField,
 			},
@@ -471,7 +470,7 @@ func TestRespondToAlert(t *testing.T) {
 				Id:              AlertId,
 				Level:           "crit",
 				Name:            RegisteredAlertName,
-				SourceTimestamp: json.Number(strconv.FormatInt(AfterDuration.UnixNano(), 10)),
+				SourceTimestamp: alertsource.EpochNano(AfterDuration.UnixNano()),
 				DeviceId:        RegisteredDeviceId,
 				QueryField:      RegisteredQueryField,
 			},
