@@ -2,6 +2,7 @@ package notifier
 
 import (
 	"io"
+	"log"
 	"strings"
 
 	"gopkg.in/gomail.v2"
@@ -18,16 +19,17 @@ func NewTestingGoMail() (Notifier, error) {
 }
 
 func (g *TestingGomail) Notify(message AlertMessage, emails ...string) error {
-	m := gomail.NewMessage()
-	m.SetHeader("From", "tester@alerts.com")
-	m.SetHeader("Subject", "DataFarm Alert Notification")
 	var emailParts []string
 	var username string
 	var err error
 	var mockSender gomail.SendFunc
+	var m *gomail.Message
 	for _, email := range emails {
 		emailParts = strings.Split(email, "@")
 		username = emailParts[0]
+		m = gomail.NewMessage()
+		m.SetHeader("From", "tester@alerts.com")
+		m.SetHeader("Subject", "DataFarm Alert Notification")
 		m.SetBody("text/html", message.ToHtml(username))
 		mockSender = gomail.SendFunc(g.Send)
 		if err = mockSender.Send("tester@alerts.com", []string{email}, m); err != nil {
@@ -81,11 +83,13 @@ func (g *Gomail) Notify(message AlertMessage, emails ...string) error {
 		username = emailParts[0]
 		m = gomail.NewMessage()
 		m.SetHeader("From", g.username)
+		m.SetHeader("To", email)
 		m.SetHeader("Subject", "DataFarm Alert Notification")
 		m.SetBody("text/html", message.ToHtml(username))
 		if err = sender.Send(g.username, []string{email}, m); err != nil {
 			break
 		}
+		log.Println("sent to: ", email)
 	}
 	return err
 }

@@ -4,11 +4,14 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"log"
 	"net/url"
 	"os"
 	"strconv"
 	"sync"
 	"time"
+
+	"github.com/segmentio/encoding/json"
 
 	cfy "github.com/geraud22/config-from-yaml"
 	"github.com/geraud22/sensordata-alerts/alertstore"
@@ -29,21 +32,21 @@ const Flux string = `from(bucket: "%s")
 var ctx context.Context
 
 type InfluxAlert struct {
-	Id                       string    `json:"_check_id" required:"true"`
-	Name                     string    `json:"_check_name"`
-	Level                    string    `json:"_level" required:"true"`
-	Measurement              string    `json:"_measurement"`
-	NotificationEndpointId   string    `json:"_notification_endpoint_id"`
-	NotificationEndpointName string    `json:"_notification_endpoint_name"`
-	NotificationRuleId       string    `json:"_notification_rule_id"`
-	NotificationRuleName     string    `json:"_notification_rule_name"`
-	SourceMeasurement        string    `json:"_source_measurement"`
-	SourceTimestamp          int       `json:"_source_timestamp"`
-	Start                    string    `json:"_start"`
-	Stop                     string    `json:"_stop"`
-	StatusTimestamp          int       `json:"_status_timestamp"`
-	Time                     time.Time `json:"_time" required:"true"`
-	Type                     string    `json:"_type"`
+	Id                       string      `json:"_check_id" required:"true"`
+	Name                     string      `json:"_check_name"`
+	Level                    string      `json:"_level" required:"true"`
+	Measurement              string      `json:"_measurement"`
+	NotificationEndpointId   string      `json:"_notification_endpoint_id"`
+	NotificationEndpointName string      `json:"_notification_endpoint_name"`
+	NotificationRuleId       string      `json:"_notification_rule_id"`
+	NotificationRuleName     string      `json:"_notification_rule_name"`
+	SourceMeasurement        string      `json:"_source_measurement"`
+	SourceTimestamp          json.Number `json:"_source_timestamp"`
+	StatusTimestamp          json.Number `json:"_status_timestamp"`
+	Start                    string      `json:"_start"`
+	Stop                     string      `json:"_stop"`
+	Time                     time.Time   `json:"_time" required:"true"`
+	Type                     string      `json:"_type"`
 	// Value                    float64   `json:"_value"`
 	Version    int      `json:"_version"`
 	DeviceId   string   `json:"deviceID" required:"true"`
@@ -67,8 +70,14 @@ func (i *InfluxAlert) AlertLevel() alertstore.AlertLevel {
 }
 
 func (i *InfluxAlert) AlertState() alertstore.AlertState {
+	ts, err := i.SourceTimestamp.Int64()
+	if err != nil {
+		log.Println(err)
+		return alertstore.AlertState{}
+	}
+	t := time.Unix(0, ts)
 	return alertstore.AlertState{
-		Time:  i.Time,
+		Time:  t,
 		Name:  i.Name,
 		Id:    i.Id,
 		Level: i.AlertLevel(),

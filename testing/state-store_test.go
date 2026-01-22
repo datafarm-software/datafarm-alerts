@@ -1,12 +1,15 @@
 package testing
 
 import (
-	"encoding/json"
 	"fmt"
 	"net/http"
+	"os"
 	"reflect"
+	"strconv"
 	"testing"
 	"time"
+
+	"github.com/segmentio/encoding/json"
 
 	"github.com/stretchr/testify/require"
 
@@ -145,12 +148,12 @@ func TestRespondToAlert(t *testing.T) {
 				},
 			},
 			alert: alertsource.InfluxAlert{
-				Id:         AlertId,
-				Level:      "crit",
-				Name:       RegisteredAlertName,
-				Time:       AfterDuration,
-				DeviceId:   RegisteredDeviceId,
-				QueryField: RegisteredQueryField,
+				Id:              AlertId,
+				Level:           "crit",
+				Name:            RegisteredAlertName,
+				SourceTimestamp: json.Number(strconv.FormatInt(AfterDuration.UnixNano(), 10)),
+				DeviceId:        RegisteredDeviceId,
+				QueryField:      RegisteredQueryField,
 			},
 			wantAlertStore: alertstore.Schema{
 				AlertRecipients: []alertstore.AlertRecipient{
@@ -208,12 +211,12 @@ func TestRespondToAlert(t *testing.T) {
 				},
 			},
 			alert: alertsource.InfluxAlert{
-				Id:         AlertId,
-				Name:       RegisteredAlertName,
-				Level:      "crit",
-				Time:       WithinDuration,
-				DeviceId:   RegisteredDeviceId,
-				QueryField: RegisteredQueryField,
+				Id:              AlertId,
+				Name:            RegisteredAlertName,
+				Level:           "crit",
+				SourceTimestamp: json.Number(strconv.FormatInt(WithinDuration.UnixNano(), 10)),
+				DeviceId:        RegisteredDeviceId,
+				QueryField:      RegisteredQueryField,
 			},
 			wantAlertStore: alertstore.Schema{
 				AlertRecipients: []alertstore.AlertRecipient{},
@@ -281,12 +284,12 @@ func TestRespondToAlert(t *testing.T) {
 				},
 			},
 			alert: alertsource.InfluxAlert{
-				Id:         AlertId,
-				Level:      "crit",
-				Name:       RegisteredAlertName,
-				Time:       WithinDuration,
-				DeviceId:   RegisteredDeviceId,
-				QueryField: RegisteredQueryField,
+				Id:              AlertId,
+				Level:           "crit",
+				Name:            RegisteredAlertName,
+				SourceTimestamp: json.Number(strconv.FormatInt(WithinDuration.UnixNano(), 10)),
+				DeviceId:        RegisteredDeviceId,
+				QueryField:      RegisteredQueryField,
 			},
 			wantAlertStore: alertstore.Schema{
 				AlertRecipients: []alertstore.AlertRecipient{
@@ -465,12 +468,12 @@ func TestRespondToAlert(t *testing.T) {
 				AlertStates: []alertstore.AlertState{},
 			},
 			alert: alertsource.InfluxAlert{
-				Id:         AlertId,
-				Level:      "crit",
-				Name:       RegisteredAlertName,
-				Time:       AfterDuration,
-				DeviceId:   RegisteredDeviceId,
-				QueryField: RegisteredQueryField,
+				Id:              AlertId,
+				Level:           "crit",
+				Name:            RegisteredAlertName,
+				SourceTimestamp: json.Number(strconv.FormatInt(AfterDuration.UnixNano(), 10)),
+				DeviceId:        RegisteredDeviceId,
+				QueryField:      RegisteredQueryField,
 			},
 			wantAlertStore: alertstore.Schema{
 				AlertRecipients: []alertstore.AlertRecipient{
@@ -1887,4 +1890,14 @@ func SchemaToAlertRules(dbRecord alertstore.Schema) []alertstore.AlertRule {
 		rules = append(rules, ar)
 	}
 	return rules
+}
+
+func TestMarshalJson(t *testing.T) {
+	data, err := os.ReadFile("example.json")
+	require.Nil(t, err)
+	var ar alertsource.InfluxAlert
+	err = json.Unmarshal(data, &ar)
+	if err != nil {
+		t.Fatalf("unmarshalling: %v", err)
+	}
 }
