@@ -476,6 +476,21 @@ func (a *App) UpdateAlertRule(
 		return nil, huma.Error500InternalServerError(
 			"Internal error while storing the updated alert rule.")
 	}
+	stateDuration, err := alertstore.ParseDuration(in.Body.Duration)
+	if err != nil {
+		log.Printf("parseDuration: %s, error: %v", in.Body.Duration, err)
+		return nil, huma.Error400BadRequest(
+			"Could not parse the provided rule duration.")
+	}
+	alertState := alertstore.AlertState{
+		Duration:    stateDuration,
+		RangeValues: in.Body.RangeValues,
+		Id:          in.Body.AlertId,
+	}
+	if err = a.AlertStore.UpdateAlertState(alertState); err != nil {
+		log.Printf("updating alert state for id: %s, err: %v", alertState.Id, err)
+		return nil, huma.Error500InternalServerError("Internal error updating alert state.")
+	}
 	if err := a.AlertSource.UpdateAlertRule(in.Body); err != nil {
 		if errors.Is(err, alertstore.NoAlert) {
 			return nil, huma.Error404NotFound(
