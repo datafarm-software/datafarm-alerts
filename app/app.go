@@ -327,6 +327,7 @@ func (a *App) RespondToAlert(
 	}
 	message := notifier.AlertMessage{
 		Name:       alert.Name,
+		Value:      alert.Value,
 		DeviceId:   alertRule.DeviceId,
 		QueryField: alertRule.QueryField,
 		Level:      alert.Level,

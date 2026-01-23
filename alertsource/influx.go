@@ -5,7 +5,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/url"
 	"os"
 	"slices"
@@ -20,16 +19,17 @@ import (
 	"github.com/influxdata/influxdb-client-go/v2/domain"
 )
 
-var msg string = `Check: ${r._check_name} State: ${r._level}.`
-
-var ZeroSeconds = "0s"
-
 const Flux string = `from(bucket: "%s")
 	|> range(start: v.timeRangeStart, stop: v.timeRangeStop)
     |> filter(fn: (r) => r["deviceID"] == "%s")
     |> filter(fn: (r) => r["_field"] == "%s")
     |> aggregateWindow(every: %s, fn: last, createEmpty: false)`
 
+const MapQueryField = `|> map(fn: (r) => ({r with _value: r.%s}))`
+const V1FieldAsCols = `|> v1["fieldsAsCols"]()`
+
+var msg string = `Check: ${r._check_name} State: ${r._level}.`
+var ZeroSeconds = "0s"
 var ctx context.Context
 
 type EpochNano int64
@@ -64,11 +64,11 @@ type InfluxAlert struct {
 	Stop                     string    `json:"_stop"`
 	Time                     time.Time `json:"_time" required:"true"`
 	Type                     string    `json:"_type"`
-	// Value                    float64   `json:"_value"`
-	Version    int      `json:"_version"`
-	DeviceId   string   `json:"deviceID" required:"true"`
-	QueryField string   `json:"query_field" required:"true"`
-	_          struct{} `json:"-" additionalProperties:"true"`
+	Value                    float64   `json:"_value"`
+	Version                  int       `json:"_version"`
+	DeviceId                 string    `json:"deviceID" required:"true"`
+	QueryField               string    `json:"query_field" required:"true"`
+	_                        struct{}  `json:"-" additionalProperties:"true"`
 }
 
 func (i *InfluxAlert) AlertLevel() alertstore.AlertLevel {
@@ -152,15 +152,23 @@ func (i *Influx) CreateAlertRule(ar alertstore.AlertRule) (string, error) {
 		return "", err
 	}
 
-	var alertId string
+	var alertId, taskId string
 	if nc.Type() == "threshold" {
 		tc, ok := nc.(*domain.ThresholdCheck)
 		if !ok {
 			return "", fmt.Errorf("invalid check created")
 		}
 		alertId = *tc.CheckBase.Id
+		taskId = *tc.CheckBase.TaskID
 	}
-	return alertId, nil
+	task, err := i.getTask(taskId)
+	if err != nil {
+		return "", fmt.Errorf(
+			"getting task for alert %s, task: %s, error: %v", alertId, taskId, err)
+	}
+	task.Flux = i.fluxInjectQueryFieldValue(task.Flux, ar.QueryField)
+	err = i.updateTask(task)
+	return alertId, err
 }
 
 func (i *Influx) UpdateAlertRule(ar alertstore.AlertRule) error {
@@ -253,43 +261,37 @@ func (i *Influx) DeleteAllAlertRules() error {
 	return err
 }
 
-var mapTemperature = `|> map(fn: (r) => ({r with _value: r.temperature}))`
-
-func (i *Influx) GetAlertRule(alertId string) {
+func (i *Influx) getAlertRule(alertId string) (domain.Check, error) {
 	gp := domain.GetChecksIDAllParams{CheckID: alertId}
+	return i.client.APIClient().GetChecksID(ctx, &gp)
+}
 
-	c, err := i.client.APIClient().GetChecksID(ctx, &gp)
-	if err != nil {
-		log.Printf("error getting check %s, error: %v", alertId, err)
-		return
-	}
-	tc, ok := c.(*domain.ThresholdCheck)
-	if !ok {
-		log.Println("could not type assert to thresholdcheck.")
-		return
-	}
-	taskId := tc.CheckBase.TaskID
-	tf := domain.GetTasksIDAllParams{TaskID: *taskId}
+func (i *Influx) getTask(taskId string) (*domain.Task, error) {
+	tf := domain.GetTasksIDAllParams{TaskID: taskId}
 	dt, err := i.client.APIClient().GetTasksID(ctx, &tf)
 	if err != nil {
-		log.Printf("error getting task %s, error: %v", *taskId, err)
-		return
+		return nil, fmt.Errorf("error getting task %s, error: %v", taskId, err)
 	}
-	log.Printf("Check: %s Task %s Original Flux:\n%s", alertId, *taskId, dt.Flux)
-	fluxSlice := strings.Split(dt.Flux, "\n")
+	return dt, nil
+}
+
+func (i *Influx) fluxInjectQueryFieldValue(flux, queryField string) string {
+	mqf := fmt.Sprintf(MapQueryField, queryField)
+	fluxSlice := strings.Split(flux, "\n")
 	slices.Reverse(fluxSlice)
-	v1FieldAsCols := `|> v1["fieldsAsCols"]()`
 	for i, stmt := range fluxSlice {
-		if !strings.Contains(stmt, v1FieldAsCols) {
+		if !strings.Contains(stmt, V1FieldAsCols) {
 			continue
 		}
-		log.Println("statement: ", stmt)
-		fluxSlice = slices.Insert(fluxSlice, i, mapTemperature)
+		fluxSlice = slices.Insert(fluxSlice, i, mqf)
 	}
 	slices.Reverse(fluxSlice)
-	log.Printf(
-		"Check: %s Task %s Modified Flux:\n%s",
-		alertId, *taskId, strings.Join(fluxSlice, " "))
+	return strings.Join(fluxSlice, " ")
+}
+
+func (i *Influx) updateTask(task *domain.Task) error {
+	_, err := i.client.TasksAPI().UpdateTask(ctx, task)
+	return err
 }
 
 func (i *Influx) PrepareDb(...alertstore.AlertRule) error {
@@ -462,6 +464,10 @@ func (i *TestingInflux) GetSnapshot() int {
 	return i.testingAlertsCount
 }
 
-func (i *TestingInflux) GetAlertRule(alertId string) {
-	i.influx.GetAlertRule(alertId)
+func (i *TestingInflux) GetAlertRule(alertId string) (any, error) {
+	return i.influx.GetAlertRule(alertId)
+}
+
+func (i *TestingInflux) GetTask(alert any) {
+	i.influx.GetTask(alert)
 }

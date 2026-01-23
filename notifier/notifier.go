@@ -7,21 +7,13 @@ import (
 	"github.com/geraud22/sensordata-alerts/alertstore"
 )
 
-const AlertMessageString = `
-	Hi %s,
-
-	This email to notify alert level %s.
-	Details:
-	- Name: %s
-	- DeviceId: %s
-	- QueryField: %s
-	- Time Alert Triggered: %s
-`
+const AlertMessageString = "Hi %s,\nThis email to notify alert level %s - %.2f.\nDetails:\n- Name: %s\n- N- DeviceId: %s\n- N- QueryField: %s\n- N- Time Alert Triggered: %s"
 
 type AlertMessage struct {
 	Name       string
 	DeviceId   string
 	QueryField string
+	Value      float64
 	Level      alertstore.AlertLevel
 	Timestamp  time.Time
 }
@@ -29,7 +21,7 @@ type AlertMessage struct {
 func (a AlertMessage) ToHtml(username string) string {
 	return fmt.Sprintf(
 		AlertMessageString,
-		username, alertstore.AlertLevelString[a.Level],
+		username, alertstore.AlertLevelString[a.Level], a.Value,
 		a.Name, a.DeviceId, a.QueryField, a.Timestamp.String())
 }
 

@@ -2040,5 +2040,7 @@ func TestSourceGetAlertRule(t *testing.T) {
 	a.AlertSource, err = alertsource.NewTestingInflux()
 	require.Nil(t, err)
 	defer a.AlertSource.Close()
-	a.AlertSource.GetAlertRule("1025217c181c6000")
+	alert, err := a.AlertSource.GetAlertRule("1025217c181c6000")
+	require.Nil(t, err)
+	a.AlertSource.GetTask(alert)
 }
