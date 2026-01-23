@@ -5,8 +5,10 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/url"
 	"os"
+	"slices"
 	"strconv"
 	"strings"
 	"sync"
@@ -251,6 +253,45 @@ func (i *Influx) DeleteAllAlertRules() error {
 	return err
 }
 
+var mapTemperature = `|> map(fn: (r) => ({r with _value: r.temperature}))`
+
+func (i *Influx) GetAlertRule(alertId string) {
+	gp := domain.GetChecksIDAllParams{CheckID: alertId}
+
+	c, err := i.client.APIClient().GetChecksID(ctx, &gp)
+	if err != nil {
+		log.Printf("error getting check %s, error: %v", alertId, err)
+		return
+	}
+	tc, ok := c.(*domain.ThresholdCheck)
+	if !ok {
+		log.Println("could not type assert to thresholdcheck.")
+		return
+	}
+	taskId := tc.CheckBase.TaskID
+	tf := domain.GetTasksIDAllParams{TaskID: *taskId}
+	dt, err := i.client.APIClient().GetTasksID(ctx, &tf)
+	if err != nil {
+		log.Printf("error getting task %s, error: %v", *taskId, err)
+		return
+	}
+	log.Printf("Check: %s Task %s Original Flux:\n%s", alertId, *taskId, dt.Flux)
+	fluxSlice := strings.Split(dt.Flux, "\n")
+	slices.Reverse(fluxSlice)
+	v1FieldAsCols := `|> v1["fieldsAsCols"]()`
+	for i, stmt := range fluxSlice {
+		if !strings.Contains(stmt, v1FieldAsCols) {
+			continue
+		}
+		log.Println("statement: ", stmt)
+		fluxSlice = slices.Insert(fluxSlice, i, mapTemperature)
+	}
+	slices.Reverse(fluxSlice)
+	log.Printf(
+		"Check: %s Task %s Modified Flux:\n%s",
+		alertId, *taskId, strings.Join(fluxSlice, " "))
+}
+
 func (i *Influx) PrepareDb(...alertstore.AlertRule) error {
 	return nil
 }
@@ -419,4 +460,8 @@ func (i *TestingInflux) DeleteAlertRule(alertId string) error {
 
 func (i *TestingInflux) GetSnapshot() int {
 	return i.testingAlertsCount
+}
+
+func (i *TestingInflux) GetAlertRule(alertId string) {
+	i.influx.GetAlertRule(alertId)
 }

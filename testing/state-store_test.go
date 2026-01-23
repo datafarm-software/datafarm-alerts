@@ -2034,3 +2034,11 @@ func TestMarshalJson(t *testing.T) {
 		t.Fatalf("unmarshalling: %v", err)
 	}
 }
+
+func TestSourceGetAlertRule(t *testing.T) {
+	var err error
+	a.AlertSource, err = alertsource.NewTestingInflux()
+	require.Nil(t, err)
+	defer a.AlertSource.Close()
+	a.AlertSource.GetAlertRule("1025217c181c6000")
+}
