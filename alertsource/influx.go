@@ -92,6 +92,7 @@ func (i *InfluxAlert) AlertState() alertstore.AlertState {
 		Time:  t,
 		Name:  i.Name,
 		Id:    i.Id,
+		Value: i.Value,
 		Level: i.AlertLevel(),
 	}
 }
@@ -462,12 +463,4 @@ func (i *TestingInflux) DeleteAlertRule(alertId string) error {
 
 func (i *TestingInflux) GetSnapshot() int {
 	return i.testingAlertsCount
-}
-
-func (i *TestingInflux) GetAlertRule(alertId string) (any, error) {
-	return i.influx.GetAlertRule(alertId)
-}
-
-func (i *TestingInflux) GetTask(alert any) {
-	i.influx.GetTask(alert)
 }

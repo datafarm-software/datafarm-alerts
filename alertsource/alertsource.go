@@ -22,6 +22,4 @@ type AlertSource interface {
 	UpdateAlertRule(alertstore.AlertRule) error
 	//NOTE: Could return alertstore.NoAlert
 	DeleteAlertRule(alertId string) error
-	GetAlertRule(alertId string) (alert any, e error)
-	GetTask(alert any)
 }

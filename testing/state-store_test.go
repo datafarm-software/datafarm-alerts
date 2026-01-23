@@ -33,6 +33,8 @@ const SomeDuration = (24 * time.Hour)
 const AlertId = "alert1"
 const UserEmail = "user1@alert.com"
 const RegisteredAlertName = "Temperature Check"
+const NewValue = 20
+const OldValue = 10
 
 var AlertReceived = time.Date(1994, 6, 24, 6, 0, 0, 0, time.UTC)
 var AfterDuration = AlertReceived.Add(25 * time.Hour)
@@ -131,6 +133,7 @@ func TestRespondToAlert(t *testing.T) {
 					{
 						Name:       RegisteredAlertName,
 						DeviceId:   RegisteredDeviceId,
+						Value:      NewValue,
 						QueryField: RegisteredQueryField,
 						Level:      alertstore.Crit,
 						Timestamp:  AfterDuration,
@@ -159,6 +162,7 @@ func TestRespondToAlert(t *testing.T) {
 						Id:       AlertId,
 						Time:     AlertReceived,
 						Duration: SomeDuration,
+						Value:    OldValue,
 						Level:    alertstore.Crit,
 					},
 				},
@@ -167,6 +171,7 @@ func TestRespondToAlert(t *testing.T) {
 				Id:              AlertId,
 				Level:           "crit",
 				Name:            RegisteredAlertName,
+				Value:           NewValue,
 				SourceTimestamp: alertsource.EpochNano(AfterDuration.UnixNano()),
 				DeviceId:        RegisteredDeviceId,
 				QueryField:      RegisteredQueryField,
@@ -192,6 +197,7 @@ func TestRespondToAlert(t *testing.T) {
 					{
 						Id:       AlertId,
 						Time:     AlertReceived.Add(SomeDuration).Add(1 * time.Hour),
+						Value:    NewValue,
 						Duration: SomeDuration,
 						Level:    alertstore.Crit,
 					},
@@ -222,6 +228,7 @@ func TestRespondToAlert(t *testing.T) {
 						Id:       AlertId,
 						Time:     AlertReceived,
 						Duration: SomeDuration,
+						Value:    OldValue,
 						Level:    alertstore.Crit,
 					},
 				},
@@ -230,6 +237,7 @@ func TestRespondToAlert(t *testing.T) {
 				Id:              AlertId,
 				Name:            RegisteredAlertName,
 				Level:           "crit",
+				Value:           NewValue,
 				SourceTimestamp: alertsource.EpochNano(WithinDuration.UnixNano()),
 				DeviceId:        RegisteredDeviceId,
 				QueryField:      RegisteredQueryField,
@@ -253,6 +261,7 @@ func TestRespondToAlert(t *testing.T) {
 					{
 						Id:       AlertId,
 						Time:     AlertReceived,
+						Value:    OldValue,
 						Duration: SomeDuration,
 						Level:    alertstore.Crit,
 					},
@@ -268,6 +277,7 @@ func TestRespondToAlert(t *testing.T) {
 						Name:       RegisteredAlertName,
 						DeviceId:   RegisteredDeviceId,
 						QueryField: RegisteredQueryField,
+						Value:      NewValue,
 						Level:      alertstore.Crit,
 						Timestamp:  WithinDuration,
 					},
@@ -294,6 +304,7 @@ func TestRespondToAlert(t *testing.T) {
 					{
 						Id:       AlertId,
 						Time:     AlertReceived,
+						Value:    OldValue,
 						Duration: SomeDuration,
 						Level:    alertstore.Ok,
 					},
@@ -302,6 +313,7 @@ func TestRespondToAlert(t *testing.T) {
 			alert: alertsource.InfluxAlert{
 				Id:              AlertId,
 				Level:           "crit",
+				Value:           NewValue,
 				Name:            RegisteredAlertName,
 				SourceTimestamp: alertsource.EpochNano(WithinDuration.UnixNano()),
 				DeviceId:        RegisteredDeviceId,
@@ -327,6 +339,7 @@ func TestRespondToAlert(t *testing.T) {
 				AlertStates: []alertstore.AlertState{
 					{
 						Id:       AlertId,
+						Value:    NewValue,
 						Time:     WithinDuration,
 						Duration: SomeDuration,
 						Level:    alertstore.Crit,
@@ -356,6 +369,7 @@ func TestRespondToAlert(t *testing.T) {
 					{
 						Time:     AlertReceived,
 						Duration: SomeDuration,
+						Value:    OldValue,
 						Id:       AlertId,
 						Level:    alertstore.Ok,
 					},
@@ -365,6 +379,7 @@ func TestRespondToAlert(t *testing.T) {
 				Id:         AlertId,
 				Name:       RegisteredAlertName,
 				Level:      "crit",
+				Value:      NewValue,
 				DeviceId:   RegisteredDeviceId,
 				QueryField: UnregisteredQueryField,
 			},
@@ -387,6 +402,7 @@ func TestRespondToAlert(t *testing.T) {
 						Time:     AlertReceived,
 						Duration: SomeDuration,
 						Id:       AlertId,
+						Value:    OldValue,
 						Level:    alertstore.Ok,
 					},
 				},
@@ -414,6 +430,7 @@ func TestRespondToAlert(t *testing.T) {
 					{
 						Time:     AlertReceived,
 						Duration: SomeDuration,
+						Value:    OldValue,
 						Id:       AlertId,
 						Level:    alertstore.Ok,
 					},
@@ -422,6 +439,7 @@ func TestRespondToAlert(t *testing.T) {
 			alert: alertsource.InfluxAlert{
 				Id:         AlertId,
 				Name:       RegisteredAlertName,
+				Value:      NewValue,
 				Level:      "crit",
 				DeviceId:   UnregisteredDeviceId,
 				QueryField: RegisteredQueryField,
@@ -443,6 +461,7 @@ func TestRespondToAlert(t *testing.T) {
 				AlertStates: []alertstore.AlertState{
 					{
 						Time:     AlertReceived,
+						Value:    NewValue,
 						Duration: SomeDuration,
 						Id:       AlertId,
 						Level:    alertstore.Ok,
@@ -459,6 +478,7 @@ func TestRespondToAlert(t *testing.T) {
 						Name:       RegisteredAlertName,
 						DeviceId:   RegisteredDeviceId,
 						QueryField: RegisteredQueryField,
+						Value:      NewValue,
 						Level:      alertstore.Crit,
 						Timestamp:  AfterDuration,
 					},
@@ -486,6 +506,7 @@ func TestRespondToAlert(t *testing.T) {
 			alert: alertsource.InfluxAlert{
 				Id:              AlertId,
 				Level:           "crit",
+				Value:           NewValue,
 				Name:            RegisteredAlertName,
 				SourceTimestamp: alertsource.EpochNano(AfterDuration.UnixNano()),
 				DeviceId:        RegisteredDeviceId,
@@ -511,6 +532,7 @@ func TestRespondToAlert(t *testing.T) {
 				AlertStates: []alertstore.AlertState{
 					{
 						Id:       AlertId,
+						Value:    NewValue,
 						Time:     AlertReceived.Add(SomeDuration).Add(1 * time.Hour),
 						Duration: SomeDuration,
 						Level:    alertstore.Crit,
@@ -2033,14 +2055,4 @@ func TestMarshalJson(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unmarshalling: %v", err)
 	}
-}
-
-func TestSourceGetAlertRule(t *testing.T) {
-	var err error
-	a.AlertSource, err = alertsource.NewTestingInflux()
-	require.Nil(t, err)
-	defer a.AlertSource.Close()
-	alert, err := a.AlertSource.GetAlertRule("1025217c181c6000")
-	require.Nil(t, err)
-	a.AlertSource.GetTask(alert)
 }

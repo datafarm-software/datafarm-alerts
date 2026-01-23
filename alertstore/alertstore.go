@@ -77,7 +77,8 @@ type AlertState struct {
 	Duration    time.Duration
 	RangeValues []float32 `gorm:"serializer:json"`
 	Name        string    `gorm:"-"`
-	Id          string    `gorm:"primaryKey;unique;not null;check:length(id)>0"`
+	Value       float64
+	Id          string `gorm:"primaryKey;unique;not null;check:length(id)>0"`
 	Level       AlertLevel
 }
 
