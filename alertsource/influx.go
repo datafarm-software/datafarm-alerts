@@ -143,14 +143,14 @@ func (i *Influx) Close() error {
 func (i *Influx) CreateAlertRule(ar alertstore.AlertRule) (string, error) {
 	check, err := i.createThresholdCheck(ar)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("createThresholdCheck: %v", err)
 	}
 	params := domain.CreateCheckAllParams{
 		Body: domain.CreateCheckJSONRequestBody(&check),
 	}
 	nc, err := i.client.APIClient().CreateCheck(ctx, &params)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("createCheck: %v", err)
 	}
 
 	var alertId, taskId string
@@ -168,7 +168,9 @@ func (i *Influx) CreateAlertRule(ar alertstore.AlertRule) (string, error) {
 			"getting task for alert %s, task: %s, error: %v", alertId, taskId, err)
 	}
 	task.Flux = i.fluxInjectQueryFieldValue(task.Flux, ar.QueryField)
-	err = i.updateTask(task)
+	if err = i.updateTask(task); err != nil {
+		return "", fmt.Errorf("updateTask: %v", err)
+	}
 	return alertId, err
 }
 
