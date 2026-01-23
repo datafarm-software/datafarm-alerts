@@ -83,6 +83,7 @@ func (m *MockAlertStore) GetAlertRule(alertId string) (AlertRule, error) {
 		ar.RangeValues = append(ar.RangeValues, rule.RangeValues...)
 		ar.AlertType = rule.AlertType
 		ar.Duration = rule.Duration
+		ar.Name = rule.Name
 	}
 	var err error
 	if ar.DeviceId == "" {

@@ -610,6 +610,7 @@ func TestCreateAlertRule(t *testing.T) {
 				AlertRules: []alertstore.StoredAlertRule{
 					{
 						AlertId:     AlertId,
+						Name:        RegisteredAlertName,
 						RangeValues: []float32{5},
 						Duration:    "24h",
 						AlertType:   alertstore.GreaterThan,
@@ -655,6 +656,7 @@ func TestCreateAlertRule(t *testing.T) {
 					{
 						AlertId:     AlertId,
 						RangeValues: []float32{5, 10},
+						Name:        RegisteredAlertName,
 						Duration:    "24h",
 						AlertType:   alertstore.Range,
 					},
@@ -725,7 +727,7 @@ func TestCreateAlertRule(t *testing.T) {
 			},
 		},
 
-		"identical alert already exists": {
+		"identical alert already exists - note name is irrelevant": {
 			wantErr:    true,
 			wantStatus: http.StatusConflict,
 			wantAlertStore: alertstore.Schema{
@@ -742,6 +744,7 @@ func TestCreateAlertRule(t *testing.T) {
 				AlertRules: []alertstore.StoredAlertRule{
 					{
 						AlertId:     AlertId,
+						Name:        RegisteredAlertName,
 						RangeValues: []float32{5},
 						Duration:    "24h",
 						AlertType:   alertstore.LessThan,
@@ -763,13 +766,14 @@ func TestCreateAlertRule(t *testing.T) {
 					{
 						AlertId:     AlertId,
 						RangeValues: []float32{5},
+						Name:        RegisteredAlertName,
 						Duration:    "24h",
 						AlertType:   alertstore.LessThan,
 					},
 				},
 			},
 			alertRule: alertstore.AlertRule{
-				Name:        RegisteredAlertName,
+				Name:        "Some other alert name",
 				RangeValues: []float32{5},
 				Duration:    "24h",
 				DeviceId:    RegisteredDeviceId,
@@ -1711,6 +1715,7 @@ func TestGetAlertRule(t *testing.T) {
 				AlertRules: []alertstore.StoredAlertRule{
 					{
 						AlertId:     AlertId,
+						Name:        RegisteredAlertName,
 						Duration:    "24h",
 						RangeValues: []float32{10, 20},
 						AlertType:   alertstore.Range,
@@ -1719,6 +1724,7 @@ func TestGetAlertRule(t *testing.T) {
 			},
 			want: alertstore.AlertRule{
 				AlertId:        AlertId,
+				Name:           RegisteredAlertName,
 				EmailAddresses: []string{UserEmail},
 				RangeValues:    []float32{10, 20},
 				Duration:       "24h",
@@ -1742,7 +1748,7 @@ func TestGetAlertRule(t *testing.T) {
 	a.RegisterHumaOperations(api)
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
-			a.AlertStore, err = alertstore.NewGorm(alertstore.Testing, "testing")
+			a.AlertStore, err = alertstore.NewMockAlertStore(alertstore.Testing, "testing")
 			defer a.AlertStore.Close()
 			err = a.AlertStore.PrepareDb(tc.mockAlertStore)
 			require.Nil(t, err)

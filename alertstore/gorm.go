@@ -65,6 +65,7 @@ func (g *Gorm) PrepareDb(dbRecord Schema) error {
 		`CREATE VIEW alert_rule_view AS
 		SELECT
 			sar.alert_id,
+			sar.name,
 			dar.device_id,
 			dar.query_field,
 			sar.range_values,
@@ -78,6 +79,7 @@ func (g *Gorm) PrepareDb(dbRecord Schema) error {
 			ON ar.alert_id = sar.alert_id
 		GROUP BY
 			sar.alert_id,
+			sar.name,
 			dar.device_id,
 			dar.query_field,
 			sar.range_values,
