@@ -1119,6 +1119,82 @@ func TestUpdateAlertRule(t *testing.T) {
 			},
 		},
 
+		"update the last state of an alert": {
+			wantStatus:           http.StatusOK,
+			wantAlertSourceCount: 1,
+			alertId:              AlertId,
+			wantAlertRule: alertstore.AlertRule{
+				Name:           RegisteredAlertName,
+				AlertId:        AlertId,
+				EmailAddresses: []string{UserEmail},
+				RangeValues:    []float32{10, 20},
+				Duration:       "24h",
+				DeviceId:       RegisteredDeviceId,
+				QueryField:     RegisteredQueryField,
+				AlertType:      alertstore.Range,
+			},
+			mockAlertStore: alertstore.Schema{
+				AlertRecipients: []alertstore.AlertRecipient{
+					{AlertId: AlertId, Email: UserEmail},
+				},
+				DeviceAlerts: []alertstore.DeviceAlertRule{
+					{
+						DeviceId:   RegisteredDeviceId,
+						QueryField: RegisteredQueryField,
+						AlertId:    AlertId,
+					},
+				},
+				AlertRules: []alertstore.StoredAlertRule{
+					{
+						AlertId:     AlertId,
+						RangeValues: []float32{43, 90},
+						Duration:    "24h",
+						AlertType:   alertstore.Range,
+					},
+				},
+				AlertStates: []alertstore.AlertState{
+					{
+						Time:        AlertReceived,
+						Duration:    SomeDuration,
+						RangeValues: []float32{43, 90},
+						Name:        RegisteredAlertName,
+						Id:          RegisteredDeviceId,
+						Level:       alertstore.Ok,
+					},
+				},
+			},
+			wantAlertStore: alertstore.Schema{
+				AlertRecipients: []alertstore.AlertRecipient{
+					{AlertId: AlertId, Email: UserEmail},
+				},
+				DeviceAlerts: []alertstore.DeviceAlertRule{
+					{
+						DeviceId:   RegisteredDeviceId,
+						QueryField: RegisteredQueryField,
+						AlertId:    AlertId,
+					},
+				},
+				AlertRules: []alertstore.StoredAlertRule{
+					{
+						AlertId:     AlertId,
+						RangeValues: []float32{10, 20},
+						Duration:    "24h",
+						AlertType:   alertstore.Range,
+					},
+				},
+				AlertStates: []alertstore.AlertState{
+					{
+						Time:        AlertReceived,
+						Duration:    SomeDuration,
+						RangeValues: []float32{10, 20},
+						Name:        RegisteredAlertName,
+						Id:          RegisteredDeviceId,
+						Level:       alertstore.Ok,
+					},
+				},
+			},
+		},
+
 		"update alert type from less than to greater than": {
 			wantStatus:           http.StatusOK,
 			wantAlertSourceCount: 1,
