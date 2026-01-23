@@ -172,7 +172,10 @@ func (g *Gorm) GetAlertRecipients(alertId string) ([]string, error) {
 
 func (g *Gorm) UpdateAlertState(alert AlertState) error {
 	return g.db.Model(&AlertState{}).
-		Where("id = ?", alert.Id).Save(&alert).Error
+		Where("id = ?", alert.Id).
+		Assign(alert).
+		FirstOrCreate(&AlertState{}).
+		Error
 }
 func (g *Gorm) StoreAlertRule(dbRecord Schema) error {
 	var err error

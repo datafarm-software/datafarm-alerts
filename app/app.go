@@ -446,11 +446,11 @@ func (a *App) UpdateAlertRule(
 	}
 	if existingAlert.DeviceId != in.Body.DeviceId {
 		return nil, huma.Error404NotFound(
-			"Not allowed to update DeviceId. Recommended to use Create route instead.")
+			"Not allowed to update DeviceId. Use Create route instead.")
 	}
 	if existingAlert.QueryField != in.Body.QueryField {
 		return nil, huma.Error404NotFound(
-			"Not allowed to update QueryField. Recommended to use Create route instead.")
+			"Not allowed to update QueryField. Use Create route instead.")
 	}
 	recipients := a.ConvertToRecipients(in.AlertId, in.Body.EmailAddresses)
 	dbRecord := alertstore.Schema{
@@ -485,6 +485,7 @@ func (a *App) UpdateAlertRule(
 	alertState := alertstore.AlertState{
 		Duration:    stateDuration,
 		RangeValues: in.Body.RangeValues,
+		Name:        in.Body.Name,
 		Id:          in.Body.AlertId,
 	}
 	if err = a.AlertStore.UpdateAlertState(alertState); err != nil {

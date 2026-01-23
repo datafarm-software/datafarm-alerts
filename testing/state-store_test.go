@@ -70,6 +70,23 @@ func TestShouldNotifyCrit(t *testing.T) {
 				Duration: SomeDuration,
 			},
 		},
+
+		"notify on first state received, not due to alert rule registration": {
+			want: true,
+			alert: alertstore.AlertState{
+				Level:       alertstore.Crit,
+				Time:        AlertReceived,
+				Duration:    SomeDuration,
+				RangeValues: []float32{10, 20},
+				Id:          AlertId,
+			},
+			previous: alertstore.AlertState{
+				Duration:    SomeDuration,
+				RangeValues: []float32{10, 20},
+				Id:          AlertId,
+			},
+		},
+
 		"change to crit, so notify": {
 			want: true,
 			alert: alertstore.AlertState{
@@ -1101,7 +1118,13 @@ func TestUpdateAlertRule(t *testing.T) {
 				},
 			},
 			wantAlertStore: alertstore.Schema{
-				AlertStates: []alertstore.AlertState{},
+				AlertStates: []alertstore.AlertState{
+					{
+						Duration:    SomeDuration,
+						RangeValues: []float32{10, 20},
+						Id:          AlertId,
+					},
+				},
 				AlertRecipients: []alertstore.AlertRecipient{
 					{AlertId: AlertId, Email: UserEmail},
 				},
@@ -1162,7 +1185,7 @@ func TestUpdateAlertRule(t *testing.T) {
 						Duration:    SomeDuration,
 						RangeValues: []float32{43, 90},
 						Name:        RegisteredAlertName,
-						Id:          RegisteredDeviceId,
+						Id:          AlertId,
 						Level:       alertstore.Ok,
 					},
 				},
@@ -1191,8 +1214,7 @@ func TestUpdateAlertRule(t *testing.T) {
 						Time:        AlertReceived,
 						Duration:    SomeDuration,
 						RangeValues: []float32{10, 20},
-						Name:        RegisteredAlertName,
-						Id:          RegisteredDeviceId,
+						Id:          AlertId,
 						Level:       alertstore.Ok,
 					},
 				},
@@ -1234,7 +1256,13 @@ func TestUpdateAlertRule(t *testing.T) {
 				},
 			},
 			wantAlertStore: alertstore.Schema{
-				AlertStates: []alertstore.AlertState{},
+				AlertStates: []alertstore.AlertState{
+					{
+						Duration:    SomeDuration,
+						RangeValues: []float32{10},
+						Id:          AlertId,
+					},
+				},
 				AlertRecipients: []alertstore.AlertRecipient{
 					{AlertId: AlertId, Email: UserEmail},
 				},
@@ -1265,7 +1293,7 @@ func TestUpdateAlertRule(t *testing.T) {
 				AlertId:        AlertId,
 				EmailAddresses: []string{UserEmail},
 				RangeValues:    []float32{10},
-				Duration:       "29h",
+				Duration:       "24h",
 				DeviceId:       RegisteredDeviceId,
 				QueryField:     RegisteredQueryField,
 				AlertType:      alertstore.LessThan,
@@ -1291,7 +1319,13 @@ func TestUpdateAlertRule(t *testing.T) {
 				},
 			},
 			wantAlertStore: alertstore.Schema{
-				AlertStates: []alertstore.AlertState{},
+				AlertStates: []alertstore.AlertState{
+					{
+						Duration:    SomeDuration,
+						RangeValues: []float32{10},
+						Id:          AlertId,
+					},
+				},
 				AlertRecipients: []alertstore.AlertRecipient{
 					{AlertId: AlertId, Email: UserEmail},
 				},
@@ -1306,7 +1340,7 @@ func TestUpdateAlertRule(t *testing.T) {
 					{
 						AlertId:     AlertId,
 						RangeValues: []float32{10},
-						Duration:    "29h",
+						Duration:    "24h",
 						AlertType:   alertstore.LessThan,
 					},
 				},
@@ -1348,7 +1382,13 @@ func TestUpdateAlertRule(t *testing.T) {
 				},
 			},
 			wantAlertStore: alertstore.Schema{
-				AlertStates: []alertstore.AlertState{},
+				AlertStates: []alertstore.AlertState{
+					{
+						Duration:    SomeDuration,
+						RangeValues: []float32{10, 20},
+						Id:          AlertId,
+					},
+				},
 				AlertRecipients: []alertstore.AlertRecipient{
 					{AlertId: AlertId, Email: UserEmail},
 				},
@@ -1519,7 +1559,13 @@ func TestUpdateAlertRule(t *testing.T) {
 				},
 			},
 			wantAlertStore: alertstore.Schema{
-				AlertStates: []alertstore.AlertState{},
+				AlertStates: []alertstore.AlertState{
+					{
+						Duration:    SomeDuration,
+						RangeValues: []float32{10, 20},
+						Id:          AlertId,
+					},
+				},
 				AlertRecipients: []alertstore.AlertRecipient{
 					{AlertId: AlertId, Email: UserEmail},
 					{AlertId: AlertId, Email: "user2@alert.com"},
@@ -1577,7 +1623,13 @@ func TestUpdateAlertRule(t *testing.T) {
 				},
 			},
 			wantAlertStore: alertstore.Schema{
-				AlertStates: []alertstore.AlertState{},
+				AlertStates: []alertstore.AlertState{
+					{
+						Duration:    SomeDuration,
+						RangeValues: []float32{10, 20},
+						Id:          AlertId,
+					},
+				},
 				AlertRecipients: []alertstore.AlertRecipient{
 					{AlertId: AlertId, Email: UserEmail},
 				},
