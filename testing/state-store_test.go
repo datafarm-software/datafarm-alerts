@@ -1157,7 +1157,7 @@ func TestUpdateAlertRule(t *testing.T) {
 		wantErr                        bool
 		wantStatus                     int
 		alertId                        string
-		wantAlertRule                  alertstore.AlertRule
+		updateAlertRule                alertstore.AlertRule
 		mockAlertStore, wantAlertStore alertstore.Schema
 		wantAlertSourceCount           int
 	}{
@@ -1166,7 +1166,7 @@ func TestUpdateAlertRule(t *testing.T) {
 			wantStatus:           http.StatusOK,
 			wantAlertSourceCount: 1,
 			alertId:              AlertId,
-			wantAlertRule: alertstore.AlertRule{
+			updateAlertRule: alertstore.AlertRule{
 				Name:           RegisteredAlertName,
 				AlertId:        AlertId,
 				EmailAddresses: []string{UserEmail},
@@ -1229,7 +1229,7 @@ func TestUpdateAlertRule(t *testing.T) {
 			wantStatus:           http.StatusOK,
 			wantAlertSourceCount: 1,
 			alertId:              AlertId,
-			wantAlertRule: alertstore.AlertRule{
+			updateAlertRule: alertstore.AlertRule{
 				Name:           RegisteredAlertName,
 				AlertId:        AlertId,
 				EmailAddresses: []string{UserEmail},
@@ -1304,7 +1304,7 @@ func TestUpdateAlertRule(t *testing.T) {
 			wantStatus:           http.StatusOK,
 			wantAlertSourceCount: 1,
 			alertId:              AlertId,
-			wantAlertRule: alertstore.AlertRule{
+			updateAlertRule: alertstore.AlertRule{
 				Name:           RegisteredAlertName,
 				AlertId:        AlertId,
 				EmailAddresses: []string{UserEmail},
@@ -1367,7 +1367,7 @@ func TestUpdateAlertRule(t *testing.T) {
 			wantStatus:           http.StatusOK,
 			wantAlertSourceCount: 1,
 			alertId:              AlertId,
-			wantAlertRule: alertstore.AlertRule{
+			updateAlertRule: alertstore.AlertRule{
 				Name:           RegisteredAlertName,
 				AlertId:        AlertId,
 				EmailAddresses: []string{UserEmail},
@@ -1430,7 +1430,7 @@ func TestUpdateAlertRule(t *testing.T) {
 			wantStatus:           http.StatusOK,
 			wantAlertSourceCount: 1,
 			alertId:              AlertId,
-			wantAlertRule: alertstore.AlertRule{
+			updateAlertRule: alertstore.AlertRule{
 				Name:           RegisteredAlertName,
 				AlertId:        AlertId,
 				EmailAddresses: []string{UserEmail},
@@ -1494,7 +1494,7 @@ func TestUpdateAlertRule(t *testing.T) {
 			wantErr:              true,
 			wantAlertSourceCount: 1,
 			alertId:              AlertId,
-			wantAlertRule: alertstore.AlertRule{
+			updateAlertRule: alertstore.AlertRule{
 				Name:           RegisteredAlertName,
 				AlertId:        AlertId,
 				EmailAddresses: []string{UserEmail},
@@ -1551,7 +1551,7 @@ func TestUpdateAlertRule(t *testing.T) {
 			wantErr:              true,
 			wantAlertSourceCount: 1,
 			alertId:              AlertId,
-			wantAlertRule: alertstore.AlertRule{
+			updateAlertRule: alertstore.AlertRule{
 				Name:           RegisteredAlertName,
 				AlertId:        AlertId,
 				EmailAddresses: []string{UserEmail},
@@ -1603,11 +1603,126 @@ func TestUpdateAlertRule(t *testing.T) {
 			},
 		},
 
+		"can't update from threshold to inactive sensor alert type": {
+			wantStatus:           http.StatusBadRequest,
+			wantErr:              true,
+			wantAlertSourceCount: 1,
+			alertId:              AlertId,
+			updateAlertRule: alertstore.AlertRule{
+				Name:           RegisteredAlertName,
+				AlertId:        AlertId,
+				EmailAddresses: []string{UserEmail},
+				Duration:       "24h",
+				DeviceId:       RegisteredDeviceId,
+				QueryField:     RegisteredQueryField,
+				AlertType:      alertstore.InactiveSensor,
+			},
+			mockAlertStore: alertstore.Schema{
+				AlertRecipients: []alertstore.AlertRecipient{
+					{AlertId: AlertId, Email: UserEmail},
+				},
+				DeviceAlerts: []alertstore.DeviceAlertRule{
+					{
+						DeviceId:   RegisteredDeviceId,
+						QueryField: RegisteredQueryField,
+						AlertId:    AlertId,
+					},
+				},
+				AlertRules: []alertstore.StoredAlertRule{
+					{
+						AlertId:     AlertId,
+						RangeValues: []float32{10},
+						Duration:    "24h",
+						AlertType:   alertstore.LessThan,
+					},
+				},
+			},
+			wantAlertStore: alertstore.Schema{
+				AlertRecipients: []alertstore.AlertRecipient{
+					{AlertId: AlertId, Email: UserEmail},
+				},
+				DeviceAlerts: []alertstore.DeviceAlertRule{
+					{
+						DeviceId:   RegisteredDeviceId,
+						QueryField: RegisteredQueryField,
+						AlertId:    AlertId,
+					},
+				},
+				AlertRules: []alertstore.StoredAlertRule{
+					{
+						AlertId:     AlertId,
+						RangeValues: []float32{10},
+						Duration:    "24h",
+						AlertType:   alertstore.LessThan,
+					},
+				},
+			},
+		},
+
+		"update inactive sensor alert duration": {
+			wantStatus:           http.StatusOK,
+			wantAlertSourceCount: 1,
+			alertId:              AlertId,
+			updateAlertRule: alertstore.AlertRule{
+				Name:           RegisteredAlertName,
+				AlertId:        AlertId,
+				EmailAddresses: []string{UserEmail},
+				Duration:       "48h",
+				DeviceId:       RegisteredDeviceId,
+				QueryField:     RegisteredQueryField,
+				AlertType:      alertstore.InactiveSensor,
+			},
+			mockAlertStore: alertstore.Schema{
+				AlertRecipients: []alertstore.AlertRecipient{
+					{AlertId: AlertId, Email: UserEmail},
+				},
+				DeviceAlerts: []alertstore.DeviceAlertRule{
+					{
+						DeviceId:   RegisteredDeviceId,
+						QueryField: RegisteredQueryField,
+						AlertId:    AlertId,
+					},
+				},
+				AlertRules: []alertstore.StoredAlertRule{
+					{
+						AlertId:   AlertId,
+						Duration:  "24h",
+						AlertType: alertstore.InactiveSensor,
+					},
+				},
+			},
+			wantAlertStore: alertstore.Schema{
+				AlertStates: []alertstore.AlertState{
+					{
+						Duration: SomeDuration,
+						Id:       AlertId,
+					},
+				},
+				AlertRecipients: []alertstore.AlertRecipient{
+					{AlertId: AlertId, Email: UserEmail},
+				},
+				DeviceAlerts: []alertstore.DeviceAlertRule{
+					{
+						DeviceId:   RegisteredDeviceId,
+						QueryField: RegisteredQueryField,
+						AlertId:    AlertId,
+					},
+				},
+				AlertRules: []alertstore.StoredAlertRule{
+					{
+						AlertId:   AlertId,
+						Duration:  "48h",
+						AlertType: alertstore.InactiveSensor,
+					},
+				},
+			},
+		},
+
 		"add more emails to the recipient list of an alert rule": {
 			wantStatus:           http.StatusOK,
 			alertId:              AlertId,
 			wantAlertSourceCount: 1,
-			wantAlertRule: alertstore.AlertRule{
+			updateAlertRule: alertstore.AlertRule{
 				Name:           RegisteredAlertName,
 				AlertId:        AlertId,
 				EmailAddresses: []string{UserEmail, "user2@alert.com"},
@@ -1671,7 +1786,7 @@ func TestUpdateAlertRule(t *testing.T) {
 			wantStatus:           http.StatusOK,
 			wantAlertSourceCount: 1,
 			alertId:              AlertId,
-			wantAlertRule: alertstore.AlertRule{
+			updateAlertRule: alertstore.AlertRule{
 				Name:           RegisteredAlertName,
 				AlertId:        AlertId,
 				EmailAddresses: []string{UserEmail, UserEmail},
@@ -1735,7 +1850,7 @@ func TestUpdateAlertRule(t *testing.T) {
 			wantErr:        true,
 			alertId:        AlertId,
 			mockAlertStore: alertstore.Schema{},
-			wantAlertRule: alertstore.AlertRule{
+			updateAlertRule: alertstore.AlertRule{
 				Name:           RegisteredAlertName,
 				EmailAddresses: []string{UserEmail},
 				RangeValues:    []float32{10, 20},
@@ -1751,7 +1866,7 @@ func TestUpdateAlertRule(t *testing.T) {
 			wantErr:        true,
 			mockAlertStore: alertstore.Schema{},
 			alertId:        AlertId,
-			wantAlertRule: alertstore.AlertRule{
+			updateAlertRule: alertstore.AlertRule{
 				Name:           RegisteredAlertName,
 				EmailAddresses: []string{UserEmail},
 				RangeValues:    []float32{10},
@@ -1767,7 +1882,7 @@ func TestUpdateAlertRule(t *testing.T) {
 			wantErr:        true,
 			mockAlertStore: alertstore.Schema{},
 			alertId:        AlertId,
-			wantAlertRule: alertstore.AlertRule{
+			updateAlertRule: alertstore.AlertRule{
 				EmailAddresses: []string{UserEmail},
 				Name:           RegisteredAlertName,
 				RangeValues:    []float32{50, 90},
@@ -1796,14 +1911,14 @@ func TestUpdateAlertRule(t *testing.T) {
 			alertRules = SchemaToAlertRules(tc.mockAlertStore)
 			err = a.AlertSource.PrepareDb(alertRules...)
 			require.Nil(t, err)
-			resp := api.Put(fmt.Sprintf("/alert/%s", tc.alertId), tc.wantAlertRule)
+			resp := api.Put(fmt.Sprintf("/alert/%s", tc.alertId), tc.updateAlertRule)
 			if tc.wantStatus != resp.Code {
 				t.Fatalf("wantStatusCode: %d, response code: %d", tc.wantStatus, resp.Code)
 			}
 			if !tc.wantErr {
 				err = json.Unmarshal(resp.Body.Bytes(), &got)
 				require.Nil(t, err)
-				if diff := cmp.Diff(tc.wantAlertRule, got); diff != "" {
+				if diff := cmp.Diff(tc.updateAlertRule, got); diff != "" {
 					t.Fatalf("response alertrule mismatch (-want +got):\n%s", diff)
 				}
 				if diff := cmp.Diff(tc.wantAlertStore, a.AlertStore.GetSnapshot()); diff != "" {
