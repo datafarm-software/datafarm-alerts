@@ -73,6 +73,7 @@ func TestShouldNotifyCrit(t *testing.T) {
 				Duration: SomeDuration,
 			},
 		},
+
 		"crit exactly on duration, so notify": {
 			want: true,
 			alert: alertstore.AlertState{
@@ -633,6 +634,48 @@ func TestCreateAlertRule(t *testing.T) {
 				DeviceId:       "device1",
 				QueryField:     "temperature",
 				AlertType:      alertstore.LessThan,
+			},
+			wantResponse: alertstore.CreatedRule{
+				AlertId: AlertId,
+			},
+		},
+
+		"successfully create an inactive sensor alert rule": {
+			wantErr:              false,
+			wantStatus:           http.StatusOK,
+			wantAlertSourceCount: 1,
+			mockAlertStore: alertstore.Schema{
+				DeviceAlerts:    []alertstore.DeviceAlertRule{},
+				AlertRecipients: []alertstore.AlertRecipient{},
+				AlertStates:     []alertstore.AlertState{},
+				AlertRules:      []alertstore.StoredAlertRule{},
+			},
+			wantAlertStore: alertstore.Schema{
+				AlertRecipients: []alertstore.AlertRecipient{
+					{AlertId: AlertId, Email: UserEmail},
+				},
+				DeviceAlerts: []alertstore.DeviceAlertRule{
+					{
+						DeviceId:   RegisteredDeviceId,
+						QueryField: RegisteredQueryField,
+						AlertId:    AlertId,
+					},
+				},
+				AlertRules: []alertstore.StoredAlertRule{
+					{
+						AlertId:   AlertId,
+						Duration:  "24h",
+						AlertType: alertstore.InactiveSensor,
+					},
+				},
+			},
+			alertRule: alertstore.AlertRule{
+				Name:           RegisteredAlertName,
+				Duration:       "24h",
+				EmailAddresses: []string{UserEmail},
+				DeviceId:       "device1",
+				QueryField:     "temperature",
+				AlertType:      alertstore.InactiveSensor,
 			},
 			wantResponse: alertstore.CreatedRule{
 				AlertId: AlertId,

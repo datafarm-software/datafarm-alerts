@@ -351,7 +351,7 @@ func (a *App) ShouldNotifyCrit(alert, previous alertstore.AlertState) bool {
 	if alert.Level > previous.Level {
 		return true
 	}
-	if alert.Time.Sub(previous.Time) > alert.Duration {
+	if alert.Time.Sub(previous.Time) >= alert.Duration {
 		return true
 	}
 	return false

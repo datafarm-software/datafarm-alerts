@@ -28,7 +28,8 @@ const Flux string = `from(bucket: "%s")
 const MapQueryField = `|> map(fn: (r) => ({r with _value: r.%s}))`
 const V1FieldAsCols = `|> v1["fieldsAsCols"]()`
 
-var StatusMessage string = `Check: ${r._check_name} State: ${r._level}.`
+var ThresholdStatusMessage string = `Check: ${r._check_name} State: ${r._level}.`
+var DeadmanStatusMessage string = `Check: ${r._check_name}. No alert received within duration: %s`
 var ZeroSeconds = "0s"
 var ctx context.Context
 
@@ -141,12 +142,18 @@ func (i *Influx) Close() error {
 }
 
 func (i *Influx) CreateAlertRule(ar alertstore.AlertRule) (string, error) {
-	check, err := i.createThresholdCheck(ar)
+	var check domain.Check
+	var err error
+	if ar.AlertType == alertstore.InactiveSensor {
+		check, err = i.createDeadmanCheck(ar)
+	} else {
+		check, err = i.createThresholdCheck(ar)
+	}
 	if err != nil {
-		return "", fmt.Errorf("createThresholdCheck: %v", err)
+		return "", fmt.Errorf("create check: %v", err)
 	}
 	params := domain.CreateCheckAllParams{
-		Body: domain.CreateCheckJSONRequestBody(&check),
+		Body: check,
 	}
 	nc, err := i.client.APIClient().CreateCheck(ctx, &params)
 	if err != nil {
@@ -157,19 +164,25 @@ func (i *Influx) CreateAlertRule(ar alertstore.AlertRule) (string, error) {
 	if nc.Type() == "threshold" {
 		tc, ok := nc.(*domain.ThresholdCheck)
 		if !ok {
-			return "", fmt.Errorf("invalid check created")
+			return "", fmt.Errorf("invalid threshold check created")
 		}
 		alertId = *tc.CheckBase.Id
 		taskId = *tc.CheckBase.TaskID
-	}
-	task, err := i.getTask(taskId)
-	if err != nil {
-		return "", fmt.Errorf(
-			"getting task for alert %s, task: %s, error: %v", alertId, taskId, err)
-	}
-	task.Flux = i.fluxInjectQueryFieldValue(task.Flux, ar.QueryField)
-	if err = i.updateTask(task); err != nil {
-		return "", fmt.Errorf("updateTask: %v", err)
+		task, err := i.getTask(taskId)
+		if err != nil {
+			return "", fmt.Errorf(
+				"getting task for alert %s, task: %s, error: %v", alertId, taskId, err)
+		}
+		task.Flux = i.fluxInjectQueryFieldValue(task.Flux, ar.QueryField)
+		if err = i.updateTask(task); err != nil {
+			return "", fmt.Errorf("updateTask: %v", err)
+		}
+	} else {
+		dc, ok := nc.(*domain.DeadmanCheck)
+		if !ok {
+			return "", fmt.Errorf("invalid deadman check created")
+		}
+		alertId = *dc.CheckBase.Id
 	}
 	return alertId, err
 }
@@ -181,7 +194,7 @@ func (i *Influx) UpdateAlertRule(ar alertstore.AlertRule) error {
 	}
 	updateParams := domain.PutChecksIDAllParams{
 		CheckID: ar.AlertId,
-		Body:    &check,
+		Body:    check,
 	}
 	_, err = i.client.APIClient().PutChecksID(ctx, &updateParams)
 	return err
@@ -305,7 +318,7 @@ func (i *Influx) GetSnapshot() int {
 	return 0
 }
 
-func (i *Influx) createThresholdCheck(ar alertstore.AlertRule) (domain.ThresholdCheck, error) {
+func (i *Influx) createThresholdCheck(ar alertstore.AlertRule) (*domain.ThresholdCheck, error) {
 	var lesser domain.LesserThreshold
 	var greater domain.GreaterThreshold
 	var rang domain.RangeThreshold
@@ -340,7 +353,7 @@ func (i *Influx) createThresholdCheck(ar alertstore.AlertRule) (domain.Threshold
 
 	case alertstore.Range:
 		if ar.RangeValues[0] >= ar.RangeValues[1] {
-			return check, fmt.Errorf("first boundary is not smaller than the second.")
+			return nil, fmt.Errorf("first boundary is not smaller than the second.")
 		}
 		rang = domain.RangeThreshold{
 			ThresholdBase: domain.ThresholdBase{Level: &lc},
@@ -348,10 +361,10 @@ func (i *Influx) createThresholdCheck(ar alertstore.AlertRule) (domain.Threshold
 			Min:           ar.RangeValues[0],
 		}
 		thresholds = append(thresholds, &rang)
-	case alertstore.DeadmanCheck:
-		return check, fmt.Errorf("tried to make threshold check, but deadman check requested.")
+	case alertstore.InactiveSensor:
+		return nil, fmt.Errorf("inactive sensor check requested.")
 	default:
-		return check, fmt.Errorf("unknown alert type: %d", ar.AlertType)
+		return nil, fmt.Errorf("unknown alert type: %d", ar.AlertType)
 	}
 
 	key := "query_field"
@@ -366,7 +379,7 @@ func (i *Influx) createThresholdCheck(ar alertstore.AlertRule) (domain.Threshold
 			},
 			Every:                 &ar.Duration,
 			Offset:                &ZeroSeconds,
-			StatusMessageTemplate: &StatusMessage,
+			StatusMessageTemplate: &ThresholdStatusMessage,
 			Tags: &[]struct {
 				Key   *string `json:"key,omitempty"`
 				Value *string `json:"value,omitempty"`
@@ -374,12 +387,13 @@ func (i *Influx) createThresholdCheck(ar alertstore.AlertRule) (domain.Threshold
 		},
 		Thresholds: &thresholds,
 	}
-	return check, nil
+	return &check, nil
 }
 
-func (i *Influx) createDeadmanCheck(ar alertstore.AlertRule) (domain.DeadmanCheck, error) {
+func (i *Influx) createDeadmanCheck(ar alertstore.AlertRule) (*domain.DeadmanCheck, error) {
 	lc := domain.CheckStatusLevelCRIT
 	hydratedFlux := fmt.Sprintf(Flux, i.org, ar.DeviceId, ar.QueryField, ar.Duration)
+	hydratedStatusMessage := fmt.Sprintf(DeadmanStatusMessage, ar.Duration)
 	check := domain.DeadmanCheck{
 		CheckBaseExtend: domain.CheckBaseExtend{
 			CheckBase: domain.CheckBase{
@@ -389,16 +403,12 @@ func (i *Influx) createDeadmanCheck(ar alertstore.AlertRule) (domain.DeadmanChec
 				Status: domain.TaskStatusTypeActive,
 			},
 			Every:                 &ar.Duration,
-			StatusMessageTemplate: &StatusMessage,
-			Tags: &[]struct {
-				Key   *string "json:\"key,omitempty\""
-				Value *string "json:\"value,omitempty\""
-			}{},
+			StatusMessageTemplate: &hydratedStatusMessage,
 		},
 		Level:     &lc,
 		TimeSince: &ar.Duration,
 	}
-	return check, nil
+	return &check, nil
 }
 
 var once sync.Once
