@@ -37,6 +37,7 @@ const NewValue = 20
 const OldValue = 10
 
 var AlertReceived = time.Date(1994, 6, 24, 6, 0, 0, 0, time.UTC)
+var OnDuration = AlertReceived.Add(24 * time.Hour)
 var AfterDuration = AlertReceived.Add(25 * time.Hour)
 var WithinDuration = AlertReceived.Add(6 * time.Hour)
 
@@ -64,6 +65,19 @@ func TestShouldNotifyCrit(t *testing.T) {
 			alert: alertstore.AlertState{
 				Level:    alertstore.Crit,
 				Time:     AfterDuration,
+				Duration: SomeDuration,
+			},
+			previous: alertstore.AlertState{
+				Level:    alertstore.Crit,
+				Time:     AlertReceived,
+				Duration: SomeDuration,
+			},
+		},
+		"crit exactly on duration, so notify": {
+			want: true,
+			alert: alertstore.AlertState{
+				Level:    alertstore.Crit,
+				Time:     OnDuration,
 				Duration: SomeDuration,
 			},
 			previous: alertstore.AlertState{

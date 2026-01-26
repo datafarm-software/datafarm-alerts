@@ -17,6 +17,7 @@ const (
 	LessThan AlertType = iota
 	GreaterThan
 	Range
+	DeadmanCheck
 )
 
 type AlertLevel int

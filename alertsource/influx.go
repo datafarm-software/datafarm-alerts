@@ -28,7 +28,7 @@ const Flux string = `from(bucket: "%s")
 const MapQueryField = `|> map(fn: (r) => ({r with _value: r.%s}))`
 const V1FieldAsCols = `|> v1["fieldsAsCols"]()`
 
-var msg string = `Check: ${r._check_name} State: ${r._level}.`
+var StatusMessage string = `Check: ${r._check_name} State: ${r._level}.`
 var ZeroSeconds = "0s"
 var ctx context.Context
 
@@ -348,6 +348,8 @@ func (i *Influx) createThresholdCheck(ar alertstore.AlertRule) (domain.Threshold
 			Min:           ar.RangeValues[0],
 		}
 		thresholds = append(thresholds, &rang)
+	case alertstore.DeadmanCheck:
+		return check, fmt.Errorf("tried to make threshold check, but deadman check requested.")
 	default:
 		return check, fmt.Errorf("unknown alert type: %d", ar.AlertType)
 	}
@@ -364,13 +366,37 @@ func (i *Influx) createThresholdCheck(ar alertstore.AlertRule) (domain.Threshold
 			},
 			Every:                 &ar.Duration,
 			Offset:                &ZeroSeconds,
-			StatusMessageTemplate: &msg,
+			StatusMessageTemplate: &StatusMessage,
 			Tags: &[]struct {
 				Key   *string `json:"key,omitempty"`
 				Value *string `json:"value,omitempty"`
 			}{{Key: &key, Value: &ar.QueryField}},
 		},
 		Thresholds: &thresholds,
+	}
+	return check, nil
+}
+
+func (i *Influx) createDeadmanCheck(ar alertstore.AlertRule) (domain.DeadmanCheck, error) {
+	lc := domain.CheckStatusLevelCRIT
+	hydratedFlux := fmt.Sprintf(Flux, i.org, ar.DeviceId, ar.QueryField, ar.Duration)
+	check := domain.DeadmanCheck{
+		CheckBaseExtend: domain.CheckBaseExtend{
+			CheckBase: domain.CheckBase{
+				Name:   ar.Name,
+				OrgID:  i.orgId,
+				Query:  domain.DashboardQuery{Text: &hydratedFlux},
+				Status: domain.TaskStatusTypeActive,
+			},
+			Every:                 &ar.Duration,
+			StatusMessageTemplate: &StatusMessage,
+			Tags: &[]struct {
+				Key   *string "json:\"key,omitempty\""
+				Value *string "json:\"value,omitempty\""
+			}{},
+		},
+		Level:     &lc,
+		TimeSince: &ar.Duration,
 	}
 	return check, nil
 }
