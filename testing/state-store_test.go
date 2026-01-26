@@ -1828,7 +1828,7 @@ func TestGetAlertRule(t *testing.T) {
 		mockAlertStore alertstore.Schema
 	}{
 
-		"successfully get a stored alert": {
+		"successfully get a stored threshold alert": {
 			wantErr:    false,
 			wantStatus: http.StatusOK,
 			alertId:    AlertId,
@@ -1864,6 +1864,40 @@ func TestGetAlertRule(t *testing.T) {
 				AlertType:      alertstore.Range,
 			},
 		},
+		"successfully get a stored inactive sensor alert": {
+			wantErr:    false,
+			wantStatus: http.StatusOK,
+			alertId:    AlertId,
+			mockAlertStore: alertstore.Schema{
+				AlertRecipients: []alertstore.AlertRecipient{
+					{AlertId: AlertId, Email: UserEmail},
+				},
+				DeviceAlerts: []alertstore.DeviceAlertRule{
+					{
+						DeviceId:   RegisteredDeviceId,
+						QueryField: RegisteredQueryField,
+						AlertId:    AlertId,
+					},
+				},
+				AlertRules: []alertstore.StoredAlertRule{
+					{
+						AlertId:   AlertId,
+						Name:      RegisteredAlertName,
+						Duration:  "24h",
+						AlertType: alertstore.InactiveSensor,
+					},
+				},
+			},
+			want: alertstore.AlertRule{
+				AlertId:        AlertId,
+				Name:           RegisteredAlertName,
+				EmailAddresses: []string{UserEmail},
+				Duration:       "24h",
+				DeviceId:       RegisteredDeviceId,
+				QueryField:     RegisteredQueryField,
+				AlertType:      alertstore.InactiveSensor,
+			},
+		},
 		"alert doesn't exist": {
 			wantErr:        true,
 			want:           alertstore.AlertRule{},
@@ -1879,7 +1913,7 @@ func TestGetAlertRule(t *testing.T) {
 	a.RegisterHumaOperations(api)
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
-			a.AlertStore, err = alertstore.NewMockAlertStore(alertstore.Testing, "testing")
+			a.AlertStore, err = alertstore.NewGorm(alertstore.Testing, "testing")
 			defer a.AlertStore.Close()
 			err = a.AlertStore.PrepareDb(tc.mockAlertStore)
 			require.Nil(t, err)
