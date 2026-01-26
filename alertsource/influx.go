@@ -32,6 +32,7 @@ var ThresholdStatusMessage string = `Check: ${r._check_name} State: ${r._level}.
 var DeadmanStatusMessage string = `Check: ${r._check_name}. No alert received within duration: %s`
 var ZeroSeconds = "0s"
 var ctx context.Context
+var DontReportZero = false
 
 type EpochNano int64
 
@@ -403,10 +404,13 @@ func (i *Influx) createDeadmanCheck(ar alertstore.AlertRule) (*domain.DeadmanChe
 				Status: domain.TaskStatusTypeActive,
 			},
 			Every:                 &ar.Duration,
+			Offset:                &ZeroSeconds,
 			StatusMessageTemplate: &hydratedStatusMessage,
 		},
-		Level:     &lc,
-		TimeSince: &ar.Duration,
+		ReportZero: &DontReportZero,
+		Level:      &lc,
+		TimeSince:  &ar.Duration,
+		StaleTime:  &ZeroSeconds,
 	}
 	return &check, nil
 }
