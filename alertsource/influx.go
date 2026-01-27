@@ -189,15 +189,27 @@ func (i *Influx) CreateAlertRule(ar alertstore.AlertRule) (string, error) {
 }
 
 func (i *Influx) UpdateAlertRule(ar alertstore.AlertRule) error {
-	check, err := i.createThresholdCheck(ar)
-	if err != nil {
-		return err
+	var updateParams domain.PutChecksIDAllParams
+	if ar.AlertType == alertstore.InactiveSensor {
+		check, err := i.createDeadmanCheck(ar)
+		if err != nil {
+			return err
+		}
+		updateParams = domain.PutChecksIDAllParams{
+			CheckID: ar.AlertId,
+			Body:    check,
+		}
+	} else {
+		check, err := i.createThresholdCheck(ar)
+		if err != nil {
+			return err
+		}
+		updateParams = domain.PutChecksIDAllParams{
+			CheckID: ar.AlertId,
+			Body:    check,
+		}
 	}
-	updateParams := domain.PutChecksIDAllParams{
-		CheckID: ar.AlertId,
-		Body:    check,
-	}
-	_, err = i.client.APIClient().PutChecksID(ctx, &updateParams)
+	_, err := i.client.APIClient().PutChecksID(ctx, &updateParams)
 	return err
 }
 

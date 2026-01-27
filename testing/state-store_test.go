@@ -1694,7 +1694,7 @@ func TestUpdateAlertRule(t *testing.T) {
 			wantAlertStore: alertstore.Schema{
 				AlertStates: []alertstore.AlertState{
 					{
-						Duration: SomeDuration,
+						Duration: 48 * time.Hour,
 						Id:       AlertId,
 					},
 				},

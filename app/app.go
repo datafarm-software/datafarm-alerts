@@ -453,6 +453,19 @@ func (a *App) UpdateAlertRule(
 		return nil, huma.Error404NotFound(
 			"Not allowed to update QueryField. Use Create route instead.")
 	}
+	if existingAlert.AlertType == alertstore.InactiveSensor {
+		if in.Body.AlertType != alertstore.InactiveSensor {
+			return nil, huma.Error400BadRequest(
+				"Cannot update an existing Inactive Sensor check, to Threshold check.")
+
+		}
+	}
+	if in.Body.AlertType == alertstore.InactiveSensor {
+		if existingAlert.AlertType != alertstore.InactiveSensor {
+			return nil, huma.Error400BadRequest(
+				"Cannot update an existing alert to an Inactive Sensor check type.")
+		}
+	}
 	recipients := a.ConvertToRecipients(in.AlertId, in.Body.EmailAddresses)
 	dbRecord := alertstore.Schema{
 		DeviceAlerts: []alertstore.DeviceAlertRule{
