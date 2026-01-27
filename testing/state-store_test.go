@@ -2057,7 +2057,7 @@ func TestDeleteAlert(t *testing.T) {
 		wantAlertSourceCount           int
 	}{
 
-		"successfully delete an alert": {
+		"delete an alert": {
 			wantErr:              false,
 			wantStatus:           http.StatusOK,
 			alertId:              AlertId,
@@ -2075,6 +2075,7 @@ func TestDeleteAlert(t *testing.T) {
 				},
 				AlertRules: []alertstore.StoredAlertRule{
 					{
+						Name:        RegisteredAlertName,
 						AlertId:     AlertId,
 						Duration:    "24h",
 						RangeValues: []float32{10, 20},
@@ -2095,6 +2096,7 @@ func TestDeleteAlert(t *testing.T) {
 			},
 			wantAlertRule: alertstore.AlertRule{
 				AlertId:        AlertId,
+				Name:           RegisteredAlertName,
 				EmailAddresses: []string{UserEmail},
 				RangeValues:    []float32{10, 20},
 				Duration:       "24h",
@@ -2104,7 +2106,7 @@ func TestDeleteAlert(t *testing.T) {
 			},
 		},
 
-		"successfully delete a specific alert": {
+		"delete a specific alert": {
 			wantErr:              false,
 			wantStatus:           http.StatusOK,
 			alertId:              "alert2",
@@ -2129,12 +2131,14 @@ func TestDeleteAlert(t *testing.T) {
 				AlertRules: []alertstore.StoredAlertRule{
 					{
 						AlertId:     AlertId,
+						Name:        RegisteredAlertName,
 						Duration:    "24h",
 						RangeValues: []float32{10, 20},
 						AlertType:   alertstore.Range,
 					},
 					{
 						AlertId:     "alert2",
+						Name:        "Some other alert name",
 						Duration:    "48h",
 						RangeValues: []float32{10},
 						AlertType:   alertstore.LessThan,
@@ -2163,6 +2167,7 @@ func TestDeleteAlert(t *testing.T) {
 				AlertRules: []alertstore.StoredAlertRule{
 					{
 						AlertId:     AlertId,
+						Name:        RegisteredAlertName,
 						Duration:    "24h",
 						RangeValues: []float32{10, 20},
 						AlertType:   alertstore.Range,
@@ -2176,6 +2181,7 @@ func TestDeleteAlert(t *testing.T) {
 			},
 			wantAlertRule: alertstore.AlertRule{
 				AlertId:        "alert2",
+				Name:           RegisteredAlertName,
 				EmailAddresses: []string{UserEmail},
 				RangeValues:    []float32{10},
 				Duration:       "48h",
@@ -2185,9 +2191,56 @@ func TestDeleteAlert(t *testing.T) {
 			},
 		},
 
+		"delete an inactive sensor alert": {
+			wantErr:              false,
+			wantStatus:           http.StatusOK,
+			alertId:              AlertId,
+			wantAlertSourceCount: 0,
+			mockAlertStore: alertstore.Schema{
+				AlertRecipients: []alertstore.AlertRecipient{
+					{AlertId: AlertId, Email: UserEmail},
+				},
+				DeviceAlerts: []alertstore.DeviceAlertRule{
+					{
+						DeviceId:   RegisteredDeviceId,
+						QueryField: RegisteredQueryField,
+						AlertId:    AlertId,
+					},
+				},
+				AlertRules: []alertstore.StoredAlertRule{
+					{
+						AlertId:   AlertId,
+						Name:      RegisteredAlertName,
+						Duration:  "24h",
+						AlertType: alertstore.InactiveSensor,
+					},
+				},
+				AlertStates: []alertstore.AlertState{
+					{
+						Id: AlertId,
+					},
+				},
+			},
+			wantAlertStore: alertstore.Schema{
+				DeviceAlerts:    []alertstore.DeviceAlertRule{},
+				AlertRecipients: []alertstore.AlertRecipient{},
+				AlertStates:     []alertstore.AlertState{},
+				AlertRules:      []alertstore.StoredAlertRule{},
+			},
+			wantAlertRule: alertstore.AlertRule{
+				AlertId:        AlertId,
+				Name:           RegisteredAlertName,
+				EmailAddresses: []string{UserEmail},
+				Duration:       "24h",
+				DeviceId:       RegisteredDeviceId,
+				QueryField:     RegisteredQueryField,
+				AlertType:      alertstore.InactiveSensor,
+			},
+		},
+
 		"try to delete non existent alert": {
 			wantErr:        true,
-			wantStatus:     404,
+			wantStatus:     http.StatusNotFound,
 			alertId:        "alert2",
 			mockAlertStore: alertstore.Schema{},
 		},
