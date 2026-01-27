@@ -36,7 +36,7 @@ type App struct {
 func Start(opts Opts) error {
 	var err error
 	app := &App{}
-	app.Notifier, err = notifier.NewGomail(opts.Gomail)
+	app.Notifier, err = notifier.NewMockNotifier()
 	if err != nil {
 		return err
 	}

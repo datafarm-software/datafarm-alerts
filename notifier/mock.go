@@ -1,5 +1,7 @@
 package notifier
 
+import "log"
+
 type MockNotifier struct {
 	inboxes map[string][]AlertMessage
 }
@@ -14,6 +16,7 @@ func (m *MockNotifier) Notify(message AlertMessage, emails ...string) error {
 	for _, e := range emails {
 		m.inboxes[e] = append(m.inboxes[e], message)
 	}
+	log.Printf("message:\n %v", message)
 	return nil
 }
 
