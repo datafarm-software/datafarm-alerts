@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"math"
 	"net/url"
 	"os"
 	"slices"
@@ -334,6 +335,8 @@ func (i *Influx) createThresholdCheck(ar alertstore.AlertRule) (*domain.Threshol
 	lo := domain.CheckStatusLevelOK
 	lc := domain.CheckStatusLevelCRIT
 	allValues := true
+	threshold := "threshold"
+	thresholdTrue := "true"
 
 	switch ar.AlertType {
 	case alertstore.LessThan:
@@ -389,7 +392,10 @@ func (i *Influx) createThresholdCheck(ar alertstore.AlertRule) (*domain.Threshol
 			Tags: &[]struct {
 				Key   *string `json:"key,omitempty"`
 				Value *string `json:"value,omitempty"`
-			}{{Key: &QueryField, Value: &ar.QueryField}},
+			}{
+				{Key: &QueryField, Value: &ar.QueryField},
+				{Key: &threshold, Value: &thresholdTrue},
+			},
 		},
 		Thresholds: &thresholds,
 	}
@@ -400,7 +406,12 @@ func (i *Influx) createDeadmanCheck(ar alertstore.AlertRule) (*domain.DeadmanChe
 	lc := domain.CheckStatusLevelCRIT
 	hydratedFlux := fmt.Sprintf(Flux, i.org, ar.DeviceId, ar.QueryField, ar.Duration)
 	hydratedStatusMessage := fmt.Sprintf(DeadmanStatusMessage, ar.Duration)
-	staleTime := "2m"
+	staleTime, every, err := i.scaleDuration(ar.Duration)
+	if err != nil {
+		return nil, err
+	}
+	deadman := "deadman"
+	deadmanTrue := "true"
 	check := domain.DeadmanCheck{
 		CheckBaseExtend: domain.CheckBaseExtend{
 			CheckBase: domain.CheckBase{
@@ -415,7 +426,10 @@ func (i *Influx) createDeadmanCheck(ar alertstore.AlertRule) (*domain.DeadmanChe
 			Tags: &[]struct {
 				Key   *string `json:"key,omitempty"`
 				Value *string `json:"value,omitempty"`
-			}{{Key: &QueryField, Value: &ar.QueryField}},
+			}{
+				{Key: &QueryField, Value: &ar.QueryField},
+				{Key: &deadman, Value: &deadmanTrue},
+			},
 		},
 		ReportZero: &DontReportZero,
 		Level:      &lc,
@@ -423,6 +437,36 @@ func (i *Influx) createDeadmanCheck(ar alertstore.AlertRule) (*domain.DeadmanChe
 		StaleTime:  &staleTime,
 	}
 	return &check, nil
+}
+
+func (i *Influx) scaleDuration(duration string) (staleTime, every string, e error) {
+	unit := duration[len(duration)-1]
+	timeDuration := duration[:len(duration)-1]
+	tdInt, err := strconv.Atoi(timeDuration)
+	if err != nil {
+		return "", "", fmt.Errorf("could not parse timeduration: %s, error: %v", timeDuration, err)
+	}
+	seconds, err := i.parseDurationSeconds(unit, tdInt)
+	if err != nil {
+		return "", "", err
+	}
+	every := math.Min()
+	staleTime := math.Max(tdInt*2, tdInt+every)
+}
+
+func (i *Influx) parseDurationSeconds(unit byte, value int) (int64, error) {
+	switch unit {
+	case 's':
+		return int64(value), nil
+	case 'm':
+		return int64(value * 60), nil
+	case 'h':
+		return int64(value * 3600), nil
+	case 'd':
+		return int64(value * 86400), nil
+	default:
+		return 1, fmt.Errorf("unknown unit: %c", unit)
+	}
 }
 
 var once sync.Once
