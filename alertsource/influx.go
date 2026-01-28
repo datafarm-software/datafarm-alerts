@@ -5,7 +5,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"math"
 	"net/url"
 	"os"
 	"slices"
@@ -35,6 +34,7 @@ var DeadmanStatusMessage string = `Check: ${r._check_name}. No alert received wi
 var ZeroSeconds = "0s"
 var ctx context.Context
 var DontReportZero = false
+var DeadmanEvery = "5m"
 
 type EpochNano int64
 
@@ -406,7 +406,7 @@ func (i *Influx) createDeadmanCheck(ar alertstore.AlertRule) (*domain.DeadmanChe
 	lc := domain.CheckStatusLevelCRIT
 	hydratedFlux := fmt.Sprintf(Flux, i.org, ar.DeviceId, ar.QueryField, ar.Duration)
 	hydratedStatusMessage := fmt.Sprintf(DeadmanStatusMessage, ar.Duration)
-	staleTime, every, err := i.scaleDuration(ar.Duration)
+	staleTime, err := doubleDuration(ar.Duration)
 	if err != nil {
 		return nil, err
 	}
@@ -420,7 +420,7 @@ func (i *Influx) createDeadmanCheck(ar alertstore.AlertRule) (*domain.DeadmanChe
 				Query:  domain.DashboardQuery{Text: &hydratedFlux},
 				Status: domain.TaskStatusTypeActive,
 			},
-			Every:                 &ar.Duration,
+			Every:                 &DeadmanEvery,
 			Offset:                &ZeroSeconds,
 			StatusMessageTemplate: &hydratedStatusMessage,
 			Tags: &[]struct {
@@ -439,34 +439,17 @@ func (i *Influx) createDeadmanCheck(ar alertstore.AlertRule) (*domain.DeadmanChe
 	return &check, nil
 }
 
-func (i *Influx) scaleDuration(duration string) (staleTime, every string, e error) {
+func doubleDuration(duration string) (string, error) {
 	unit := duration[len(duration)-1]
 	timeDuration := duration[:len(duration)-1]
 	tdInt, err := strconv.Atoi(timeDuration)
 	if err != nil {
-		return "", "", fmt.Errorf("could not parse timeduration: %s, error: %v", timeDuration, err)
+		return "", fmt.Errorf(
+			"could not parse timeduration: %s, error: %v", timeDuration, err)
 	}
-	seconds, err := i.parseDurationSeconds(unit, tdInt)
-	if err != nil {
-		return "", "", err
-	}
-	every := math.Min()
-	staleTime := math.Max(tdInt*2, tdInt+every)
-}
-
-func (i *Influx) parseDurationSeconds(unit byte, value int) (int64, error) {
-	switch unit {
-	case 's':
-		return int64(value), nil
-	case 'm':
-		return int64(value * 60), nil
-	case 'h':
-		return int64(value * 3600), nil
-	case 'd':
-		return int64(value * 86400), nil
-	default:
-		return 1, fmt.Errorf("unknown unit: %c", unit)
-	}
+	staleInt := tdInt * 2
+	staleTime := fmt.Sprintf("%d%s", staleInt, string(unit))
+	return staleTime, nil
 }
 
 var once sync.Once
