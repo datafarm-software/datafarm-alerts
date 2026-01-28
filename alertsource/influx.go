@@ -28,6 +28,7 @@ const Flux string = `from(bucket: "%s")
 const MapQueryField = `|> map(fn: (r) => ({r with _value: r.%s}))`
 const V1FieldAsCols = `|> v1["fieldsAsCols"]()`
 
+var QueryField = "query_field"
 var ThresholdStatusMessage string = `Check: ${r._check_name} State: ${r._level}.`
 var DeadmanStatusMessage string = `Check: ${r._check_name}. No alert received within duration: %s`
 var ZeroSeconds = "0s"
@@ -66,10 +67,10 @@ type InfluxAlert struct {
 	Stop                     string    `json:"_stop"`
 	Time                     time.Time `json:"_time" required:"true"`
 	Type                     string    `json:"_type"`
-	Value                    float64   `json:"_value"`
+	Value                    float64   `json:"_value" required:"false"`
 	Version                  int       `json:"_version"`
-	DeviceId                 string    `json:"deviceID" required:"true"`
-	QueryField               string    `json:"query_field" required:"true"`
+	DeviceId                 string    `json:"deviceID"`
+	QueryField               string    `json:"query_field"`
 	_                        struct{}  `json:"-" additionalProperties:"true"`
 }
 
@@ -143,15 +144,9 @@ func (i *Influx) Close() error {
 }
 
 func (i *Influx) CreateAlertRule(ar alertstore.AlertRule) (string, error) {
-	var check domain.Check
-	var err error
-	if ar.AlertType == alertstore.InactiveSensor {
-		check, err = i.createDeadmanCheck(ar)
-	} else {
-		check, err = i.createThresholdCheck(ar)
-	}
+	check, err := i.createCheck(ar)
 	if err != nil {
-		return "", fmt.Errorf("create check: %v", err)
+		return "", err
 	}
 	params := domain.CreateCheckAllParams{
 		Body: check,
@@ -189,28 +184,27 @@ func (i *Influx) CreateAlertRule(ar alertstore.AlertRule) (string, error) {
 }
 
 func (i *Influx) UpdateAlertRule(ar alertstore.AlertRule) error {
-	var updateParams domain.PutChecksIDAllParams
-	if ar.AlertType == alertstore.InactiveSensor {
-		check, err := i.createDeadmanCheck(ar)
-		if err != nil {
-			return err
-		}
-		updateParams = domain.PutChecksIDAllParams{
-			CheckID: ar.AlertId,
-			Body:    check,
-		}
-	} else {
-		check, err := i.createThresholdCheck(ar)
-		if err != nil {
-			return err
-		}
-		updateParams = domain.PutChecksIDAllParams{
-			CheckID: ar.AlertId,
-			Body:    check,
-		}
+	check, err := i.createCheck(ar)
+	if err != nil {
+		return err
 	}
-	_, err := i.client.APIClient().PutChecksID(ctx, &updateParams)
+	updateParams := domain.PutChecksIDAllParams{
+		CheckID: ar.AlertId,
+		Body:    check,
+	}
+	_, err = i.client.APIClient().PutChecksID(ctx, &updateParams)
 	return err
+}
+
+func (i *Influx) createCheck(ar alertstore.AlertRule) (domain.Check, error) {
+	var check domain.Check
+	var err error
+	if ar.AlertType == alertstore.InactiveSensor {
+		check, err = i.createDeadmanCheck(ar)
+	} else {
+		check, err = i.createThresholdCheck(ar)
+	}
+	return check, err
 }
 
 func (i *Influx) DeleteAlertRule(alertId string) error {
@@ -380,7 +374,6 @@ func (i *Influx) createThresholdCheck(ar alertstore.AlertRule) (*domain.Threshol
 		return nil, fmt.Errorf("unknown alert type: %d", ar.AlertType)
 	}
 
-	key := "query_field"
 	hydratedFlux := fmt.Sprintf(Flux, i.org, ar.DeviceId, ar.QueryField, ar.Duration)
 	check = domain.ThresholdCheck{
 		CheckBaseExtend: domain.CheckBaseExtend{
@@ -396,7 +389,7 @@ func (i *Influx) createThresholdCheck(ar alertstore.AlertRule) (*domain.Threshol
 			Tags: &[]struct {
 				Key   *string `json:"key,omitempty"`
 				Value *string `json:"value,omitempty"`
-			}{{Key: &key, Value: &ar.QueryField}},
+			}{{Key: &QueryField, Value: &ar.QueryField}},
 		},
 		Thresholds: &thresholds,
 	}
@@ -407,6 +400,7 @@ func (i *Influx) createDeadmanCheck(ar alertstore.AlertRule) (*domain.DeadmanChe
 	lc := domain.CheckStatusLevelCRIT
 	hydratedFlux := fmt.Sprintf(Flux, i.org, ar.DeviceId, ar.QueryField, ar.Duration)
 	hydratedStatusMessage := fmt.Sprintf(DeadmanStatusMessage, ar.Duration)
+	staleTime := "2m"
 	check := domain.DeadmanCheck{
 		CheckBaseExtend: domain.CheckBaseExtend{
 			CheckBase: domain.CheckBase{
@@ -418,11 +412,15 @@ func (i *Influx) createDeadmanCheck(ar alertstore.AlertRule) (*domain.DeadmanChe
 			Every:                 &ar.Duration,
 			Offset:                &ZeroSeconds,
 			StatusMessageTemplate: &hydratedStatusMessage,
+			Tags: &[]struct {
+				Key   *string `json:"key,omitempty"`
+				Value *string `json:"value,omitempty"`
+			}{{Key: &QueryField, Value: &ar.QueryField}},
 		},
 		ReportZero: &DontReportZero,
 		Level:      &lc,
 		TimeSince:  &ar.Duration,
-		StaleTime:  &ZeroSeconds,
+		StaleTime:  &staleTime,
 	}
 	return &check, nil
 }
