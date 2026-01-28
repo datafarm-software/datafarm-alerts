@@ -34,7 +34,7 @@ var DeadmanStatusMessage string = `Check: ${r._check_name}. No alert received wi
 var ZeroSeconds = "0s"
 var ctx context.Context
 var DontReportZero = false
-var DeadmanEvery = "5m"
+var DeadmanEveryMax = int64(5 * 60)
 
 type EpochNano int64
 
@@ -406,7 +406,11 @@ func (i *Influx) createDeadmanCheck(ar alertstore.AlertRule) (*domain.DeadmanChe
 	lc := domain.CheckStatusLevelCRIT
 	hydratedFlux := fmt.Sprintf(Flux, i.org, ar.DeviceId, ar.QueryField, ar.Duration)
 	hydratedStatusMessage := fmt.Sprintf(DeadmanStatusMessage, ar.Duration)
-	staleTime, err := doubleDuration(ar.Duration)
+	every, err := parseEveryInterval(ar.Duration)
+	if err != nil {
+		return nil, err
+	}
+	staleTime, err := parseStaleTime(ar.Duration)
 	if err != nil {
 		return nil, err
 	}
@@ -420,7 +424,7 @@ func (i *Influx) createDeadmanCheck(ar alertstore.AlertRule) (*domain.DeadmanChe
 				Query:  domain.DashboardQuery{Text: &hydratedFlux},
 				Status: domain.TaskStatusTypeActive,
 			},
-			Every:                 &DeadmanEvery,
+			Every:                 &every,
 			Offset:                &ZeroSeconds,
 			StatusMessageTemplate: &hydratedStatusMessage,
 			Tags: &[]struct {
@@ -439,7 +443,36 @@ func (i *Influx) createDeadmanCheck(ar alertstore.AlertRule) (*domain.DeadmanChe
 	return &check, nil
 }
 
-func doubleDuration(duration string) (string, error) {
+func parseEveryInterval(duration string) (string, error) {
+	unit := duration[len(duration)-1]
+	timeDuration := duration[:len(duration)-1]
+	tdInt, err := strconv.Atoi(timeDuration)
+	if err != nil {
+		return "", fmt.Errorf(
+			"could not parse timeduration: %s, error: %v", timeDuration, err)
+	}
+	var everySeconds int64
+	switch unit {
+	case 's':
+		everySeconds = int64(tdInt)
+	case 'm':
+		everySeconds = int64(tdInt * 60)
+	case 'h':
+		everySeconds = int64(tdInt * 3600)
+	case 'd':
+		everySeconds = int64(tdInt * 86400)
+	default:
+		return "", fmt.Errorf("unknown relative time unit: %c", unit)
+	}
+	everyInt := max(int64(everySeconds/2), 1)
+	every := fmt.Sprintf("%ds", everyInt)
+	if everyInt >= DeadmanEveryMax {
+		every = "5m"
+	}
+	return every, nil
+}
+
+func parseStaleTime(duration string) (string, error) {
 	unit := duration[len(duration)-1]
 	timeDuration := duration[:len(duration)-1]
 	tdInt, err := strconv.Atoi(timeDuration)
