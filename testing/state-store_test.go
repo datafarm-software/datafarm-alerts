@@ -949,7 +949,7 @@ func TestCreateAlertRule(t *testing.T) {
 			},
 		},
 
-		"multiple alerts on deviceId and queryField combination": {
+		"allow multiple alerts on deviceId and queryField combination": {
 			wantErr:    false,
 			wantStatus: http.StatusOK,
 			wantResponse: alertstore.CreatedRule{
@@ -1018,6 +1018,78 @@ func TestCreateAlertRule(t *testing.T) {
 				DeviceId:       RegisteredDeviceId,
 				QueryField:     RegisteredQueryField,
 				AlertType:      alertstore.Range,
+			},
+		},
+
+		"allow multiple alerts of the same type, on deviceId and queryField combination": {
+			wantErr:    false,
+			wantStatus: http.StatusOK,
+			wantResponse: alertstore.CreatedRule{
+				AlertId: "alert2",
+			},
+			wantAlertStore: alertstore.Schema{
+				AlertRecipients: []alertstore.AlertRecipient{
+					{AlertId: AlertId, Email: UserEmail},
+					{AlertId: "alert2", Email: UserEmail},
+					{AlertId: "alert2", Email: "user2@alert.com"},
+				},
+				DeviceAlerts: []alertstore.DeviceAlertRule{
+					{
+						DeviceId:   RegisteredDeviceId,
+						QueryField: RegisteredQueryField,
+						AlertId:    AlertId,
+					},
+					{
+						DeviceId:   RegisteredDeviceId,
+						QueryField: RegisteredQueryField,
+						AlertId:    "alert2",
+					},
+				},
+				AlertRules: []alertstore.StoredAlertRule{
+					{
+						AlertId:     AlertId,
+						RangeValues: []float32{5},
+						Duration:    "24h",
+						AlertType:   alertstore.LessThan,
+					},
+					{
+						AlertId:     "alert2",
+						RangeValues: []float32{10},
+						Duration:    "24h",
+						AlertType:   alertstore.LessThan,
+					},
+				},
+			},
+			mockAlertStore: alertstore.Schema{
+				AlertRecipients: []alertstore.AlertRecipient{
+					{AlertId: AlertId, Email: UserEmail},
+				},
+				DeviceAlerts: []alertstore.DeviceAlertRule{
+					{
+						DeviceId:   RegisteredDeviceId,
+						QueryField: RegisteredQueryField,
+						AlertId:    AlertId,
+					},
+				},
+				AlertRules: []alertstore.StoredAlertRule{
+					{
+						AlertId:     AlertId,
+						RangeValues: []float32{5},
+						Duration:    "24h",
+						AlertType:   alertstore.LessThan,
+					},
+				},
+			},
+			startingAlertSourceCount: 1,
+			wantAlertSourceCount:     2,
+			alertRule: alertstore.AlertRule{
+				Name:           RegisteredAlertName,
+				EmailAddresses: []string{UserEmail, "user2@alert.com"},
+				RangeValues:    []float32{10},
+				Duration:       "24h",
+				DeviceId:       RegisteredDeviceId,
+				QueryField:     RegisteredQueryField,
+				AlertType:      alertstore.LessThan,
 			},
 		},
 	}

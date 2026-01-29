@@ -402,6 +402,7 @@ func (a *App) CreateAlertRule(
 		AlertRules: []alertstore.StoredAlertRule{
 			{
 				AlertId:     alertId,
+				Name:        in.Body.Name,
 				RangeValues: in.Body.RangeValues,
 				Duration:    in.Body.Duration,
 				AlertType:   in.Body.AlertType,
@@ -479,6 +480,7 @@ func (a *App) UpdateAlertRule(
 		AlertRules: []alertstore.StoredAlertRule{
 			{
 				AlertId:     in.AlertId,
+				Name:        in.Body.Name,
 				RangeValues: in.Body.RangeValues,
 				Duration:    in.Body.Duration,
 				AlertType:   in.Body.AlertType,
