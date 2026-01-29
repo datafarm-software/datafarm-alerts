@@ -458,7 +458,6 @@ func (a *App) UpdateAlertRule(
 		if in.Body.AlertType != alertstore.InactiveSensor {
 			return nil, huma.Error400BadRequest(
 				"Cannot update an existing Inactive Sensor check, to Threshold check.")
-
 		}
 	}
 	if in.Body.AlertType == alertstore.InactiveSensor {
@@ -467,6 +466,8 @@ func (a *App) UpdateAlertRule(
 				"Cannot update an existing alert to an Inactive Sensor check type.")
 		}
 	}
+	var dbRecord alertstore.Schema
+
 	alertId, err := a.AlertStore.CheckAlertRuleExists(in.Body)
 	if err != nil {
 		if !errors.Is(err, alertstore.AlertExists) {
@@ -481,32 +482,27 @@ func (a *App) UpdateAlertRule(
 				"Internal error getting existing alert recipients.")
 		}
 		emails = append(emails, in.Body.EmailAddresses...)
-		recipients := a.ConvertToRecipients(in.AlertId, emails)
-		if err = a.AlertStore.UpdateRecipients(in.AlertId, recipients); err != nil {
-			log.Println("updating recipients for: %s, error: %v", in.AlertId, err)
-			return nil, huma.Error500InternalServerError(
-				"Internal error while updating alert recipients.")
-		}
-		in.Body.AlertId = in.AlertId
+		dbRecord.AlertRecipients = a.ConvertToRecipients(alertId, emails)
+		in.Body.AlertId = alertId
 	}
-	recipients := a.ConvertToRecipients(in.AlertId, in.Body.EmailAddresses)
-	dbRecord := alertstore.Schema{
-		DeviceAlerts: []alertstore.DeviceAlertRule{
-			{
-				DeviceId:   in.Body.DeviceId,
-				QueryField: in.Body.QueryField,
-				AlertId:    in.AlertId,
-			},
+
+	if len(dbRecord.AlertRecipients) < 1 {
+		dbRecord.AlertRecipients = a.ConvertToRecipients(in.AlertId, in.Body.EmailAddresses)
+	}
+	dbRecord.DeviceAlerts = []alertstore.DeviceAlertRule{
+		{
+			DeviceId:   in.Body.DeviceId,
+			QueryField: in.Body.QueryField,
+			AlertId:    in.AlertId,
 		},
-		AlertRecipients: recipients,
-		AlertRules: []alertstore.StoredAlertRule{
-			{
-				AlertId:     in.AlertId,
-				Name:        in.Body.Name,
-				RangeValues: in.Body.RangeValues,
-				Duration:    in.Body.Duration,
-				AlertType:   in.Body.AlertType,
-			},
+	}
+	dbRecord.AlertRules = []alertstore.StoredAlertRule{
+		{
+			AlertId:     in.AlertId,
+			Name:        in.Body.Name,
+			RangeValues: in.Body.RangeValues,
+			Duration:    in.Body.Duration,
+			AlertType:   in.Body.AlertType,
 		},
 	}
 	if err := a.AlertStore.UpdateAlertRule(in.Body.AlertId, dbRecord); err != nil {

@@ -1303,7 +1303,7 @@ func TestUpdateAlertRule(t *testing.T) {
 			wantAlertSourceCount: 1,
 			alertId:              "alert2",
 			updateAlertRule: alertstore.AlertRule{
-				AlertId:        "alert2",
+				AlertId:        "alert1",
 				Name:           RegisteredAlertName,
 				EmailAddresses: []string{"user2@alerts.com"},
 				RangeValues:    []float32{10},
