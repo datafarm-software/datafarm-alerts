@@ -467,6 +467,28 @@ func (a *App) UpdateAlertRule(
 				"Cannot update an existing alert to an Inactive Sensor check type.")
 		}
 	}
+	alertId, err := a.AlertStore.CheckAlertRuleExists(in.Body)
+	if err != nil {
+		if !errors.Is(err, alertstore.AlertExists) {
+			log.Printf("checking alert rule exists for: %s, error: %v", in.AlertId, err)
+			return nil, huma.Error500InternalServerError(
+				"Internal error checking if the alert rule exists.")
+		}
+		emails, err := a.AlertStore.GetAlertRecipients(alertId)
+		if err != nil {
+			log.Printf("getting existing alert recipients for: %s, error: %v", in.AlertId, err)
+			return nil, huma.Error500InternalServerError(
+				"Internal error getting existing alert recipients.")
+		}
+		emails = append(emails, in.Body.EmailAddresses...)
+		recipients := a.ConvertToRecipients(in.AlertId, emails)
+		if err = a.AlertStore.UpdateRecipients(in.AlertId, recipients); err != nil {
+			log.Println("updating recipients for: %s, error: %v", in.AlertId, err)
+			return nil, huma.Error500InternalServerError(
+				"Internal error while updating alert recipients.")
+		}
+		in.Body.AlertId = in.AlertId
+	}
 	recipients := a.ConvertToRecipients(in.AlertId, in.Body.EmailAddresses)
 	dbRecord := alertstore.Schema{
 		DeviceAlerts: []alertstore.DeviceAlertRule{

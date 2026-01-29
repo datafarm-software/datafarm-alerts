@@ -53,6 +53,7 @@ type AlertStore interface {
 	DeleteAlertState(alertId string) error
 	//NOTE: could return alertstore.NoAlert
 	DeleteAlertRule(alertId string) (AlertRule, error)
+	UpdateAlertRecipients(alertId string, recipients []AlertRecipient) error
 }
 
 type Schema struct {

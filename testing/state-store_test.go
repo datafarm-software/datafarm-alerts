@@ -1298,13 +1298,13 @@ func TestUpdateAlertRule(t *testing.T) {
 			},
 		},
 
-		"update an alert to become identical to an existing alert": {
+		"update alert to become identical to an existing alert": {
 			wantStatus:           http.StatusOK,
 			wantAlertSourceCount: 1,
-			alertId:              AlertId,
+			alertId:              "alert2",
 			updateAlertRule: alertstore.AlertRule{
-				Name:           RegisteredAlertName,
 				AlertId:        "alert2",
+				Name:           RegisteredAlertName,
 				EmailAddresses: []string{"user2@alerts.com"},
 				RangeValues:    []float32{10},
 				Duration:       "24h",

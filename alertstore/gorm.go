@@ -243,17 +243,8 @@ func (g *Gorm) UpdateAlertRule(alertId string, dbRecord Schema) error {
 // NOTE: could return alertstore.AlertExists
 func (g *Gorm) CheckAlertRuleExists(ar AlertRule) (string, error) {
 	var alertId string
-	var jsonRangeValues []byte
 	var err error
-	if ar.RangeValues == nil {
-		jsonRangeValues = []byte("")
-	} else {
-		jsonRangeValues, err = json.Marshal(ar.RangeValues)
-		if err != nil {
-			return alertId, fmt.Errorf("marshalling range values: %v", err)
-		}
-	}
-	err = g.db.Debug().Table("stored_alert_rules").
+	db := g.db.Table("stored_alert_rules").
 		Joins(
 			`JOIN device_alert_rules ON
 			stored_alert_rules.alert_id = device_alert_rules.alert_id`,
@@ -261,9 +252,17 @@ func (g *Gorm) CheckAlertRuleExists(ar AlertRule) (string, error) {
 		Where("device_alert_rules.device_id = ?", ar.DeviceId).
 		Where("device_alert_rules.query_field = ?", ar.QueryField).
 		Where("stored_alert_rules.duration = ?", ar.Duration).
-		Where("stored_alert_rules.alert_type = ?", ar.AlertType).
-		Where("stored_alert_rules.range_values = ?", string(jsonRangeValues)).
-		Select("device_alert_rules.alert_id").
+		Where("stored_alert_rules.alert_type = ?", ar.AlertType)
+
+	if ar.RangeValues != nil {
+		jsonRangeValues, err := json.Marshal(ar.RangeValues)
+		if err != nil {
+			return alertId, fmt.Errorf("marshalling range values: %v", err)
+		}
+		db = db.Where("stored_alert_rules.range_values = ?", string(jsonRangeValues))
+	}
+
+	err = db.Select("device_alert_rules.alert_id").
 		Limit(1).
 		Scan(&alertId).Error
 	if alertId != "" {
