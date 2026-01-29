@@ -1289,9 +1289,89 @@ func TestUpdateAlertRule(t *testing.T) {
 				AlertRules: []alertstore.StoredAlertRule{
 					{
 						AlertId:     AlertId,
+						Name:        RegisteredAlertName,
 						RangeValues: []float32{10, 20},
 						Duration:    "24h",
 						AlertType:   alertstore.Range,
+					},
+				},
+			},
+		},
+
+		"update an alert to become identical to an existing alert": {
+			wantStatus:           http.StatusOK,
+			wantAlertSourceCount: 1,
+			alertId:              AlertId,
+			updateAlertRule: alertstore.AlertRule{
+				Name:           RegisteredAlertName,
+				AlertId:        "alert2",
+				EmailAddresses: []string{"user2@alerts.com"},
+				RangeValues:    []float32{10},
+				Duration:       "24h",
+				DeviceId:       RegisteredDeviceId,
+				QueryField:     RegisteredQueryField,
+				AlertType:      alertstore.LessThan,
+			},
+			mockAlertStore: alertstore.Schema{
+				AlertRecipients: []alertstore.AlertRecipient{
+					{AlertId: AlertId, Email: UserEmail},
+					{AlertId: "alert2", Email: "user2@alerts.com"},
+				},
+				DeviceAlerts: []alertstore.DeviceAlertRule{
+					{
+						DeviceId:   RegisteredDeviceId,
+						QueryField: RegisteredQueryField,
+						AlertId:    AlertId,
+					},
+					{
+						DeviceId:   RegisteredDeviceId,
+						QueryField: RegisteredQueryField,
+						AlertId:    "alert2",
+					},
+				},
+				AlertRules: []alertstore.StoredAlertRule{
+					{
+						AlertId:     AlertId,
+						Name:        RegisteredAlertName,
+						RangeValues: []float32{10},
+						Duration:    "24h",
+						AlertType:   alertstore.LessThan,
+					},
+					{
+						AlertId:     "alert2",
+						Name:        "Some other alert name",
+						RangeValues: []float32{43, 90},
+						Duration:    "24h",
+						AlertType:   alertstore.Range,
+					},
+				},
+			},
+			wantAlertStore: alertstore.Schema{
+				AlertStates: []alertstore.AlertState{
+					{
+						Duration:    SomeDuration,
+						RangeValues: []float32{10},
+						Id:          AlertId,
+					},
+				},
+				AlertRecipients: []alertstore.AlertRecipient{
+					{AlertId: AlertId, Email: UserEmail},
+					{AlertId: AlertId, Email: "user2@alerts.com"},
+				},
+				DeviceAlerts: []alertstore.DeviceAlertRule{
+					{
+						DeviceId:   RegisteredDeviceId,
+						QueryField: RegisteredQueryField,
+						AlertId:    AlertId,
+					},
+				},
+				AlertRules: []alertstore.StoredAlertRule{
+					{
+						AlertId:     AlertId,
+						Name:        RegisteredAlertName,
+						RangeValues: []float32{10},
+						Duration:    "24h",
+						AlertType:   alertstore.LessThan,
 					},
 				},
 			},
@@ -1325,6 +1405,7 @@ func TestUpdateAlertRule(t *testing.T) {
 				AlertRules: []alertstore.StoredAlertRule{
 					{
 						AlertId:     AlertId,
+						Name:        RegisteredAlertName,
 						RangeValues: []float32{43, 90},
 						Duration:    "24h",
 						AlertType:   alertstore.Range,
@@ -1335,7 +1416,6 @@ func TestUpdateAlertRule(t *testing.T) {
 						Time:        AlertReceived,
 						Duration:    SomeDuration,
 						RangeValues: []float32{43, 90},
-						Name:        RegisteredAlertName,
 						Id:          AlertId,
 						Level:       alertstore.Ok,
 					},
@@ -1355,6 +1435,7 @@ func TestUpdateAlertRule(t *testing.T) {
 				AlertRules: []alertstore.StoredAlertRule{
 					{
 						AlertId:     AlertId,
+						Name:        RegisteredAlertName,
 						RangeValues: []float32{10, 20},
 						Duration:    "24h",
 						AlertType:   alertstore.Range,
@@ -1400,6 +1481,7 @@ func TestUpdateAlertRule(t *testing.T) {
 				AlertRules: []alertstore.StoredAlertRule{
 					{
 						AlertId:     AlertId,
+						Name:        RegisteredAlertName,
 						RangeValues: []float32{10},
 						Duration:    "24h",
 						AlertType:   alertstore.LessThan,
@@ -1427,6 +1509,7 @@ func TestUpdateAlertRule(t *testing.T) {
 				AlertRules: []alertstore.StoredAlertRule{
 					{
 						AlertId:     AlertId,
+						Name:        RegisteredAlertName,
 						RangeValues: []float32{10},
 						Duration:    "24h",
 						AlertType:   alertstore.GreaterThan,
@@ -1463,6 +1546,7 @@ func TestUpdateAlertRule(t *testing.T) {
 				AlertRules: []alertstore.StoredAlertRule{
 					{
 						AlertId:     AlertId,
+						Name:        RegisteredAlertName,
 						RangeValues: []float32{10},
 						Duration:    "24h",
 						AlertType:   alertstore.GreaterThan,
@@ -1490,6 +1574,7 @@ func TestUpdateAlertRule(t *testing.T) {
 				AlertRules: []alertstore.StoredAlertRule{
 					{
 						AlertId:     AlertId,
+						Name:        RegisteredAlertName,
 						RangeValues: []float32{10},
 						Duration:    "24h",
 						AlertType:   alertstore.LessThan,
@@ -1526,6 +1611,7 @@ func TestUpdateAlertRule(t *testing.T) {
 				AlertRules: []alertstore.StoredAlertRule{
 					{
 						AlertId:     AlertId,
+						Name:        RegisteredAlertName,
 						RangeValues: []float32{10},
 						Duration:    "24h",
 						AlertType:   alertstore.LessThan,
@@ -1553,6 +1639,7 @@ func TestUpdateAlertRule(t *testing.T) {
 				AlertRules: []alertstore.StoredAlertRule{
 					{
 						AlertId:     AlertId,
+						Name:        RegisteredAlertName,
 						RangeValues: []float32{10, 20},
 						Duration:    "24h",
 						AlertType:   alertstore.Range,
@@ -1590,6 +1677,7 @@ func TestUpdateAlertRule(t *testing.T) {
 				AlertRules: []alertstore.StoredAlertRule{
 					{
 						AlertId:     AlertId,
+						Name:        RegisteredAlertName,
 						RangeValues: []float32{10},
 						Duration:    "24h",
 						AlertType:   alertstore.LessThan,
@@ -1610,6 +1698,7 @@ func TestUpdateAlertRule(t *testing.T) {
 				AlertRules: []alertstore.StoredAlertRule{
 					{
 						AlertId:     AlertId,
+						Name:        RegisteredAlertName,
 						RangeValues: []float32{10},
 						Duration:    "24h",
 						AlertType:   alertstore.LessThan,
@@ -1647,6 +1736,7 @@ func TestUpdateAlertRule(t *testing.T) {
 				AlertRules: []alertstore.StoredAlertRule{
 					{
 						AlertId:     AlertId,
+						Name:        RegisteredAlertName,
 						RangeValues: []float32{10},
 						Duration:    "24h",
 						AlertType:   alertstore.LessThan,
@@ -1667,6 +1757,7 @@ func TestUpdateAlertRule(t *testing.T) {
 				AlertRules: []alertstore.StoredAlertRule{
 					{
 						AlertId:     AlertId,
+						Name:        RegisteredAlertName,
 						RangeValues: []float32{10},
 						Duration:    "24h",
 						AlertType:   alertstore.LessThan,
@@ -1703,6 +1794,7 @@ func TestUpdateAlertRule(t *testing.T) {
 				AlertRules: []alertstore.StoredAlertRule{
 					{
 						AlertId:     AlertId,
+						Name:        RegisteredAlertName,
 						RangeValues: []float32{10},
 						Duration:    "24h",
 						AlertType:   alertstore.LessThan,
@@ -1723,6 +1815,7 @@ func TestUpdateAlertRule(t *testing.T) {
 				AlertRules: []alertstore.StoredAlertRule{
 					{
 						AlertId:     AlertId,
+						Name:        RegisteredAlertName,
 						RangeValues: []float32{10},
 						Duration:    "24h",
 						AlertType:   alertstore.LessThan,
@@ -1758,6 +1851,7 @@ func TestUpdateAlertRule(t *testing.T) {
 				AlertRules: []alertstore.StoredAlertRule{
 					{
 						AlertId:   AlertId,
+						Name:      RegisteredAlertName,
 						Duration:  "24h",
 						AlertType: alertstore.InactiveSensor,
 					},
@@ -1783,6 +1877,7 @@ func TestUpdateAlertRule(t *testing.T) {
 				AlertRules: []alertstore.StoredAlertRule{
 					{
 						AlertId:   AlertId,
+						Name:      RegisteredAlertName,
 						Duration:  "48h",
 						AlertType: alertstore.InactiveSensor,
 					},
@@ -1818,6 +1913,7 @@ func TestUpdateAlertRule(t *testing.T) {
 				AlertRules: []alertstore.StoredAlertRule{
 					{
 						AlertId:     AlertId,
+						Name:        RegisteredAlertName,
 						RangeValues: []float32{10, 20},
 						Duration:    "24h",
 						AlertType:   alertstore.Range,
@@ -1846,6 +1942,7 @@ func TestUpdateAlertRule(t *testing.T) {
 				AlertRules: []alertstore.StoredAlertRule{
 					{
 						AlertId:     AlertId,
+						Name:        RegisteredAlertName,
 						RangeValues: []float32{10, 20},
 						Duration:    "24h",
 						AlertType:   alertstore.Range,
@@ -1882,6 +1979,7 @@ func TestUpdateAlertRule(t *testing.T) {
 				AlertRules: []alertstore.StoredAlertRule{
 					{
 						AlertId:     AlertId,
+						Name:        RegisteredAlertName,
 						RangeValues: []float32{10, 20},
 						Duration:    "24h",
 						AlertType:   alertstore.Range,
@@ -1909,6 +2007,7 @@ func TestUpdateAlertRule(t *testing.T) {
 				AlertRules: []alertstore.StoredAlertRule{
 					{
 						AlertId:     AlertId,
+						Name:        RegisteredAlertName,
 						RangeValues: []float32{10, 20},
 						Duration:    "24h",
 						AlertType:   alertstore.Range,
@@ -1977,7 +2076,7 @@ func TestUpdateAlertRule(t *testing.T) {
 			defer a.AlertStore.Close()
 			err = a.AlertStore.PrepareDb(tc.mockAlertStore)
 			require.Nil(t, err)
-			a.AlertSource, err = alertsource.NewTestingInflux()
+			a.AlertSource, err = alertsource.NewMockAlertSource()
 			require.Nil(t, err)
 			defer a.AlertSource.Close()
 			alertRules = SchemaToAlertRules(tc.mockAlertStore)
