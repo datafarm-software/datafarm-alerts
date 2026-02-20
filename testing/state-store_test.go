@@ -2112,6 +2112,74 @@ func TestUpdateAlertRule(t *testing.T) {
 				AlertType:      alertstore.LessThan,
 			},
 		},
+
+		"update alert level from crit to warn": {
+			wantStatus:           http.StatusOK,
+			wantAlertSourceCount: 1,
+			alertId:              AlertId,
+			updateAlertRule: alertstore.AlertRule{
+				Name:           RegisteredAlertName,
+				AlertId:        AlertId,
+				EmailAddresses: []string{UserEmail},
+				RangeValues:    []float32{10},
+				Duration:       "24h",
+				DeviceId:       RegisteredDeviceId,
+				QueryField:     RegisteredQueryField,
+				AlertType:      alertstore.GreaterThan,
+				AlertLevel:     alertstore.Warn,
+			},
+			mockAlertStore: alertstore.Schema{
+				AlertRecipients: []alertstore.AlertRecipient{
+					{AlertId: AlertId, Email: UserEmail},
+				},
+				DeviceAlerts: []alertstore.DeviceAlertRule{
+					{
+						DeviceId:   RegisteredDeviceId,
+						QueryField: RegisteredQueryField,
+						AlertId:    AlertId,
+					},
+				},
+				AlertRules: []alertstore.StoredAlertRule{
+					{
+						AlertId:     AlertId,
+						Name:        RegisteredAlertName,
+						RangeValues: []float32{10},
+						Duration:    "24h",
+						AlertType:   alertstore.LessThan,
+						AlertLevel:  alertstore.Crit,
+					},
+				},
+			},
+			wantAlertStore: alertstore.Schema{
+				AlertStates: []alertstore.AlertState{
+					{
+						Duration:    SomeDuration,
+						RangeValues: []float32{10},
+						Id:          AlertId,
+					},
+				},
+				AlertRecipients: []alertstore.AlertRecipient{
+					{AlertId: AlertId, Email: UserEmail},
+				},
+				DeviceAlerts: []alertstore.DeviceAlertRule{
+					{
+						DeviceId:   RegisteredDeviceId,
+						QueryField: RegisteredQueryField,
+						AlertId:    AlertId,
+					},
+				},
+				AlertRules: []alertstore.StoredAlertRule{
+					{
+						AlertId:     AlertId,
+						Name:        RegisteredAlertName,
+						RangeValues: []float32{10},
+						Duration:    "24h",
+						AlertType:   alertstore.GreaterThan,
+						AlertLevel:  alertstore.Warn,
+					},
+				},
+			},
+		},
 	}
 
 	var err error
@@ -2301,6 +2369,7 @@ func TestDeleteAlert(t *testing.T) {
 						AlertId:     AlertId,
 						Duration:    "24h",
 						RangeValues: []float32{10, 20},
+						AlertLevel:  alertstore.Crit,
 						AlertType:   alertstore.Range,
 					},
 				},
@@ -2364,6 +2433,7 @@ func TestDeleteAlert(t *testing.T) {
 						Duration:    "48h",
 						RangeValues: []float32{10},
 						AlertType:   alertstore.LessThan,
+						AlertLevel:  alertstore.Warn,
 					},
 				},
 				AlertStates: []alertstore.AlertState{
@@ -2410,6 +2480,7 @@ func TestDeleteAlert(t *testing.T) {
 				DeviceId:       "device2",
 				QueryField:     "humidity",
 				AlertType:      alertstore.LessThan,
+				AlertLevel:     alertstore.Warn,
 			},
 		},
 
@@ -2512,18 +2583,23 @@ func TestDeleteAlert(t *testing.T) {
 func SchemaToAlertRules(dbRecord alertstore.Schema) []alertstore.AlertRule {
 	var ar alertstore.AlertRule
 	rules := make([]alertstore.AlertRule, 0, len(dbRecord.DeviceAlerts))
+	rulesMap := make(map[string]alertstore.AlertRule, len(dbRecord.DeviceAlerts))
 	for _, da := range dbRecord.DeviceAlerts {
 		ar.AlertId = da.AlertId
 		ar.DeviceId = da.DeviceId
 		ar.QueryField = da.QueryField
-
-		for _, rule := range dbRecord.AlertRules {
-			ar.RangeValues = rule.RangeValues
-			ar.Duration = rule.Duration
-			ar.AlertType = rule.AlertType
-		}
-		ar.Name = fmt.Sprintf("DeviceId: %s, QueryField: %s", ar.DeviceId, ar.QueryField)
-		rules = append(rules, ar)
+		rulesMap[da.AlertId] = ar
+	}
+	for _, rule := range dbRecord.AlertRules {
+		ar = rulesMap[rule.AlertId]
+		ar.RangeValues = rule.RangeValues
+		ar.Duration = rule.Duration
+		ar.AlertType = rule.AlertType
+		ar.Name = rule.Name
+		rulesMap[rule.AlertId] = ar
+	}
+	for _, r := range rulesMap {
+		rules = append(rules, r)
 	}
 	return rules
 }

@@ -467,7 +467,6 @@ func (a *App) UpdateAlertRule(
 		}
 	}
 	var dbRecord alertstore.Schema
-
 	alertId, err := a.AlertStore.CheckAlertRuleExists(in.Body)
 	if err != nil {
 		if !errors.Is(err, alertstore.AlertExists) {
@@ -513,6 +512,7 @@ func (a *App) UpdateAlertRule(
 				RangeValues: in.Body.RangeValues,
 				Duration:    in.Body.Duration,
 				AlertType:   in.Body.AlertType,
+				AlertLevel:  in.Body.AlertLevel,
 			},
 		}
 	}
