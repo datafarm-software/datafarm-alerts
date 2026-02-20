@@ -119,6 +119,7 @@ func TestShouldNotify(t *testing.T) {
 			want: false,
 			alert: alertstore.AlertState{
 				Level: alertstore.Ok,
+				Time:  AfterDuration,
 			},
 			previous: alertstore.AlertState{
 				Level: alertstore.Crit,
@@ -2612,11 +2613,14 @@ func SchemaToAlertRules(dbRecord alertstore.Schema) []alertstore.AlertRule {
 		ar.QueryField = da.QueryField
 		rulesMap[da.AlertId] = ar
 	}
-	for _, rule := range dbRecord.AlertRules {
+	for i, rule := range dbRecord.AlertRules {
 		ar = rulesMap[rule.AlertId]
 		ar.RangeValues = rule.RangeValues
 		ar.Duration = rule.Duration
 		ar.AlertType = rule.AlertType
+		if rule.Name == "" {
+			rule.Name = fmt.Sprintf("DeviceId: %s, QueryField: %s %d", ar.DeviceId, ar.QueryField, i)
+		}
 		ar.Name = rule.Name
 		rulesMap[rule.AlertId] = ar
 	}
