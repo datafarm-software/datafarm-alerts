@@ -40,7 +40,7 @@ var OnDuration = AlertReceived.Add(24 * time.Hour)
 var AfterDuration = AlertReceived.Add(25 * time.Hour)
 var WithinDuration = AlertReceived.Add(6 * time.Hour)
 
-func TestShouldNotifyCrit(t *testing.T) {
+func TestShouldNotify(t *testing.T) {
 	var got bool
 	tests := map[string]struct {
 		want            bool
@@ -60,6 +60,7 @@ func TestShouldNotifyCrit(t *testing.T) {
 				Duration: SomeDuration,
 			},
 		},
+
 		"still crit after duration, so notify": {
 			want: true,
 			alert: alertstore.AlertState{
@@ -113,6 +114,7 @@ func TestShouldNotifyCrit(t *testing.T) {
 				Level: alertstore.Ok,
 			},
 		},
+
 		"change from crit to ok, so do nothing": {
 			want: false,
 			alert: alertstore.AlertState{
@@ -122,10 +124,30 @@ func TestShouldNotifyCrit(t *testing.T) {
 				Level: alertstore.Crit,
 			},
 		},
+
+		"change to warn, so notify": {
+			want: true,
+			alert: alertstore.AlertState{
+				Level: alertstore.Warn,
+			},
+			previous: alertstore.AlertState{
+				Level: alertstore.Ok,
+			},
+		},
+
+		"change from warn to ok, so do nothing": {
+			want: false,
+			alert: alertstore.AlertState{
+				Level: alertstore.Ok,
+			},
+			previous: alertstore.AlertState{
+				Level: alertstore.Warn,
+			},
+		},
 	}
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
-			got = a.ShouldNotifyCrit(tc.alert, tc.previous)
+			got = a.ShouldNotify(tc.alert, tc.previous)
 			if got != tc.want {
 				t.Fatalf("tc.want = %v, got = %v", tc.want, got)
 			}

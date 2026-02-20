@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"reflect"
+	"time"
 
 	"github.com/danielgtaylor/huma/v2"
 	"github.com/danielgtaylor/huma/v2/adapters/humago"
@@ -259,7 +260,7 @@ func (a *App) RegisterHumaOperations(api huma.API) {
 				Description: "Internal Server Error",
 				Content: map[string]*huma.MediaType{
 					"application/json": {
-						Schema: huma.SchemaFromType(registry, reflect.TypeOf(HumaError{})),
+						Schema: huma.SchemaFromType(registry, reflect.TypeFor[HumaError]()),
 						Example: HumaError{
 							Schema: "http://localhost:3030/schemas/ErrorModel.json",
 							Title:  "Internal Server Error",
@@ -271,7 +272,7 @@ func (a *App) RegisterHumaOperations(api huma.API) {
 				Description: "Bad Request",
 				Content: map[string]*huma.MediaType{
 					"application/json": {
-						Schema: huma.SchemaFromType(registry, reflect.TypeOf(HumaError{})),
+						Schema: huma.SchemaFromType(registry, reflect.TypeFor[HumaError]()),
 						Example: HumaError{
 							Schema: "http://localhost:3030/schemas/ErrorModel.json",
 							Title:  "Bad Request",
@@ -317,7 +318,7 @@ func (a *App) RespondToAlert(
 		log.Printf("parsing duration for alert: %s, %s, err: %v", alert.Id, alertRule.Duration, err)
 		return nil, huma.Error500InternalServerError("Internal error parsing the duration of the alert.")
 	}
-	if !a.ShouldNotifyCrit(alert, previousAlert) {
+	if !a.ShouldNotify(alert, previousAlert) {
 		return nil, nil
 	}
 	emails, err := a.AlertStore.GetAlertRecipients(alert.Id)
@@ -344,12 +345,16 @@ func (a *App) RespondToAlert(
 	return nil, nil
 }
 
-func (a *App) ShouldNotifyCrit(alert, previous alertstore.AlertState) bool {
-	if alert.Level != alertstore.Crit {
-		return false
-	}
+func (a *App) ShouldNotify(alert, previous alertstore.AlertState) bool {
 	if alert.Level > previous.Level {
 		return true
+	}
+	emptyTime := time.Time{}
+	if alert.Time.Equal(emptyTime) {
+		return false
+	}
+	if previous.Time.Equal(emptyTime) {
+		return false
 	}
 	if alert.Time.Sub(previous.Time) >= alert.Duration {
 		return true
