@@ -541,6 +541,7 @@ func (a *App) UpdateAlertRule(
 		RangeValues: in.Body.RangeValues,
 		Name:        in.Body.Name,
 		Id:          in.Body.AlertId,
+		Level:       in.Body.AlertLevel,
 	}
 	if err = a.AlertStore.UpdateAlertState(alertState); err != nil {
 		log.Printf("updating alert state for id: %s, err: %v", alertState.Id, err)

@@ -1628,6 +1628,7 @@ func TestUpdateAlertRule(t *testing.T) {
 				DeviceId:       RegisteredDeviceId,
 				QueryField:     RegisteredQueryField,
 				AlertType:      alertstore.Range,
+				AlertLevel:     alertstore.Crit,
 			},
 			mockAlertStore: alertstore.Schema{
 				AlertRecipients: []alertstore.AlertRecipient{
@@ -1646,6 +1647,7 @@ func TestUpdateAlertRule(t *testing.T) {
 						RangeValues: []float32{43, 90},
 						Duration:    "24h",
 						AlertType:   alertstore.Range,
+						AlertLevel:  alertstore.Crit,
 					},
 				},
 			},
@@ -1655,6 +1657,7 @@ func TestUpdateAlertRule(t *testing.T) {
 						Duration:    SomeDuration,
 						RangeValues: []float32{10, 20},
 						Id:          AlertId,
+						Level:       alertstore.Crit,
 					},
 				},
 				AlertRecipients: []alertstore.AlertRecipient{
@@ -1674,6 +1677,7 @@ func TestUpdateAlertRule(t *testing.T) {
 						RangeValues: []float32{10, 20},
 						Duration:    "24h",
 						AlertType:   alertstore.Range,
+						AlertLevel:  alertstore.Crit,
 					},
 				},
 			},
@@ -1692,6 +1696,7 @@ func TestUpdateAlertRule(t *testing.T) {
 				DeviceId:       RegisteredDeviceId,
 				QueryField:     RegisteredQueryField,
 				AlertType:      alertstore.LessThan,
+				AlertLevel:     alertstore.Crit,
 			},
 			mockAlertStore: alertstore.Schema{
 				AlertRecipients: []alertstore.AlertRecipient{
@@ -1717,6 +1722,7 @@ func TestUpdateAlertRule(t *testing.T) {
 						RangeValues: []float32{10},
 						Duration:    "24h",
 						AlertType:   alertstore.LessThan,
+						AlertLevel:  alertstore.Crit,
 					},
 					{
 						AlertId:     "alert2",
@@ -1724,6 +1730,7 @@ func TestUpdateAlertRule(t *testing.T) {
 						RangeValues: []float32{43, 90},
 						Duration:    "24h",
 						AlertType:   alertstore.Range,
+						AlertLevel:  alertstore.Crit,
 					},
 				},
 			},
@@ -1733,6 +1740,7 @@ func TestUpdateAlertRule(t *testing.T) {
 						Duration:    SomeDuration,
 						RangeValues: []float32{10},
 						Id:          AlertId,
+						Level:       alertstore.Crit,
 					},
 				},
 				AlertRecipients: []alertstore.AlertRecipient{
@@ -1753,6 +1761,7 @@ func TestUpdateAlertRule(t *testing.T) {
 						RangeValues: []float32{10},
 						Duration:    "24h",
 						AlertType:   alertstore.LessThan,
+						AlertLevel:  alertstore.Crit,
 					},
 				},
 			},
@@ -1771,6 +1780,7 @@ func TestUpdateAlertRule(t *testing.T) {
 				DeviceId:       RegisteredDeviceId,
 				QueryField:     RegisteredQueryField,
 				AlertType:      alertstore.Range,
+				AlertLevel:     alertstore.Crit,
 			},
 			mockAlertStore: alertstore.Schema{
 				AlertRecipients: []alertstore.AlertRecipient{
@@ -1790,6 +1800,7 @@ func TestUpdateAlertRule(t *testing.T) {
 						RangeValues: []float32{43, 90},
 						Duration:    "24h",
 						AlertType:   alertstore.Range,
+						AlertLevel:  alertstore.Crit,
 					},
 				},
 				AlertStates: []alertstore.AlertState{
@@ -1820,15 +1831,15 @@ func TestUpdateAlertRule(t *testing.T) {
 						RangeValues: []float32{10, 20},
 						Duration:    "24h",
 						AlertType:   alertstore.Range,
+						AlertLevel:  alertstore.Crit,
 					},
 				},
 				AlertStates: []alertstore.AlertState{
 					{
-						Time:        AlertReceived,
 						Duration:    SomeDuration,
 						RangeValues: []float32{10, 20},
 						Id:          AlertId,
-						Level:       alertstore.Ok,
+						Level:       alertstore.Crit,
 					},
 				},
 			},
@@ -1847,6 +1858,7 @@ func TestUpdateAlertRule(t *testing.T) {
 				DeviceId:       RegisteredDeviceId,
 				QueryField:     RegisteredQueryField,
 				AlertType:      alertstore.GreaterThan,
+				AlertLevel:     alertstore.Crit,
 			},
 			mockAlertStore: alertstore.Schema{
 				AlertRecipients: []alertstore.AlertRecipient{
@@ -1866,6 +1878,7 @@ func TestUpdateAlertRule(t *testing.T) {
 						RangeValues: []float32{10},
 						Duration:    "24h",
 						AlertType:   alertstore.LessThan,
+						AlertLevel:  alertstore.Crit,
 					},
 				},
 			},
@@ -1875,6 +1888,7 @@ func TestUpdateAlertRule(t *testing.T) {
 						Duration:    SomeDuration,
 						RangeValues: []float32{10},
 						Id:          AlertId,
+						Level:       alertstore.Crit,
 					},
 				},
 				AlertRecipients: []alertstore.AlertRecipient{
@@ -1894,6 +1908,7 @@ func TestUpdateAlertRule(t *testing.T) {
 						RangeValues: []float32{10},
 						Duration:    "24h",
 						AlertType:   alertstore.GreaterThan,
+						AlertLevel:  alertstore.Crit,
 					},
 				},
 			},
@@ -1912,6 +1927,7 @@ func TestUpdateAlertRule(t *testing.T) {
 				DeviceId:       RegisteredDeviceId,
 				QueryField:     RegisteredQueryField,
 				AlertType:      alertstore.LessThan,
+				AlertLevel:     alertstore.Crit,
 			},
 			mockAlertStore: alertstore.Schema{
 				AlertRecipients: []alertstore.AlertRecipient{
@@ -1931,6 +1947,7 @@ func TestUpdateAlertRule(t *testing.T) {
 						RangeValues: []float32{10},
 						Duration:    "24h",
 						AlertType:   alertstore.GreaterThan,
+						AlertLevel:  alertstore.Crit,
 					},
 				},
 			},
@@ -1940,6 +1957,7 @@ func TestUpdateAlertRule(t *testing.T) {
 						Duration:    SomeDuration,
 						RangeValues: []float32{10},
 						Id:          AlertId,
+						Level:       alertstore.Crit,
 					},
 				},
 				AlertRecipients: []alertstore.AlertRecipient{
@@ -1959,6 +1977,7 @@ func TestUpdateAlertRule(t *testing.T) {
 						RangeValues: []float32{10},
 						Duration:    "24h",
 						AlertType:   alertstore.LessThan,
+						AlertLevel:  alertstore.Crit,
 					},
 				},
 			},
@@ -1977,6 +1996,7 @@ func TestUpdateAlertRule(t *testing.T) {
 				DeviceId:       RegisteredDeviceId,
 				QueryField:     RegisteredQueryField,
 				AlertType:      alertstore.Range,
+				AlertLevel:     alertstore.Crit,
 			},
 			mockAlertStore: alertstore.Schema{
 				AlertRecipients: []alertstore.AlertRecipient{
@@ -1996,6 +2016,7 @@ func TestUpdateAlertRule(t *testing.T) {
 						RangeValues: []float32{10},
 						Duration:    "24h",
 						AlertType:   alertstore.LessThan,
+						AlertLevel:  alertstore.Crit,
 					},
 				},
 			},
@@ -2005,6 +2026,7 @@ func TestUpdateAlertRule(t *testing.T) {
 						Duration:    SomeDuration,
 						RangeValues: []float32{10, 20},
 						Id:          AlertId,
+						Level:       alertstore.Crit,
 					},
 				},
 				AlertRecipients: []alertstore.AlertRecipient{
@@ -2024,6 +2046,7 @@ func TestUpdateAlertRule(t *testing.T) {
 						RangeValues: []float32{10, 20},
 						Duration:    "24h",
 						AlertType:   alertstore.Range,
+						AlertLevel:  alertstore.Crit,
 					},
 				},
 			},
@@ -2042,6 +2065,7 @@ func TestUpdateAlertRule(t *testing.T) {
 				Duration:       "24h",
 				DeviceId:       RegisteredDeviceId,
 				QueryField:     UnregisteredQueryField,
+				AlertLevel:     alertstore.Crit,
 				AlertType:      alertstore.Range,
 			},
 			mockAlertStore: alertstore.Schema{
@@ -2061,6 +2085,7 @@ func TestUpdateAlertRule(t *testing.T) {
 						Name:        RegisteredAlertName,
 						RangeValues: []float32{10},
 						Duration:    "24h",
+						AlertLevel:  alertstore.Crit,
 						AlertType:   alertstore.LessThan,
 					},
 				},
@@ -2082,6 +2107,7 @@ func TestUpdateAlertRule(t *testing.T) {
 						Name:        RegisteredAlertName,
 						RangeValues: []float32{10},
 						Duration:    "24h",
+						AlertLevel:  alertstore.Crit,
 						AlertType:   alertstore.LessThan,
 					},
 				},
@@ -2101,6 +2127,7 @@ func TestUpdateAlertRule(t *testing.T) {
 				Duration:       "24h",
 				DeviceId:       UnregisteredDeviceId,
 				QueryField:     RegisteredQueryField,
+				AlertLevel:     alertstore.Crit,
 				AlertType:      alertstore.Range,
 			},
 			mockAlertStore: alertstore.Schema{
@@ -2120,6 +2147,7 @@ func TestUpdateAlertRule(t *testing.T) {
 						Name:        RegisteredAlertName,
 						RangeValues: []float32{10},
 						Duration:    "24h",
+						AlertLevel:  alertstore.Crit,
 						AlertType:   alertstore.LessThan,
 					},
 				},
@@ -2141,6 +2169,7 @@ func TestUpdateAlertRule(t *testing.T) {
 						Name:        RegisteredAlertName,
 						RangeValues: []float32{10},
 						Duration:    "24h",
+						AlertLevel:  alertstore.Crit,
 						AlertType:   alertstore.LessThan,
 					},
 				},
@@ -2159,6 +2188,7 @@ func TestUpdateAlertRule(t *testing.T) {
 				Duration:       "24h",
 				DeviceId:       RegisteredDeviceId,
 				QueryField:     RegisteredQueryField,
+				AlertLevel:     alertstore.Crit,
 				AlertType:      alertstore.InactiveSensor,
 			},
 			mockAlertStore: alertstore.Schema{
@@ -2178,6 +2208,7 @@ func TestUpdateAlertRule(t *testing.T) {
 						Name:        RegisteredAlertName,
 						RangeValues: []float32{10},
 						Duration:    "24h",
+						AlertLevel:  alertstore.Crit,
 						AlertType:   alertstore.LessThan,
 					},
 				},
@@ -2199,6 +2230,7 @@ func TestUpdateAlertRule(t *testing.T) {
 						Name:        RegisteredAlertName,
 						RangeValues: []float32{10},
 						Duration:    "24h",
+						AlertLevel:  alertstore.Crit,
 						AlertType:   alertstore.LessThan,
 					},
 				},
@@ -2216,6 +2248,7 @@ func TestUpdateAlertRule(t *testing.T) {
 				Duration:       "48h",
 				DeviceId:       RegisteredDeviceId,
 				QueryField:     RegisteredQueryField,
+				AlertLevel:     alertstore.Crit,
 				AlertType:      alertstore.InactiveSensor,
 			},
 			mockAlertStore: alertstore.Schema{
@@ -2231,10 +2264,11 @@ func TestUpdateAlertRule(t *testing.T) {
 				},
 				AlertRules: []alertstore.StoredAlertRule{
 					{
-						AlertId:   AlertId,
-						Name:      RegisteredAlertName,
-						Duration:  "24h",
-						AlertType: alertstore.InactiveSensor,
+						AlertId:    AlertId,
+						Name:       RegisteredAlertName,
+						Duration:   "24h",
+						AlertLevel: alertstore.Crit,
+						AlertType:  alertstore.InactiveSensor,
 					},
 				},
 			},
@@ -2243,6 +2277,7 @@ func TestUpdateAlertRule(t *testing.T) {
 					{
 						Duration: 48 * time.Hour,
 						Id:       AlertId,
+						Level:    alertstore.Crit,
 					},
 				},
 				AlertRecipients: []alertstore.AlertRecipient{
@@ -2257,10 +2292,11 @@ func TestUpdateAlertRule(t *testing.T) {
 				},
 				AlertRules: []alertstore.StoredAlertRule{
 					{
-						AlertId:   AlertId,
-						Name:      RegisteredAlertName,
-						Duration:  "48h",
-						AlertType: alertstore.InactiveSensor,
+						AlertId:    AlertId,
+						Name:       RegisteredAlertName,
+						Duration:   "48h",
+						AlertLevel: alertstore.Crit,
+						AlertType:  alertstore.InactiveSensor,
 					},
 				},
 			},
@@ -2278,6 +2314,7 @@ func TestUpdateAlertRule(t *testing.T) {
 				Duration:       "24h",
 				DeviceId:       RegisteredDeviceId,
 				QueryField:     RegisteredQueryField,
+				AlertLevel:     alertstore.Crit,
 				AlertType:      alertstore.Range,
 			},
 			mockAlertStore: alertstore.Schema{
@@ -2297,6 +2334,7 @@ func TestUpdateAlertRule(t *testing.T) {
 						Name:        RegisteredAlertName,
 						RangeValues: []float32{10, 20},
 						Duration:    "24h",
+						AlertLevel:  alertstore.Crit,
 						AlertType:   alertstore.Range,
 					},
 				},
@@ -2307,6 +2345,7 @@ func TestUpdateAlertRule(t *testing.T) {
 						Duration:    SomeDuration,
 						RangeValues: []float32{10, 20},
 						Id:          AlertId,
+						Level:       alertstore.Crit,
 					},
 				},
 				AlertRecipients: []alertstore.AlertRecipient{
@@ -2326,6 +2365,7 @@ func TestUpdateAlertRule(t *testing.T) {
 						Name:        RegisteredAlertName,
 						RangeValues: []float32{10, 20},
 						Duration:    "24h",
+						AlertLevel:  alertstore.Crit,
 						AlertType:   alertstore.Range,
 					},
 				},
@@ -2344,6 +2384,7 @@ func TestUpdateAlertRule(t *testing.T) {
 				Duration:       "24h",
 				DeviceId:       RegisteredDeviceId,
 				QueryField:     RegisteredQueryField,
+				AlertLevel:     alertstore.Crit,
 				AlertType:      alertstore.Range,
 			},
 			mockAlertStore: alertstore.Schema{
@@ -2363,6 +2404,7 @@ func TestUpdateAlertRule(t *testing.T) {
 						Name:        RegisteredAlertName,
 						RangeValues: []float32{10, 20},
 						Duration:    "24h",
+						AlertLevel:  alertstore.Crit,
 						AlertType:   alertstore.Range,
 					},
 				},
@@ -2373,6 +2415,7 @@ func TestUpdateAlertRule(t *testing.T) {
 						Duration:    SomeDuration,
 						RangeValues: []float32{10, 20},
 						Id:          AlertId,
+						Level:       alertstore.Crit,
 					},
 				},
 				AlertRecipients: []alertstore.AlertRecipient{
@@ -2391,6 +2434,7 @@ func TestUpdateAlertRule(t *testing.T) {
 						Name:        RegisteredAlertName,
 						RangeValues: []float32{10, 20},
 						Duration:    "24h",
+						AlertLevel:  alertstore.Crit,
 						AlertType:   alertstore.Range,
 					},
 				},
@@ -2409,6 +2453,7 @@ func TestUpdateAlertRule(t *testing.T) {
 				Duration:       "24h",
 				DeviceId:       RegisteredDeviceId,
 				QueryField:     RegisteredQueryField,
+				AlertLevel:     alertstore.Crit,
 				AlertType:      alertstore.Range,
 			},
 		},
@@ -2425,6 +2470,7 @@ func TestUpdateAlertRule(t *testing.T) {
 				Duration:       "24h",
 				DeviceId:       RegisteredDeviceId,
 				QueryField:     RegisteredQueryField,
+				AlertLevel:     alertstore.Crit,
 				AlertType:      alertstore.Range,
 			},
 		},
@@ -2441,6 +2487,7 @@ func TestUpdateAlertRule(t *testing.T) {
 				Duration:       "24h",
 				DeviceId:       RegisteredDeviceId,
 				QueryField:     RegisteredQueryField,
+				AlertLevel:     alertstore.Crit,
 				AlertType:      alertstore.LessThan,
 			},
 		},
@@ -2488,6 +2535,7 @@ func TestUpdateAlertRule(t *testing.T) {
 						Duration:    SomeDuration,
 						RangeValues: []float32{10},
 						Id:          AlertId,
+						Level:       alertstore.Warn,
 					},
 				},
 				AlertRecipients: []alertstore.AlertRecipient{
@@ -2618,10 +2666,11 @@ func TestGetAlertRule(t *testing.T) {
 				},
 				AlertRules: []alertstore.StoredAlertRule{
 					{
-						AlertId:   AlertId,
-						Name:      RegisteredAlertName,
-						Duration:  "24h",
-						AlertType: alertstore.InactiveSensor,
+						AlertId:    AlertId,
+						Name:       RegisteredAlertName,
+						Duration:   "24h",
+						AlertType:  alertstore.InactiveSensor,
+						AlertLevel: alertstore.Crit,
 					},
 				},
 			},
@@ -2633,6 +2682,7 @@ func TestGetAlertRule(t *testing.T) {
 				DeviceId:       RegisteredDeviceId,
 				QueryField:     RegisteredQueryField,
 				AlertType:      alertstore.InactiveSensor,
+				AlertLevel:     alertstore.Crit,
 			},
 		},
 		"alert doesn't exist": {
@@ -2725,6 +2775,7 @@ func TestDeleteAlert(t *testing.T) {
 				Duration:       "24h",
 				DeviceId:       RegisteredDeviceId,
 				QueryField:     RegisteredQueryField,
+				AlertLevel:     alertstore.Crit,
 				AlertType:      alertstore.Range,
 			},
 		},
@@ -2757,6 +2808,7 @@ func TestDeleteAlert(t *testing.T) {
 						Name:        RegisteredAlertName,
 						Duration:    "24h",
 						RangeValues: []float32{10, 20},
+						AlertLevel:  alertstore.Crit,
 						AlertType:   alertstore.Range,
 					},
 					{
@@ -2794,6 +2846,7 @@ func TestDeleteAlert(t *testing.T) {
 						Name:        RegisteredAlertName,
 						Duration:    "24h",
 						RangeValues: []float32{10, 20},
+						AlertLevel:  alertstore.Crit,
 						AlertType:   alertstore.Range,
 					},
 				},
@@ -2834,10 +2887,11 @@ func TestDeleteAlert(t *testing.T) {
 				},
 				AlertRules: []alertstore.StoredAlertRule{
 					{
-						AlertId:   AlertId,
-						Name:      RegisteredAlertName,
-						Duration:  "24h",
-						AlertType: alertstore.InactiveSensor,
+						AlertId:    AlertId,
+						Name:       RegisteredAlertName,
+						Duration:   "24h",
+						AlertLevel: alertstore.Crit,
+						AlertType:  alertstore.InactiveSensor,
 					},
 				},
 				AlertStates: []alertstore.AlertState{
@@ -2859,6 +2913,7 @@ func TestDeleteAlert(t *testing.T) {
 				Duration:       "24h",
 				DeviceId:       RegisteredDeviceId,
 				QueryField:     RegisteredQueryField,
+				AlertLevel:     alertstore.Crit,
 				AlertType:      alertstore.InactiveSensor,
 			},
 		},
