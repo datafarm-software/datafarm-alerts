@@ -307,6 +307,134 @@ func TestRespondToAlert(t *testing.T) {
 			},
 		},
 
+		"no notification because going from crit to warn": {
+			wantStatus:      http.StatusNoContent,
+			wantUserInboxes: EmptyInboxes,
+			mockAlertStore: alertstore.Schema{
+				AlertRecipients: []alertstore.AlertRecipient{},
+				DeviceAlerts: []alertstore.DeviceAlertRule{
+					{
+						DeviceId:   RegisteredDeviceId,
+						QueryField: RegisteredQueryField,
+						AlertId:    AlertId,
+					},
+				},
+				AlertRules: []alertstore.StoredAlertRule{
+					{
+						AlertId:  AlertId,
+						Duration: "24h",
+					},
+				},
+				AlertStates: []alertstore.AlertState{
+					{
+						Id:       AlertId,
+						Time:     AlertReceived,
+						Duration: SomeDuration,
+						Value:    OldValue,
+						Level:    alertstore.Crit,
+					},
+				},
+			},
+			alert: alertsource.InfluxAlert{
+				Id:              AlertId,
+				Name:            RegisteredAlertName,
+				Level:           "warn",
+				Value:           NewValue,
+				SourceTimestamp: alertsource.EpochNano(WithinDuration.UnixNano()),
+				DeviceId:        RegisteredDeviceId,
+				QueryField:      RegisteredQueryField,
+			},
+			wantAlertStore: alertstore.Schema{
+				AlertRecipients: []alertstore.AlertRecipient{},
+				DeviceAlerts: []alertstore.DeviceAlertRule{
+					{
+						DeviceId:   RegisteredDeviceId,
+						QueryField: RegisteredQueryField,
+						AlertId:    AlertId,
+					},
+				},
+				AlertRules: []alertstore.StoredAlertRule{
+					{
+						AlertId:  AlertId,
+						Duration: "24h",
+					},
+				},
+				AlertStates: []alertstore.AlertState{
+					{
+						Id:       AlertId,
+						Time:     time.Unix(0, WithinDuration.UnixNano()),
+						Value:    NewValue,
+						Duration: SomeDuration,
+						Level:    alertstore.Warn,
+					},
+				},
+			},
+		},
+
+		"no notification because going from crit to ok": {
+			wantStatus:      http.StatusNoContent,
+			wantUserInboxes: EmptyInboxes,
+			mockAlertStore: alertstore.Schema{
+				AlertRecipients: []alertstore.AlertRecipient{},
+				DeviceAlerts: []alertstore.DeviceAlertRule{
+					{
+						DeviceId:   RegisteredDeviceId,
+						QueryField: RegisteredQueryField,
+						AlertId:    AlertId,
+					},
+				},
+				AlertRules: []alertstore.StoredAlertRule{
+					{
+						AlertId:  AlertId,
+						Duration: "24h",
+					},
+				},
+				AlertStates: []alertstore.AlertState{
+					{
+						Id:       AlertId,
+						Time:     AlertReceived,
+						Duration: SomeDuration,
+						Value:    OldValue,
+						Level:    alertstore.Crit,
+					},
+				},
+			},
+			alert: alertsource.InfluxAlert{
+				Id:              AlertId,
+				Name:            RegisteredAlertName,
+				Level:           "ok",
+				Value:           NewValue,
+				SourceTimestamp: alertsource.EpochNano(WithinDuration.UnixNano()),
+				DeviceId:        RegisteredDeviceId,
+				QueryField:      RegisteredQueryField,
+			},
+			wantAlertStore: alertstore.Schema{
+				AlertRecipients: []alertstore.AlertRecipient{},
+				DeviceAlerts: []alertstore.DeviceAlertRule{
+					{
+						DeviceId:   RegisteredDeviceId,
+						QueryField: RegisteredQueryField,
+						AlertId:    AlertId,
+					},
+				},
+				AlertRules: []alertstore.StoredAlertRule{
+					{
+						AlertId:  AlertId,
+						Duration: "24h",
+					},
+				},
+				AlertStates: []alertstore.AlertState{
+					{
+						Id:       AlertId,
+						Time:     time.Unix(0, WithinDuration.UnixNano()),
+						Value:    NewValue,
+						Duration: SomeDuration,
+						Level:    alertstore.Ok,
+					},
+				},
+			},
+		},
+
 		"send notification because alert level changing from ok to crit": {
 			wantStatus: http.StatusNoContent,
 			wantUserInboxes: map[string][]notifier.AlertMessage{
@@ -345,6 +473,164 @@ func TestRespondToAlert(t *testing.T) {
 						Value:    OldValue,
 						Duration: SomeDuration,
 						Level:    alertstore.Ok,
+					},
+				},
+			},
+			alert: alertsource.InfluxAlert{
+				Id:              AlertId,
+				Level:           "crit",
+				Value:           NewValue,
+				Name:            RegisteredAlertName,
+				SourceTimestamp: alertsource.EpochNano(WithinDuration.UnixNano()),
+				DeviceId:        RegisteredDeviceId,
+				QueryField:      RegisteredQueryField,
+			},
+			wantAlertStore: alertstore.Schema{
+				AlertRecipients: []alertstore.AlertRecipient{
+					{AlertId: AlertId, Email: UserEmail},
+				},
+				DeviceAlerts: []alertstore.DeviceAlertRule{
+					{
+						DeviceId:   RegisteredDeviceId,
+						QueryField: RegisteredQueryField,
+						AlertId:    AlertId,
+					},
+				},
+				AlertRules: []alertstore.StoredAlertRule{
+					{
+						AlertId:  AlertId,
+						Duration: "24h",
+					},
+				},
+				AlertStates: []alertstore.AlertState{
+					{
+						Id:       AlertId,
+						Value:    NewValue,
+						Time:     WithinDuration,
+						Duration: SomeDuration,
+						Level:    alertstore.Crit,
+					},
+				},
+			},
+		},
+
+		"send notification because alert level changing from ok to warn": {
+			wantStatus: http.StatusNoContent,
+			wantUserInboxes: map[string][]notifier.AlertMessage{
+				UserEmail: {
+					{
+						Name:       RegisteredAlertName,
+						DeviceId:   RegisteredDeviceId,
+						QueryField: RegisteredQueryField,
+						Value:      NewValue,
+						Level:      alertstore.Warn,
+						Timestamp:  WithinDuration,
+					},
+				},
+			},
+			mockAlertStore: alertstore.Schema{
+				AlertRecipients: []alertstore.AlertRecipient{
+					{AlertId: AlertId, Email: UserEmail},
+				},
+				DeviceAlerts: []alertstore.DeviceAlertRule{
+					{
+						DeviceId:   RegisteredDeviceId,
+						QueryField: RegisteredQueryField,
+						AlertId:    AlertId,
+					},
+				},
+				AlertRules: []alertstore.StoredAlertRule{
+					{
+						AlertId:  AlertId,
+						Duration: "24h",
+					},
+				},
+				AlertStates: []alertstore.AlertState{
+					{
+						Id:       AlertId,
+						Time:     AlertReceived,
+						Value:    OldValue,
+						Duration: SomeDuration,
+						Level:    alertstore.Ok,
+					},
+				},
+			},
+			alert: alertsource.InfluxAlert{
+				Id:              AlertId,
+				Level:           "warn",
+				Value:           NewValue,
+				Name:            RegisteredAlertName,
+				SourceTimestamp: alertsource.EpochNano(WithinDuration.UnixNano()),
+				DeviceId:        RegisteredDeviceId,
+				QueryField:      RegisteredQueryField,
+			},
+			wantAlertStore: alertstore.Schema{
+				AlertRecipients: []alertstore.AlertRecipient{
+					{AlertId: AlertId, Email: UserEmail},
+				},
+				DeviceAlerts: []alertstore.DeviceAlertRule{
+					{
+						DeviceId:   RegisteredDeviceId,
+						QueryField: RegisteredQueryField,
+						AlertId:    AlertId,
+					},
+				},
+				AlertRules: []alertstore.StoredAlertRule{
+					{
+						AlertId:  AlertId,
+						Duration: "24h",
+					},
+				},
+				AlertStates: []alertstore.AlertState{
+					{
+						Id:       AlertId,
+						Value:    NewValue,
+						Time:     WithinDuration,
+						Duration: SomeDuration,
+						Level:    alertstore.Warn,
+					},
+				},
+			},
+		},
+
+		"send notification because alert level changing from warn to crit": {
+			wantStatus: http.StatusNoContent,
+			wantUserInboxes: map[string][]notifier.AlertMessage{
+				UserEmail: {
+					{
+						Name:       RegisteredAlertName,
+						DeviceId:   RegisteredDeviceId,
+						QueryField: RegisteredQueryField,
+						Value:      NewValue,
+						Level:      alertstore.Crit,
+						Timestamp:  WithinDuration,
+					},
+				},
+			},
+			mockAlertStore: alertstore.Schema{
+				AlertRecipients: []alertstore.AlertRecipient{
+					{AlertId: AlertId, Email: UserEmail},
+				},
+				DeviceAlerts: []alertstore.DeviceAlertRule{
+					{
+						DeviceId:   RegisteredDeviceId,
+						QueryField: RegisteredQueryField,
+						AlertId:    AlertId,
+					},
+				},
+				AlertRules: []alertstore.StoredAlertRule{
+					{
+						AlertId:  AlertId,
+						Duration: "24h",
+					},
+				},
+				AlertStates: []alertstore.AlertState{
+					{
+						Id:       AlertId,
+						Time:     AlertReceived,
+						Value:    OldValue,
+						Duration: SomeDuration,
+						Level:    alertstore.Warn,
 					},
 				},
 			},

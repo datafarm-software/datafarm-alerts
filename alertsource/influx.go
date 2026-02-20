@@ -333,7 +333,17 @@ func (i *Influx) createThresholdCheck(ar alertstore.AlertRule) (*domain.Threshol
 	var thresholds []domain.Threshold
 	var check domain.ThresholdCheck
 	lo := domain.CheckStatusLevelOK
-	lc := domain.CheckStatusLevelCRIT
+	var al domain.CheckStatusLevel
+	switch ar.AlertLevel {
+	case alertstore.Warn:
+		al = domain.CheckStatusLevelWARN
+	case alertstore.Crit:
+		al = domain.CheckStatusLevelCRIT
+	default:
+		return nil, fmt.Errorf("alert rule level invalid: %d - %s",
+			ar.AlertLevel,
+			alertstore.AlertLevelString[ar.AlertLevel])
+	}
 	allValues := true
 	threshold := "threshold"
 	thresholdTrue := "true"
@@ -346,14 +356,14 @@ func (i *Influx) createThresholdCheck(ar alertstore.AlertRule) (*domain.Threshol
 		}
 		lesser = domain.LesserThreshold{
 			Value:         ar.RangeValues[0],
-			ThresholdBase: domain.ThresholdBase{Level: &lc},
+			ThresholdBase: domain.ThresholdBase{Level: &al},
 		}
 		thresholds = append(thresholds, &lesser, &greater)
 
 	case alertstore.GreaterThan:
 		greater = domain.GreaterThreshold{
 			Value:         ar.RangeValues[0],
-			ThresholdBase: domain.ThresholdBase{Level: &lc, AllValues: &allValues},
+			ThresholdBase: domain.ThresholdBase{Level: &al, AllValues: &allValues},
 		}
 		lesser = domain.LesserThreshold{
 			Value:         ar.RangeValues[0],
@@ -366,7 +376,7 @@ func (i *Influx) createThresholdCheck(ar alertstore.AlertRule) (*domain.Threshol
 			return nil, fmt.Errorf("first boundary is not smaller than the second.")
 		}
 		rang = domain.RangeThreshold{
-			ThresholdBase: domain.ThresholdBase{Level: &lc},
+			ThresholdBase: domain.ThresholdBase{Level: &al},
 			Max:           ar.RangeValues[1],
 			Min:           ar.RangeValues[0],
 		}

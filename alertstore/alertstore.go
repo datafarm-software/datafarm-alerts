@@ -102,7 +102,7 @@ type AlertRule struct {
 	DeviceId       string     `json:"deviceId" pattern:"^[a-zA-Z0-9]+$" doc:"The device for which data should be checked."`
 	QueryField     string     `json:"queryField" pattern:"^[a-zA-Z0-9_]+$" doc:"The field on the device, for which data should be checked."`
 	AlertType      AlertType  `json:"alertType" maximum:"3" doc:"Specify type of check to perform. 0 = Less Than, 1 = Greater Than, 2 = Range, 3 = Inactive Sensor Check."`
-	AlertLevel     AlertLevel `json:"alertLevel" maximum:"2" doc:"Specify the alert level to notify. 0 = OK, 1 = WARN, 2 = CRIT"`
+	AlertLevel     AlertLevel `json:"alertLevel" minimum:"1" maximum:"2" doc:"Specify the alert level to notify. 1 = WARN, 2 = CRIT"`
 }
 
 type CreatedRule struct {

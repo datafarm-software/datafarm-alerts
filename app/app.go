@@ -318,7 +318,14 @@ func (a *App) RespondToAlert(
 		log.Printf("parsing duration for alert: %s, %s, err: %v", alert.Id, alertRule.Duration, err)
 		return nil, huma.Error500InternalServerError("Internal error parsing the duration of the alert.")
 	}
-	if !a.ShouldNotify(alert, previousAlert) {
+	shouldNotify := a.ShouldNotify(alert, previousAlert)
+	if shouldNotify || alert.Level != previousAlert.Level {
+		if err = a.AlertStore.UpdateAlertState(alert); err != nil {
+			log.Printf("updating alert state for id: %s, err: %v", alert.Id, err)
+			return nil, huma.Error500InternalServerError("Internal error updating alert state.")
+		}
+	}
+	if !shouldNotify {
 		return nil, nil
 	}
 	emails, err := a.AlertStore.GetAlertRecipients(alert.Id)
@@ -337,10 +344,6 @@ func (a *App) RespondToAlert(
 	if err = a.Notifier.Notify(message, emails...); err != nil {
 		log.Printf("notifying users: %v", err)
 		return nil, huma.Error500InternalServerError("Could not notify users.")
-	}
-	if err = a.AlertStore.UpdateAlertState(alert); err != nil {
-		log.Printf("updating alert state for id: %s, err: %v", alert.Id, err)
-		return nil, huma.Error500InternalServerError("Internal error updating alert state.")
 	}
 	return nil, nil
 }

@@ -174,12 +174,13 @@ func (g *Gorm) GetAlertRecipients(alertId string) ([]string, error) {
 }
 
 func (g *Gorm) UpdateAlertState(alert AlertState) error {
-	return g.db.Model(&AlertState{}).
-		Where("id = ?", alert.Id).
-		Assign(alert).
-		FirstOrCreate(&AlertState{}).
+	return g.db.Clauses(clause.OnConflict{
+		Columns:   []clause.Column{{Name: "id"}},
+		UpdateAll: true,
+	}).Create(&alert).
 		Error
 }
+
 func (g *Gorm) StoreAlertRule(dbRecord Schema) error {
 	var err error
 	return g.db.Transaction(func(tx *gorm.DB) error {
