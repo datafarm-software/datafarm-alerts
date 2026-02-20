@@ -72,6 +72,7 @@ func (g *Gorm) PrepareDb(dbRecord Schema) error {
 			sar.range_values,
 			sar.duration,
 			sar.alert_type,
+			sar.alert_level,
 			json_group_array(ar.email) AS email_addresses
 		FROM stored_alert_rules sar
 		LEFT JOIN device_alert_rules dar
@@ -85,7 +86,8 @@ func (g *Gorm) PrepareDb(dbRecord Schema) error {
 			dar.query_field,
 			sar.range_values,
 			sar.duration,
-			sar.alert_type
+			sar.alert_type,
+			sar.alert_level
 		`,
 	}
 	for _, stmt := range stmts {

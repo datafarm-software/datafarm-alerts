@@ -3,7 +3,6 @@ package testing
 import (
 	"fmt"
 	"net/http"
-	"os"
 	"reflect"
 	"testing"
 	"time"
@@ -47,6 +46,7 @@ func TestShouldNotifyCrit(t *testing.T) {
 		want            bool
 		alert, previous alertstore.AlertState
 	}{
+
 		"no change within duration, so do nothing": {
 			want: false,
 			alert: alertstore.AlertState{
@@ -1092,6 +1092,52 @@ func TestCreateAlertRule(t *testing.T) {
 				AlertType:      alertstore.LessThan,
 			},
 		},
+
+		"successfully create a warning level alert rule": {
+			wantErr:              false,
+			wantStatus:           http.StatusOK,
+			wantAlertSourceCount: 1,
+			mockAlertStore: alertstore.Schema{
+				DeviceAlerts:    []alertstore.DeviceAlertRule{},
+				AlertRecipients: []alertstore.AlertRecipient{},
+				AlertStates:     []alertstore.AlertState{},
+				AlertRules:      []alertstore.StoredAlertRule{},
+			},
+			wantAlertStore: alertstore.Schema{
+				AlertRecipients: []alertstore.AlertRecipient{
+					{AlertId: AlertId, Email: UserEmail},
+				},
+				DeviceAlerts: []alertstore.DeviceAlertRule{
+					{
+						DeviceId:   RegisteredDeviceId,
+						QueryField: RegisteredQueryField,
+						AlertId:    AlertId,
+					},
+				},
+				AlertRules: []alertstore.StoredAlertRule{
+					{
+						AlertId:     AlertId,
+						RangeValues: []float32{5},
+						Duration:    "24h",
+						AlertType:   alertstore.LessThan,
+						AlertLevel:  alertstore.Warn,
+					},
+				},
+			},
+			alertRule: alertstore.AlertRule{
+				RangeValues:    []float32{5},
+				Name:           RegisteredAlertName,
+				Duration:       "24h",
+				EmailAddresses: []string{UserEmail},
+				DeviceId:       "device1",
+				QueryField:     "temperature",
+				AlertType:      alertstore.LessThan,
+				AlertLevel:     alertstore.Warn,
+			},
+			wantResponse: alertstore.CreatedRule{
+				AlertId: AlertId,
+			},
+		},
 	}
 
 	var got alertstore.CreatedRule
@@ -1197,6 +1243,7 @@ func TestConvertToRecipients(t *testing.T) {
 		alertId        string
 		wantRecipients []alertstore.AlertRecipient
 	}{
+
 		"convert emails to slice of AlertRecipient": {
 			emails:  []string{UserEmail, "user2@alert.com"},
 			alertId: AlertId,
@@ -1205,6 +1252,7 @@ func TestConvertToRecipients(t *testing.T) {
 				{AlertId: AlertId, Email: "user2@alert.com"},
 			},
 		},
+
 		"ignore duplicate emails": {
 			emails:  []string{UserEmail, UserEmail},
 			alertId: AlertId,
@@ -1213,6 +1261,7 @@ func TestConvertToRecipients(t *testing.T) {
 			},
 		},
 	}
+
 	var recipients []alertstore.AlertRecipient
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
@@ -2136,6 +2185,7 @@ func TestGetAlertRule(t *testing.T) {
 						Duration:    "24h",
 						RangeValues: []float32{10, 20},
 						AlertType:   alertstore.Range,
+						AlertLevel:  alertstore.Warn,
 					},
 				},
 			},
@@ -2148,6 +2198,7 @@ func TestGetAlertRule(t *testing.T) {
 				DeviceId:       RegisteredDeviceId,
 				QueryField:     RegisteredQueryField,
 				AlertType:      alertstore.Range,
+				AlertLevel:     alertstore.Warn,
 			},
 		},
 		"successfully get a stored inactive sensor alert": {
@@ -2475,14 +2526,4 @@ func SchemaToAlertRules(dbRecord alertstore.Schema) []alertstore.AlertRule {
 		rules = append(rules, ar)
 	}
 	return rules
-}
-
-func TestMarshalJson(t *testing.T) {
-	data, err := os.ReadFile("example.json")
-	require.Nil(t, err)
-	var ar alertsource.InfluxAlert
-	err = json.Unmarshal(data, &ar)
-	if err != nil {
-		t.Fatalf("unmarshalling: %v", err)
-	}
 }
