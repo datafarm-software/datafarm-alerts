@@ -414,6 +414,7 @@ func (a *App) CreateAlertRule(
 				RangeValues: in.Body.RangeValues,
 				Duration:    in.Body.Duration,
 				AlertType:   in.Body.AlertType,
+				AlertLevel:  in.Body.AlertLevel,
 			},
 		},
 	}
