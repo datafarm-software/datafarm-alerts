@@ -17,6 +17,10 @@ func NewTestingGoMail() (Notifier, error) {
 	}, nil
 }
 
+func (g *TestingGomail) Close() error {
+	return nil
+}
+
 func (g *TestingGomail) Notify(message AlertMessage, emails ...string) error {
 	var emailParts []string
 	var username string
@@ -65,6 +69,10 @@ func NewGomail(opts GomailOpts) (Notifier, error) {
 		dialer:   d,
 		username: opts.Username,
 	}, nil
+}
+
+func (g *Gomail) Close() error {
+	return nil
 }
 
 func (g *Gomail) Notify(message AlertMessage, emails ...string) error {

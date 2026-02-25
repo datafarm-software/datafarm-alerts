@@ -12,6 +12,10 @@ func NewMockNotifier() (*MockNotifier, error) {
 	}, nil
 }
 
+func (m *MockNotifier) Close() error {
+	return nil
+}
+
 func (m *MockNotifier) Notify(message AlertMessage, emails ...string) error {
 	for _, e := range emails {
 		m.inboxes[e] = append(m.inboxes[e], message)

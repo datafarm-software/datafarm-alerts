@@ -31,5 +31,6 @@ type TestingNotifier interface {
 
 type Notifier interface {
 	TestingNotifier
+	Close() error
 	Notify(message AlertMessage, emails ...string) error
 }

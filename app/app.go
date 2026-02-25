@@ -41,14 +41,14 @@ func Start(opts Opts) error {
 	if err != nil {
 		return err
 	}
-	app.AlertStore, err = alertstore.NewGorm(alertstore.Production, "prod")
+	app.AlertStore, err = alertstore.NewGorm(alertstore.Testing, "test")
 	if err != nil {
 		return err
 	}
 	if err = app.AlertStore.PrepareDb(alertstore.Schema{}); err != nil {
 		return err
 	}
-	app.AlertSource, err = alertsource.NewInflux(opts.Influx)
+	app.AlertSource, err = alertsource.NewTestingInflux("config.yml")
 	if err != nil {
 		return err
 	}
@@ -70,10 +70,25 @@ func Start(opts Opts) error {
 			}
 		})
 		hooks.OnStop(func() {
+			app.Close()
 			server.Shutdown(context.Background())
 		})
 	})
 	cli.Run()
+	return nil
+}
+
+func (a *App) Close() error {
+	if err := a.Notifier.Close(); err != nil {
+		log.Printf("closing notifier: %v", err)
+	}
+	if err := a.AlertSource.Close(); err != nil {
+		log.Printf("closing alertsource: %v", err)
+	}
+	if err := a.AlertStore.Close(); err != nil {
+		log.Printf("closing alertstore: %v", err)
+	}
+	log.Printf("Successfully closed app interfaces.")
 	return nil
 }
 

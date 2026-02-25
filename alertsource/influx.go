@@ -504,10 +504,10 @@ type TestingInflux struct {
 	testingAlertIdsMap map[string]string
 }
 
-func NewTestingInflux() (AlertSource, error) {
+func NewTestingInflux(configPath string) (AlertSource, error) {
 	var topErr error
 	once.Do(func() {
-		config, err := os.ReadFile("../config.yml")
+		config, err := os.ReadFile(configPath)
 		if err != nil {
 			topErr = err
 			return

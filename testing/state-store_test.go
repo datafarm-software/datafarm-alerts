@@ -24,6 +24,7 @@ var a = &app.App{}
 var EmptyInboxes = map[string][]notifier.AlertMessage{}
 var EmptyAlertStore = alertstore.Schema{}
 
+const ConfigPath = "../config.yml"
 const UnregisteredQueryField = "humidity"
 const RegisteredQueryField = "temperature"
 const UnregisteredDeviceId = "device2"
@@ -1485,7 +1486,7 @@ func TestCreateAlertRule(t *testing.T) {
 			defer a.AlertStore.Close()
 			err = a.AlertStore.PrepareDb(tc.mockAlertStore)
 			require.Nil(t, err)
-			a.AlertSource, err = alertsource.NewTestingInflux()
+			a.AlertSource, err = alertsource.NewTestingInflux(ConfigPath)
 			require.Nil(t, err)
 			defer a.AlertSource.Close()
 			alertRules = SchemaToAlertRules(tc.mockAlertStore)
@@ -2933,7 +2934,7 @@ func TestDeleteAlert(t *testing.T) {
 	a.RegisterHumaOperations(api)
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
-			a.AlertSource, err = alertsource.NewTestingInflux()
+			a.AlertSource, err = alertsource.NewTestingInflux(ConfigPath)
 			require.Nil(t, err)
 			defer a.AlertSource.Close()
 			alertRules = SchemaToAlertRules(tc.mockAlertStore)
