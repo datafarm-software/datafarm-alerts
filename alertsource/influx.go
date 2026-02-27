@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/url"
 	"os"
@@ -18,6 +19,8 @@ import (
 	influxdb2 "github.com/influxdata/influxdb-client-go/v2"
 	"github.com/influxdata/influxdb-client-go/v2/domain"
 )
+
+var NoRangeValues = errors.New("no range values")
 
 const Flux string = `from(bucket: "%s")
 	|> range(start: v.timeRangeStart, stop: v.timeRangeStop)
@@ -348,6 +351,9 @@ func (i *Influx) createThresholdCheck(ar alertstore.AlertRule) (*domain.Threshol
 	threshold := "threshold"
 	thresholdTrue := "true"
 
+	if len(ar.RangeValues) < 1 {
+		return nil, NoRangeValues
+	}
 	switch ar.AlertType {
 	case alertstore.LessThan:
 		greater = domain.GreaterThreshold{
