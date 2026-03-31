@@ -3037,13 +3037,14 @@ func TestRemoveUsersFromAlertRule(t *testing.T) {
 				},
 				AlertStates: []alertstore.AlertState{},
 			},
-			wantStatus:     http.StatusOK,
-			emailsToRemove: []string{AnotherUserEmail},
-			alertId:        AlertId,
+			wantStatus:           http.StatusOK,
+			wantAlertSourceCount: 1,
+			emailsToRemove:       []string{AnotherUserEmail},
+			alertId:              AlertId,
 		},
 
 		"try to remove email that isnt attached to the alert": {
-			wantErr: true,
+			wantErr: false,
 			mockAlertStore: alertstore.Schema{
 				DeviceAlerts: []alertstore.DeviceAlertRule{
 					{
@@ -3096,9 +3097,10 @@ func TestRemoveUsersFromAlertRule(t *testing.T) {
 				},
 				AlertStates: []alertstore.AlertState{},
 			},
-			wantStatus:     http.StatusNotFound,
-			emailsToRemove: []string{AnotherUserEmail},
-			alertId:        AlertId,
+			wantStatus:           http.StatusOK,
+			wantAlertSourceCount: 1,
+			emailsToRemove:       []string{AnotherUserEmail},
+			alertId:              AlertId,
 		},
 
 		"remove last email from alert, so delete alert": {
@@ -3238,11 +3240,11 @@ func TestRemoveUsersFromAlertRule(t *testing.T) {
 				if diff := cmp.Diff(tc.wantAlertStore, a.AlertStore.GetSnapshot()); diff != "" {
 					t.Fatalf("alertStore mismatch (-want +got):\n%s", diff)
 				}
-				var emails []string
+				var mu alertstore.MutateAlertUsersResponse
 				body := resp.Body.Bytes()
-				err = json.Unmarshal(body, &emails)
+				err = json.Unmarshal(body, &mu)
 				require.Nil(t, err)
-				if diff := cmp.Diff(tc.emailsToRemove, emails); diff != "" {
+				if diff := cmp.Diff(tc.emailsToRemove, mu.EmailAddresses); diff != "" {
 					t.Fatalf("emails mismatch (-want +got):\n%s", diff)
 				}
 				alertsCount := a.AlertSource.GetSnapshot()
@@ -3460,11 +3462,12 @@ func TestAddUsersToAlertRule(t *testing.T) {
 				if diff := cmp.Diff(tc.wantAlertStore, a.AlertStore.GetSnapshot()); diff != "" {
 					t.Fatalf("alertStore mismatch (-want +got):\n%s", diff)
 				}
-				var emails []string
+
+				var mu alertstore.MutateAlertUsersResponse
 				body := resp.Body.Bytes()
-				err = json.Unmarshal(body, &emails)
+				err = json.Unmarshal(body, &mu)
 				require.Nil(t, err)
-				if diff := cmp.Diff(tc.emailsToAdd, emails); diff != "" {
+				if diff := cmp.Diff(tc.emailsToAdd, mu.EmailAddresses); diff != "" {
 					t.Fatalf("emails mismatch (-want +got):\n%s", diff)
 				}
 				alertsCount := a.AlertSource.GetSnapshot()
