@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"reflect"
+	"slices"
 	"time"
 
 	"github.com/danielgtaylor/huma/v2"
@@ -746,7 +747,9 @@ func (a *App) DeleteAlertRule(ctx context.Context,
 func (a *App) AddUsersToAlertRule(ctx context.Context, in *struct {
 	AlertId string   `path:"alertId"`
 	Body    []string `doc:"List of user email addresses." format:"email"`
-}) (*struct{ Body alertstore.AddUsersResponse }, error) {
+}) (*struct {
+	Body alertstore.MutateAlertUsersResponse
+}, error) {
 	ar, err := a.AlertStore.GetAlertRule(in.AlertId)
 	if err != nil {
 		if errors.Is(err, alertstore.NoAlert) {
@@ -779,9 +782,73 @@ func (a *App) AddUsersToAlertRule(ctx context.Context, in *struct {
 		return nil, huma.Error500InternalServerError(
 			"Internal error while updating alert rule.")
 	}
-	return &struct{ Body alertstore.AddUsersResponse }{
-		Body: alertstore.AddUsersResponse{
+	return &struct {
+		Body alertstore.MutateAlertUsersResponse
+	}{
+		Body: alertstore.MutateAlertUsersResponse{
 			AlertId: ar.AlertId, EmailAddresses: in.Body,
 		},
 	}, nil
+}
+
+func (a *App) RemoveUsersFromAlertRule(ctx context.Context, in *struct {
+	AlertId string   `path:"alertId"`
+	Body    []string `doc:"List of user email addresses." format:"email"`
+}) (*struct {
+	Status int
+	Body   alertstore.MutateAlertUsersResponse
+}, error) {
+	ar, err := a.AlertStore.GetAlertRule(in.AlertId)
+	if err != nil {
+		if errors.Is(err, alertstore.NoAlert) {
+			return nil, huma.Error404NotFound("AlertId Not Found.")
+		} else {
+			return nil, huma.Error500InternalServerError(
+				"Internal error checking if AlertId exists.")
+		}
+	}
+	emailsToDelete := make([]string, 0, len(in.Body))
+	//NOTE: what to do with unknown emails?
+	unknownEmails := make([]string, 0, len(in.Body))
+	for _, email := range in.Body {
+		if slices.Contains(ar.EmailAddresses, email) {
+			emailsToDelete = append(emailsToDelete, email)
+		} else {
+			unknownEmails = append(unknownEmails, email)
+		}
+	}
+	slices.Sort(emailsToDelete)
+	slices.Sort(ar.EmailAddresses)
+	shouldDeleteAlertRule := slices.Equal(emailsToDelete, ar.EmailAddresses)
+	if shouldDeleteAlertRule {
+		if err = a.AlertSource.DeleteAlertRule(in.AlertId); err != nil {
+			return nil, huma.Error500InternalServerError(
+				"Internal error while deleting empty alert rule from source.")
+		}
+		if err = a.AlertStore.DeleteAlertState(in.AlertId); err != nil {
+			return nil, huma.Error500InternalServerError(
+				"Internal error while deleting empty alert rule state.")
+		}
+		if _, err = a.AlertStore.DeleteAlertRule(in.AlertId); err != nil {
+			return nil, huma.Error500InternalServerError(
+				"Internal error while deleting empty alert rule.")
+		}
+		return &struct {
+			Status int
+			Body   alertstore.MutateAlertUsersResponse
+		}{Status: http.StatusNoContent}, nil
+	}
+	ars := a.ConvertToRecipients(in.AlertId, emailsToDelete)
+	err = a.AlertStore.RemoveUsersFromAlertRule(ars)
+	if err != nil {
+		return nil, huma.Error500InternalServerError(
+			"Internal error removing users from alert rule.")
+	}
+	return &struct {
+		Status int
+		Body   alertstore.MutateAlertUsersResponse
+	}{Status: http.StatusOK, Body: alertstore.MutateAlertUsersResponse{
+		AlertId:        in.AlertId,
+		EmailAddresses: in.Body,
+	}}, nil
 }

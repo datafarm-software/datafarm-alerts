@@ -311,3 +311,17 @@ func (g *Gorm) DeleteAlertRule(alertId string) (AlertRule, error) {
 	}
 	return ar, nil
 }
+
+func (g *Gorm) RemoveUsersFromAlertRule(ars []AlertRecipient) error {
+	return g.db.Transaction(func(tx *gorm.DB) error {
+		for _, ar := range ars {
+			if err := tx.Table("alert_recipients").
+				Where("alert_id = ?", ar.AlertId).
+				Where("email = ?", ar.Email).
+				Delete("*").Error; err != nil {
+				return err
+			}
+		}
+		return nil
+	})
+}

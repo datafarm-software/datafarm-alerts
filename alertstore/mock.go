@@ -1,6 +1,7 @@
 package alertstore
 
 import (
+	"fmt"
 	"slices"
 	"time"
 
@@ -255,4 +256,8 @@ func (m *MockAlertStore) DeleteAlertRule(alertId string) (AlertRule, error) {
 		m.Db.AlertRules = slices.Delete(m.Db.AlertRules, i, i+1)
 	}
 	return rule, err
+}
+
+func (m *MockAlertStore) RemoveUsersFromAlertRule([]AlertRecipient) error {
+	return fmt.Errorf("not implemented")
 }

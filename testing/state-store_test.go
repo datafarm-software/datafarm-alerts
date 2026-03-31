@@ -33,6 +33,7 @@ const SomeDuration = (24 * time.Hour)
 const AlertId = "alert1"
 const UnregisteredAlertId = "alertUnregistered"
 const UserEmail = "user1@alert.com"
+const AnotherUserEmail = "another@email.com"
 const RegisteredAlertName = "Temperature Check"
 const NewValue = 20
 const OldValue = 10
@@ -2996,7 +2997,7 @@ func TestRemoveUsersFromAlertRule(t *testing.T) {
 					},
 					{
 						AlertId: AlertId,
-						Email:   "another@email.com",
+						Email:   AnotherUserEmail,
 					},
 				},
 				AlertRules: []alertstore.StoredAlertRule{
@@ -3034,9 +3035,10 @@ func TestRemoveUsersFromAlertRule(t *testing.T) {
 						AlertLevel:  alertstore.Warn,
 					},
 				},
+				AlertStates: []alertstore.AlertState{},
 			},
 			wantStatus:     http.StatusOK,
-			emailsToRemove: []string{"another@email.com"},
+			emailsToRemove: []string{AnotherUserEmail},
 			alertId:        AlertId,
 		},
 
@@ -3095,12 +3097,12 @@ func TestRemoveUsersFromAlertRule(t *testing.T) {
 				AlertStates: []alertstore.AlertState{},
 			},
 			wantStatus:     http.StatusNotFound,
-			emailsToRemove: []string{"another@email.com"},
+			emailsToRemove: []string{AnotherUserEmail},
 			alertId:        AlertId,
 		},
 
 		"remove last email from alert, so delete alert": {
-			wantErr: false,
+			wantErr: true,
 			mockAlertStore: alertstore.Schema{
 				DeviceAlerts: []alertstore.DeviceAlertRule{
 					{
@@ -3113,10 +3115,6 @@ func TestRemoveUsersFromAlertRule(t *testing.T) {
 					{
 						AlertId: AlertId,
 						Email:   UserEmail,
-					},
-					{
-						AlertId: AlertId,
-						Email:   "another@email.com",
 					},
 				},
 				AlertRules: []alertstore.StoredAlertRule{
@@ -3131,6 +3129,19 @@ func TestRemoveUsersFromAlertRule(t *testing.T) {
 				},
 			},
 			wantAlertStore: alertstore.Schema{
+				DeviceAlerts:    []alertstore.DeviceAlertRule{},
+				AlertRecipients: []alertstore.AlertRecipient{},
+				AlertRules:      []alertstore.StoredAlertRule{},
+				AlertStates:     []alertstore.AlertState{},
+			},
+			wantStatus:     http.StatusNoContent,
+			emailsToRemove: []string{UserEmail},
+			alertId:        AlertId,
+		},
+
+		"remove last email from alert among other unknown emails, so delete alert": {
+			wantErr: true,
+			mockAlertStore: alertstore.Schema{
 				DeviceAlerts: []alertstore.DeviceAlertRule{
 					{
 						DeviceId:   RegisteredDeviceId,
@@ -3155,8 +3166,14 @@ func TestRemoveUsersFromAlertRule(t *testing.T) {
 					},
 				},
 			},
-			wantStatus:     http.StatusOK,
-			emailsToRemove: []string{"another@email.com"},
+			wantAlertStore: alertstore.Schema{
+				DeviceAlerts:    []alertstore.DeviceAlertRule{},
+				AlertRecipients: []alertstore.AlertRecipient{},
+				AlertRules:      []alertstore.StoredAlertRule{},
+				AlertStates:     []alertstore.AlertState{},
+			},
+			wantStatus:     http.StatusNoContent,
+			emailsToRemove: []string{UserEmail, AnotherUserEmail},
 			alertId:        AlertId,
 		},
 
@@ -3189,7 +3206,7 @@ func TestRemoveUsersFromAlertRule(t *testing.T) {
 			},
 			wantAlertStore:       alertstore.Schema{},
 			wantStatus:           http.StatusNotFound,
-			emailsToRemove:       []string{"another@email.com"},
+			emailsToRemove:       []string{AnotherUserEmail},
 			alertId:              UnregisteredAlertId,
 			wantAlertSourceCount: 1,
 		},
@@ -3220,6 +3237,13 @@ func TestRemoveUsersFromAlertRule(t *testing.T) {
 			if !tc.wantErr {
 				if diff := cmp.Diff(tc.wantAlertStore, a.AlertStore.GetSnapshot()); diff != "" {
 					t.Fatalf("alertStore mismatch (-want +got):\n%s", diff)
+				}
+				var emails []string
+				body := resp.Body.Bytes()
+				err = json.Unmarshal(body, &emails)
+				require.Nil(t, err)
+				if diff := cmp.Diff(tc.emailsToRemove, emails); diff != "" {
+					t.Fatalf("emails mismatch (-want +got):\n%s", diff)
 				}
 				alertsCount := a.AlertSource.GetSnapshot()
 				if tc.wantAlertSourceCount != alertsCount {
@@ -3283,7 +3307,7 @@ func TestAddUsersToAlertRule(t *testing.T) {
 					},
 					{
 						AlertId: AlertId,
-						Email:   "another@email.com",
+						Email:   AnotherUserEmail,
 					},
 				},
 				AlertRules: []alertstore.StoredAlertRule{
@@ -3299,7 +3323,78 @@ func TestAddUsersToAlertRule(t *testing.T) {
 				AlertStates: []alertstore.AlertState{},
 			},
 			wantStatus:           http.StatusOK,
-			emailsToAdd:          []string{"another@email.com"},
+			emailsToAdd:          []string{AnotherUserEmail},
+			alertId:              AlertId,
+			wantAlertSourceCount: 1,
+		},
+
+		"some new emails, some old emails": {
+			wantErr: false,
+			mockAlertStore: alertstore.Schema{
+				DeviceAlerts: []alertstore.DeviceAlertRule{
+					{
+						DeviceId:   RegisteredDeviceId,
+						QueryField: RegisteredQueryField,
+						AlertId:    AlertId,
+					},
+				},
+				AlertRecipients: []alertstore.AlertRecipient{
+					{
+						AlertId: AlertId,
+						Email:   UserEmail,
+					},
+					{
+						AlertId: AlertId,
+						Email:   AnotherUserEmail,
+					},
+				},
+				AlertRules: []alertstore.StoredAlertRule{
+					{
+						AlertId:     AlertId,
+						RangeValues: []float32{OldValue},
+						Name:        RegisteredAlertName,
+						Duration:    "24h",
+						AlertType:   alertstore.LessThan,
+						AlertLevel:  alertstore.Warn,
+					},
+				},
+			},
+			wantAlertStore: alertstore.Schema{
+				DeviceAlerts: []alertstore.DeviceAlertRule{
+					{
+						DeviceId:   RegisteredDeviceId,
+						QueryField: RegisteredQueryField,
+						AlertId:    AlertId,
+					},
+				},
+				AlertRecipients: []alertstore.AlertRecipient{
+					{
+						AlertId: AlertId,
+						Email:   UserEmail,
+					},
+					{
+						AlertId: AlertId,
+						Email:   AnotherUserEmail,
+					},
+					{
+						AlertId: AlertId,
+						Email:   "user3@alert.com",
+					},
+				},
+				AlertRules: []alertstore.StoredAlertRule{
+					{
+						AlertId:     AlertId,
+						RangeValues: []float32{OldValue},
+						Name:        RegisteredAlertName,
+						Duration:    "24h",
+						AlertType:   alertstore.LessThan,
+						AlertLevel:  alertstore.Warn,
+					},
+				},
+				AlertStates: []alertstore.AlertState{},
+			},
+			wantStatus:           http.StatusOK,
+			emailsToAdd:          []string{UserEmail, "user3@alert.com"},
 			alertId:              AlertId,
 			wantAlertSourceCount: 1,
 		},
@@ -3333,7 +3428,7 @@ func TestAddUsersToAlertRule(t *testing.T) {
 			},
 			wantAlertStore:       alertstore.Schema{},
 			wantStatus:           http.StatusNotFound,
-			emailsToAdd:          []string{"another@email.com"},
+			emailsToAdd:          []string{AnotherUserEmail},
 			alertId:              UnregisteredAlertId,
 			wantAlertSourceCount: 1,
 		},
@@ -3364,6 +3459,13 @@ func TestAddUsersToAlertRule(t *testing.T) {
 			if !tc.wantErr {
 				if diff := cmp.Diff(tc.wantAlertStore, a.AlertStore.GetSnapshot()); diff != "" {
 					t.Fatalf("alertStore mismatch (-want +got):\n%s", diff)
+				}
+				var emails []string
+				body := resp.Body.Bytes()
+				err = json.Unmarshal(body, &emails)
+				require.Nil(t, err)
+				if diff := cmp.Diff(tc.emailsToAdd, emails); diff != "" {
+					t.Fatalf("emails mismatch (-want +got):\n%s", diff)
 				}
 				alertsCount := a.AlertSource.GetSnapshot()
 				if tc.wantAlertSourceCount != alertsCount {

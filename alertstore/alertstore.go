@@ -53,6 +53,7 @@ type AlertStore interface {
 	DeleteAlertState(alertId string) error
 	//NOTE: could return alertstore.NoAlert
 	DeleteAlertRule(alertId string) (AlertRule, error)
+	RemoveUsersFromAlertRule([]AlertRecipient) error
 }
 
 type Schema struct {
@@ -109,7 +110,7 @@ type CreatedRule struct {
 	AlertId string `json:"alertId" readOnly:"true" doc:"Generated Alert Id."`
 }
 
-type AddUsersResponse struct {
+type MutateAlertUsersResponse struct {
 	AlertId        string   `json:"alertId"`
 	EmailAddresses []string `json:"emailAddresses"`
 }
