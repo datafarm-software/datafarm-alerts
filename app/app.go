@@ -39,18 +39,18 @@ func Start(opts Opts) error {
 	app := &App{}
 	app.Notifier, err = notifier.NewMockNotifier()
 	if err != nil {
-		return err
+		return fmt.Errorf("init notifier: %v", err)
 	}
 	app.AlertStore, err = alertstore.NewGorm(alertstore.Testing, "test")
 	if err != nil {
-		return err
+		return fmt.Errorf("init alertstore: %v", err)
 	}
 	if err = app.AlertStore.PrepareDb(alertstore.Schema{}); err != nil {
-		return err
+		return fmt.Errorf("prepare alertstore: %v", err)
 	}
 	app.AlertSource, err = alertsource.NewTestingInflux("config.yml")
 	if err != nil {
-		return err
+		return fmt.Errorf("init alertsource: %v", err)
 	}
 	cli := humacli.New(func(hooks humacli.Hooks, options *Opts) {
 		router := http.NewServeMux()
@@ -196,7 +196,9 @@ func (a *App) RegisterHumaOperations(api huma.API) {
 							Status: 500,
 							Detail: "Internal error while retrieving the alert.",
 						},
-					}}},
+					},
+				},
+			},
 		},
 	}
 	huma.Register(api, operation, a.GetAlertRule)
@@ -300,6 +302,58 @@ func (a *App) RegisterHumaOperations(api huma.API) {
 		},
 	}
 	huma.Register(api, operation, a.DeleteAlertRule)
+	operation = huma.Operation{
+		Method: "POST",
+		Path:   "/alert/{alertId}/emailaddresses",
+		Parameters: []*huma.Param{
+			{
+				Name:            "alertId",
+				In:              "path",
+				Description:     "Alert Id to add email addresses to.",
+				Required:        true,
+				AllowEmptyValue: false,
+				Schema: &huma.Schema{
+					Type:    "string",
+					Pattern: "^[a-zA-Z0-9]+$",
+				},
+			},
+		},
+		Tags:        []string{"Update"},
+		Summary:     "Update an Alert Rule's User List.",
+		Description: "Clients can use this route to add more users to the AlertRule.",
+		RequestBody: &huma.RequestBody{},
+		Responses: map[string]*huma.Response{
+			"500": {
+				Description: "Internal Server Error",
+				Content: map[string]*huma.MediaType{
+					"application/json": {
+						Schema: huma.SchemaFromType(registry, reflect.TypeFor[HumaError]()),
+						Example: HumaError{
+							Schema: "http://localhost:3030/schemas/ErrorModel.json",
+							Title:  "Internal Server Error",
+							Status: 500,
+							Detail: "Internal error while updating the email addresses.",
+						},
+					},
+				},
+			},
+			"404": {
+				Description: "Not Found",
+				Content: map[string]*huma.MediaType{
+					"application/json": {
+						Schema: huma.SchemaFromType(registry, reflect.TypeFor[HumaError]()),
+						Example: HumaError{
+							Schema: "http://localhost:3030/schemas/ErrorModel.json",
+							Title:  "Not Found",
+							Status: http.StatusNotFound,
+							Detail: "AlertId Not Found.",
+						},
+					},
+				},
+			},
+		},
+	}
+	huma.Register(api, operation, a.AddUsersToAlertRule)
 }
 
 func (a *App) RespondToAlert(
@@ -636,4 +690,17 @@ func (a *App) DeleteAlertRule(ctx context.Context,
 		return nil, huma.Error500InternalServerError("Internal error while deleting the alert rule from source.")
 	}
 	return &struct{ Body alertstore.AlertRule }{alertRule}, nil
+}
+
+func (a *App) AddUsersToAlertRule(ctx context.Context, in *struct {
+	AlertId string   `path:"alertId"`
+	Body    []string `doc:"List of user email addresses." format:"email"`
+}) (*struct{}, error) {
+	ar, err := a.AlertStore.GetAlertRule(in.AlertId)
+	if err != nil {
+		if errors.Is(err, alertstore.NoAlert) {
+			return nil, huma.Error404NotFound(
+				"AlertId Not Found.")
+		}
+	}
 }

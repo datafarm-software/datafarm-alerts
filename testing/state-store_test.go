@@ -2,10 +2,8 @@ package testing
 
 import (
 	"fmt"
-	"io"
 	"net/http"
 	"reflect"
-	"strings"
 	"testing"
 	"time"
 
@@ -2970,7 +2968,7 @@ func TestDeleteAlert(t *testing.T) {
 	}
 }
 
-func TestRemoverUserFromAlert(t *testing.T) {
+func TestRemoveUsersFromAlert(t *testing.T) {
 	tests := map[string]struct {
 		wantErr                        bool
 		mockAlertStore, wantAlertStore alertstore.Schema
@@ -2980,7 +2978,68 @@ func TestRemoverUserFromAlert(t *testing.T) {
 		wantAlertSourceCount           int
 	}{
 
-		"remove 1 email from alert setup": {
+		"remove 1 email from alert rule": {
+			wantErr: false,
+			mockAlertStore: alertstore.Schema{
+				DeviceAlerts: []alertstore.DeviceAlertRule{
+					{
+						DeviceId:   RegisteredDeviceId,
+						QueryField: RegisteredQueryField,
+						AlertId:    AlertId,
+					},
+				},
+				AlertRecipients: []alertstore.AlertRecipient{
+					{
+						AlertId: AlertId,
+						Email:   UserEmail,
+					},
+					{
+						AlertId: AlertId,
+						Email:   "another@email.com",
+					},
+				},
+				AlertRules: []alertstore.StoredAlertRule{
+					{
+						AlertId:     AlertId,
+						RangeValues: []float32{OldValue},
+						Name:        RegisteredAlertName,
+						Duration:    "24h",
+						AlertType:   alertstore.LessThan,
+						AlertLevel:  alertstore.Warn,
+					},
+				},
+			},
+			wantAlertStore: alertstore.Schema{
+				DeviceAlerts: []alertstore.DeviceAlertRule{
+					{
+						DeviceId:   RegisteredDeviceId,
+						QueryField: RegisteredQueryField,
+						AlertId:    AlertId,
+					},
+				},
+				AlertRecipients: []alertstore.AlertRecipient{
+					{
+						AlertId: AlertId,
+						Email:   UserEmail,
+					},
+				},
+				AlertRules: []alertstore.StoredAlertRule{
+					{
+						AlertId:     AlertId,
+						RangeValues: []float32{OldValue},
+						Name:        RegisteredAlertName,
+						Duration:    "24h",
+						AlertType:   alertstore.LessThan,
+						AlertLevel:  alertstore.Warn,
+					},
+				},
+			},
+			wantStatus:     http.StatusOK,
+			emailsToRemove: []string{"another@email.com"},
+			alertId:        AlertId,
+		},
+
+		"remove last email from alert, so delete alert": {
 			wantErr: false,
 			mockAlertStore: alertstore.Schema{
 				DeviceAlerts: []alertstore.DeviceAlertRule{
@@ -3041,10 +3100,9 @@ func TestRemoverUserFromAlert(t *testing.T) {
 			alertId:        AlertId,
 		},
 	}
+
 	var alertRules []alertstore.AlertRule
 	var err error
-	var emailReader io.Reader
-	var emailString string
 	_, api := humatest.New(t)
 	a.RegisterHumaOperations(api)
 	for name, tc := range tests {
@@ -3060,9 +3118,8 @@ func TestRemoverUserFromAlert(t *testing.T) {
 			defer a.AlertStore.Close()
 			err = a.AlertStore.PrepareDb(tc.mockAlertStore)
 			require.Nil(t, err)
-			emailString = strings.Join(tc.emailsToRemove, " ")
-			emailReader = strings.NewReader(emailString)
-			resp := api.Delete(fmt.Sprintf("/alert/emails/%s", tc.alertId), emailReader)
+			resp := api.Delete(fmt.Sprintf("/alert/%s/emailaddresses", tc.alertId),
+				tc.emailsToRemove)
 			if tc.wantStatus != resp.Code {
 				t.Fatalf("wantStatus: %d, response Code: %v", tc.wantStatus, resp.Code)
 			}
@@ -3078,7 +3135,115 @@ func TestRemoverUserFromAlert(t *testing.T) {
 			}
 		})
 	}
+}
 
+func TestAddUsersToAlertRule(t *testing.T) {
+	tests := map[string]struct {
+		wantErr                        bool
+		mockAlertStore, wantAlertStore alertstore.Schema
+		wantStatus                     int
+		emailsToAdd                    []string
+		alertId                        string
+		wantAlertSourceCount           int
+	}{
+
+		"add 1 email to alert rule": {
+			wantErr: false,
+			mockAlertStore: alertstore.Schema{
+				DeviceAlerts: []alertstore.DeviceAlertRule{
+					{
+						DeviceId:   RegisteredDeviceId,
+						QueryField: RegisteredQueryField,
+						AlertId:    AlertId,
+					},
+				},
+				AlertRecipients: []alertstore.AlertRecipient{
+					{
+						AlertId: AlertId,
+						Email:   UserEmail,
+					},
+				},
+				AlertRules: []alertstore.StoredAlertRule{
+					{
+						AlertId:     AlertId,
+						RangeValues: []float32{OldValue},
+						Name:        RegisteredAlertName,
+						Duration:    "24h",
+						AlertType:   alertstore.LessThan,
+						AlertLevel:  alertstore.Warn,
+					},
+				},
+			},
+			wantAlertStore: alertstore.Schema{
+				DeviceAlerts: []alertstore.DeviceAlertRule{
+					{
+						DeviceId:   RegisteredDeviceId,
+						QueryField: RegisteredQueryField,
+						AlertId:    AlertId,
+					},
+				},
+				AlertRecipients: []alertstore.AlertRecipient{
+					{
+						AlertId: AlertId,
+						Email:   UserEmail,
+					},
+					{
+						AlertId: AlertId,
+						Email:   "another@email.com",
+					},
+				},
+				AlertRules: []alertstore.StoredAlertRule{
+					{
+						AlertId:     AlertId,
+						RangeValues: []float32{OldValue},
+						Name:        RegisteredAlertName,
+						Duration:    "24h",
+						AlertType:   alertstore.LessThan,
+						AlertLevel:  alertstore.Warn,
+					},
+				},
+			},
+			wantStatus:           http.StatusOK,
+			emailsToAdd:          []string{"another@email.com"},
+			alertId:              AlertId,
+			wantAlertSourceCount: 1,
+		},
+	}
+
+	var alertRules []alertstore.AlertRule
+	var err error
+	_, api := humatest.New(t)
+	a.RegisterHumaOperations(api)
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+			a.AlertSource, err = alertsource.NewTestingInflux(ConfigPath)
+			require.Nil(t, err)
+			defer a.AlertSource.Close()
+			alertRules = SchemaToAlertRules(tc.mockAlertStore)
+			err = a.AlertSource.PrepareDb(alertRules...)
+			require.Nil(t, err)
+			a.AlertStore, err = alertstore.NewGorm(alertstore.Testing, "testing")
+			require.Nil(t, err)
+			defer a.AlertStore.Close()
+			err = a.AlertStore.PrepareDb(tc.mockAlertStore)
+			require.Nil(t, err)
+			resp := api.Post(fmt.Sprintf("/alert/%s/emailaddresses", tc.alertId),
+				tc.emailsToAdd)
+			if tc.wantStatus != resp.Code {
+				t.Fatalf("wantStatus: %d, response Code: %v", tc.wantStatus, resp.Code)
+			}
+			if !tc.wantErr {
+				if diff := cmp.Diff(tc.wantAlertStore, a.AlertStore.GetSnapshot()); diff != "" {
+					t.Fatalf("alertStore mismatch (-want +got):\n%s", diff)
+				}
+				alertsCount := a.AlertSource.GetSnapshot()
+				if tc.wantAlertSourceCount != alertsCount {
+					t.Fatalf("wantAlertSourceCount: %d, got alertsCount: %d",
+						tc.wantAlertSourceCount, alertsCount)
+				}
+			}
+		})
+	}
 }
 
 func SchemaToAlertRules(dbRecord alertstore.Schema) []alertstore.AlertRule {
