@@ -109,6 +109,11 @@ type CreatedRule struct {
 	AlertId string `json:"alertId" readOnly:"true" doc:"Generated Alert Id."`
 }
 
+type AddUsersResponse struct {
+	AlertId        string   `json:"alertId"`
+	EmailAddresses []string `json:"emailAddresses"`
+}
+
 func ParseDuration(d string) (time.Duration, error) {
 	var num int
 	var err error

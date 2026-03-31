@@ -399,7 +399,6 @@ func (a *App) RespondToAlert(
 	}
 	emails, err := a.AlertStore.GetAlertRecipients(alert.Id)
 	if err != nil {
-		log.Printf("GetAlertRecipients: %v", err)
 		return nil, huma.Error500InternalServerError("Internal error getting alert recipients.")
 	}
 	message := notifier.AlertMessage{
@@ -695,12 +694,42 @@ func (a *App) DeleteAlertRule(ctx context.Context,
 func (a *App) AddUsersToAlertRule(ctx context.Context, in *struct {
 	AlertId string   `path:"alertId"`
 	Body    []string `doc:"List of user email addresses." format:"email"`
-}) (*struct{}, error) {
+}) (*struct{ Body alertstore.AddUsersResponse }, error) {
 	ar, err := a.AlertStore.GetAlertRule(in.AlertId)
 	if err != nil {
 		if errors.Is(err, alertstore.NoAlert) {
-			return nil, huma.Error404NotFound(
-				"AlertId Not Found.")
+			return nil, huma.Error404NotFound("AlertId Not Found.")
+		} else {
+			return nil, huma.Error500InternalServerError(
+				"Internal error checking if AlertId exists.")
 		}
 	}
+	var dbRecord alertstore.Schema
+	dbRecord.AlertRecipients = a.ConvertToRecipients(in.AlertId, in.Body)
+	dbRecord.DeviceAlerts = []alertstore.DeviceAlertRule{
+		{
+			DeviceId:   ar.DeviceId,
+			QueryField: ar.QueryField,
+			AlertId:    ar.AlertId,
+		},
+	}
+	dbRecord.AlertRules = []alertstore.StoredAlertRule{
+		{
+			AlertId:     ar.AlertId,
+			Name:        ar.Name,
+			RangeValues: ar.RangeValues,
+			Duration:    ar.Duration,
+			AlertType:   ar.AlertType,
+			AlertLevel:  ar.AlertLevel,
+		},
+	}
+	if err = a.AlertStore.UpdateAlertRule(ar.AlertId, dbRecord); err != nil {
+		return nil, huma.Error500InternalServerError(
+			"Internal error while updating alert rule.")
+	}
+	return &struct{ Body alertstore.AddUsersResponse }{
+		Body: alertstore.AddUsersResponse{
+			AlertId: ar.AlertId, EmailAddresses: in.Body,
+		},
+	}, nil
 }

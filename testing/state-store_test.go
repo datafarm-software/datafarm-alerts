@@ -3202,6 +3202,7 @@ func TestAddUsersToAlertRule(t *testing.T) {
 						AlertLevel:  alertstore.Warn,
 					},
 				},
+				AlertStates: []alertstore.AlertState{},
 			},
 			wantStatus:           http.StatusOK,
 			emailsToAdd:          []string{"another@email.com"},
