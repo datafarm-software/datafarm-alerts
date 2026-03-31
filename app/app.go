@@ -354,6 +354,58 @@ func (a *App) RegisterHumaOperations(api huma.API) {
 		},
 	}
 	huma.Register(api, operation, a.AddUsersToAlertRule)
+	operation = huma.Operation{
+		Method: "DELETE",
+		Path:   "/alert/{alertId}/emailaddresses",
+		Parameters: []*huma.Param{
+			{
+				Name:            "alertId",
+				In:              "path",
+				Description:     "Alert Id from which to remove email addresses.",
+				Required:        true,
+				AllowEmptyValue: false,
+				Schema: &huma.Schema{
+					Type:    "string",
+					Pattern: "^[a-zA-Z0-9]+$",
+				},
+			},
+		},
+		Tags:        []string{"Delete"},
+		Summary:     "Delete an Alert Rule's User List.",
+		Description: "Clients can use this route to remove users from the AlertRule.",
+		RequestBody: &huma.RequestBody{},
+		Responses: map[string]*huma.Response{
+			"500": {
+				Description: "Internal Server Error",
+				Content: map[string]*huma.MediaType{
+					"application/json": {
+						Schema: huma.SchemaFromType(registry, reflect.TypeFor[HumaError]()),
+						Example: HumaError{
+							Schema: "http://localhost:3030/schemas/ErrorModel.json",
+							Title:  "Internal Server Error",
+							Status: http.StatusInternalServerError,
+							Detail: "Internal error while removing the email addresses.",
+						},
+					},
+				},
+			},
+			"404": {
+				Description: "Not Found",
+				Content: map[string]*huma.MediaType{
+					"application/json": {
+						Schema: huma.SchemaFromType(registry, reflect.TypeFor[HumaError]()),
+						Example: HumaError{
+							Schema: "http://localhost:3030/schemas/ErrorModel.json",
+							Title:  "Not Found",
+							Status: http.StatusNotFound,
+							Detail: "AlertId Not Found.",
+						},
+					},
+				},
+			},
+		},
+	}
+	huma.Register(api, operation, a.RemoveUsersFromAlertRule)
 }
 
 func (a *App) RespondToAlert(
