@@ -521,10 +521,20 @@ func (a *App) CreateAlertRule(
 			return nil,
 				huma.Error500InternalServerError("Internal error checking if alert exists.")
 		}
-		return nil, ErrorResponse{
-			StatusError: huma.Error409Conflict(
-				"Alert with identical parameters already exists."),
-			AlertId: existingAlertId,
+		existingAlert, err := a.AlertStore.GetAlertRule(existingAlertId)
+		if err != nil {
+			log.Printf("getting existing alert rule: %v", err)
+			return nil, huma.Error500InternalServerError(
+				"Internal error while getting existing alert rule.")
+		}
+		slices.Sort(in.Body.EmailAddresses)
+		slices.Sort(existingAlert.EmailAddresses)
+		if slices.Equal(in.Body.EmailAddresses, existingAlert.EmailAddresses) {
+			return nil, ErrorResponse{
+				StatusError: huma.Error409Conflict(
+					"Alert with identical parameters already exists."),
+				AlertId: existingAlertId,
+			}
 		}
 	}
 	alertId, err := a.AlertSource.CreateAlertRule(in.Body)

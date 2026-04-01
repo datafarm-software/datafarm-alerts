@@ -1143,10 +1143,24 @@ func TestCreateAlertRule(t *testing.T) {
 			},
 		},
 
-		"identical alert already exists - note name is irrelevant": {
-			wantErr:    true,
-			wantStatus: http.StatusConflict,
-			wantAlertStore: alertstore.Schema{
+		"identical alert except user emails, so create anyway": {
+			wantErr:              false,
+			wantStatus:           http.StatusOK,
+			wantAlertSourceCount: 2,
+			wantResponse: alertstore.CreatedRule{
+				AlertId: "alert2",
+			},
+			alertRule: alertstore.AlertRule{
+				Name:           "Some other alert name",
+				RangeValues:    []float32{5},
+				Duration:       "24h",
+				EmailAddresses: []string{AnotherUserEmail, "user3@alert.com"},
+				DeviceId:       RegisteredDeviceId,
+				QueryField:     RegisteredQueryField,
+				AlertType:      alertstore.LessThan,
+				AlertLevel:     alertstore.Crit,
+			},
+			mockAlertStore: alertstore.Schema{
 				AlertRecipients: []alertstore.AlertRecipient{
 					{AlertId: AlertId, Email: UserEmail},
 				},
@@ -1160,6 +1174,51 @@ func TestCreateAlertRule(t *testing.T) {
 				AlertRules: []alertstore.StoredAlertRule{
 					{
 						AlertId:     AlertId,
+						RangeValues: []float32{5},
+						Name:        RegisteredAlertName,
+						Duration:    "24h",
+						AlertType:   alertstore.LessThan,
+						AlertLevel:  alertstore.Crit,
+					},
+				},
+				AlertStates: []alertstore.AlertState{
+					{
+						Duration:    SomeDuration,
+						RangeValues: []float32{5},
+						Id:          AlertId,
+						Level:       alertstore.Crit,
+					},
+				},
+			},
+			wantAlertStore: alertstore.Schema{
+				AlertRecipients: []alertstore.AlertRecipient{
+					{AlertId: AlertId, Email: UserEmail},
+					{AlertId: "alert2", Email: AnotherUserEmail},
+					{AlertId: "alert2", Email: "user3@alert.com"},
+				},
+				DeviceAlerts: []alertstore.DeviceAlertRule{
+					{
+						DeviceId:   RegisteredDeviceId,
+						QueryField: RegisteredQueryField,
+						AlertId:    AlertId,
+					},
+					{
+						DeviceId:   RegisteredDeviceId,
+						QueryField: RegisteredQueryField,
+						AlertId:    "alert2",
+					},
+				},
+				AlertRules: []alertstore.StoredAlertRule{
+					{
+						AlertId:     AlertId,
+						Name:        RegisteredAlertName,
+						RangeValues: []float32{5},
+						Duration:    "24h",
+						AlertType:   alertstore.LessThan,
+						AlertLevel:  alertstore.Crit,
+					},
+					{
+						AlertId:     "alert2",
 						Name:        RegisteredAlertName,
 						RangeValues: []float32{5},
 						Duration:    "24h",
@@ -1167,7 +1226,26 @@ func TestCreateAlertRule(t *testing.T) {
 						AlertLevel:  alertstore.Crit,
 					},
 				},
+				AlertStates: []alertstore.AlertState{
+					{
+						Duration:    SomeDuration,
+						RangeValues: []float32{5},
+						Id:          AlertId,
+						Level:       alertstore.Crit,
+					},
+					{
+						Duration:    SomeDuration,
+						RangeValues: []float32{5},
+						Id:          "alert2",
+						Level:       alertstore.Crit,
+					},
+				},
 			},
+		},
+
+		"identical alert including user email, so conflict": {
+			wantErr:    true,
+			wantStatus: http.StatusConflict,
 			mockAlertStore: alertstore.Schema{
 				AlertRecipients: []alertstore.AlertRecipient{
 					{AlertId: AlertId, Email: UserEmail},
@@ -1191,13 +1269,14 @@ func TestCreateAlertRule(t *testing.T) {
 				},
 			},
 			alertRule: alertstore.AlertRule{
-				Name:        "Some other alert name",
-				RangeValues: []float32{5},
-				Duration:    "24h",
-				DeviceId:    RegisteredDeviceId,
-				QueryField:  RegisteredQueryField,
-				AlertType:   alertstore.LessThan,
-				AlertLevel:  alertstore.Crit,
+				Name:           "Some other alert name",
+				RangeValues:    []float32{5},
+				Duration:       "24h",
+				EmailAddresses: []string{UserEmail},
+				DeviceId:       RegisteredDeviceId,
+				QueryField:     RegisteredQueryField,
+				AlertType:      alertstore.LessThan,
+				AlertLevel:     alertstore.Crit,
 			},
 		},
 
