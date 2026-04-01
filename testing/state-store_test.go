@@ -2694,7 +2694,7 @@ func TestUpdateAlertRule(t *testing.T) {
 			if !tc.wantErr {
 				err = json.Unmarshal(resp.Body.Bytes(), &got)
 				require.Nil(t, err)
-				tc.updatedAlertRule.AlertId = fmt.Sprintf("alert%d", tc.wantAlertSourceCount)
+				tc.updatedAlertRule.AlertId = tc.alertId
 				if diff := cmp.Diff(tc.updatedAlertRule, got); diff != "" {
 					t.Fatalf("response alertrule mismatch (-want +got):\n%s", diff)
 				}
