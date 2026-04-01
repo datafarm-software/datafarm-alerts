@@ -304,7 +304,7 @@ func (a *App) RegisterHumaOperations(api huma.API) {
 	}
 	huma.Register(api, operation, a.DeleteAlertRule)
 	operation = huma.Operation{
-		Method: "POST",
+		Method: "PUT",
 		Path:   "/alert/{alertId}/emailaddresses",
 		Parameters: []*huma.Param{
 			{
@@ -392,6 +392,20 @@ func (a *App) RegisterHumaOperations(api huma.API) {
 			},
 			"404": {
 				Description: "Not Found",
+				Content: map[string]*huma.MediaType{
+					"application/json": {
+						Schema: huma.SchemaFromType(registry, reflect.TypeFor[HumaError]()),
+						Example: HumaError{
+							Schema: "http://localhost:3030/schemas/ErrorModel.json",
+							Title:  "Not Found",
+							Status: http.StatusNotFound,
+							Detail: "AlertId Not Found.",
+						},
+					},
+				},
+			},
+			"204": {
+				Description: "No Content will be returned in the event of the client removing all remaining users from the Alert Rule. In this case the sytem will also remove the Alert Rule.",
 				Content: map[string]*huma.MediaType{
 					"application/json": {
 						Schema: huma.SchemaFromType(registry, reflect.TypeFor[HumaError]()),
@@ -597,59 +611,37 @@ func (a *App) UpdateAlertRule(
 		}
 	}
 	var dbRecord alertstore.Schema
-	alertId, err := a.AlertStore.CheckAlertRuleExists(in.Body)
-	if err != nil {
-		if !errors.Is(err, alertstore.AlertExists) {
-			log.Printf("checking alert rule exists for: %s, error: %v", in.AlertId, err)
-			return nil, huma.Error500InternalServerError(
-				"Internal error checking if the alert rule exists.")
-		}
-		if alertId != in.AlertId {
-			emails, err := a.AlertStore.GetAlertRecipients(alertId)
-			if err != nil {
-				log.Printf("getting existing alert recipients for: %s, error: %v", in.AlertId, err)
-				return nil, huma.Error500InternalServerError(
-					"Internal error getting existing alert recipients.")
-			}
-			emails = append(emails, in.Body.EmailAddresses...)
-			dbRecord.AlertRecipients = a.ConvertToRecipients(alertId, emails)
-			if _, err = a.DeleteAlertRule(ctx, &struct {
-				AlertId string `path:"alertId"`
-			}{in.AlertId}); err != nil {
-				log.Printf(
-					"deleting alert rule. current: %s, existing: %s, error: %v",
-					in.AlertId, alertId, err)
-				return nil, huma.Error500InternalServerError(
-					"Internal error deleting alert rule being updated to existing alert.")
-			}
-			in.Body.AlertId = alertId
-		}
+	dbRecord.AlertRecipients = a.ConvertToRecipients(in.AlertId, in.Body.EmailAddresses)
+	dbRecord.DeviceAlerts = []alertstore.DeviceAlertRule{
+		{
+			DeviceId:   in.Body.DeviceId,
+			QueryField: in.Body.QueryField,
+			AlertId:    in.Body.AlertId,
+		},
 	}
-
-	if len(dbRecord.AlertRecipients) < 1 {
-		dbRecord.AlertRecipients = a.ConvertToRecipients(in.AlertId, in.Body.EmailAddresses)
-		dbRecord.DeviceAlerts = []alertstore.DeviceAlertRule{
-			{
-				DeviceId:   in.Body.DeviceId,
-				QueryField: in.Body.QueryField,
-				AlertId:    in.Body.AlertId,
-			},
-		}
-		dbRecord.AlertRules = []alertstore.StoredAlertRule{
-			{
-				AlertId:     in.Body.AlertId,
-				Name:        in.Body.Name,
-				RangeValues: in.Body.RangeValues,
-				Duration:    in.Body.Duration,
-				AlertType:   in.Body.AlertType,
-				AlertLevel:  in.Body.AlertLevel,
-			},
-		}
+	dbRecord.AlertRules = []alertstore.StoredAlertRule{
+		{
+			AlertId:     in.Body.AlertId,
+			Name:        in.Body.Name,
+			RangeValues: in.Body.RangeValues,
+			Duration:    in.Body.Duration,
+			AlertType:   in.Body.AlertType,
+			AlertLevel:  in.Body.AlertLevel,
+		},
 	}
 	if err := a.AlertStore.UpdateAlertRule(in.Body.AlertId, dbRecord); err != nil {
 		log.Printf("alertstore update alert rule for id: %s, error: %v", in.AlertId, err)
 		return nil, huma.Error500InternalServerError(
 			"Internal error while storing the updated alert rule.")
+	}
+	if err := a.AlertSource.UpdateAlertRule(in.Body); err != nil {
+		if errors.Is(err, alertstore.NoAlert) {
+			return nil, huma.Error404NotFound(
+				"Could not update rule with alertsource. Alert not found.")
+		}
+		log.Printf("alertsource update alert rule for id: %s, error: %v", in.AlertId, err)
+		return nil, huma.Error500InternalServerError(
+			"Internal error while updating the alert rule with source.")
 	}
 	stateDuration, err := alertstore.ParseDuration(in.Body.Duration)
 	if err != nil {
@@ -667,15 +659,6 @@ func (a *App) UpdateAlertRule(
 	if err = a.AlertStore.UpdateAlertState(alertState); err != nil {
 		log.Printf("updating alert state for id: %s, err: %v", alertState.Id, err)
 		return nil, huma.Error500InternalServerError("Internal error updating alert state.")
-	}
-	if err := a.AlertSource.UpdateAlertRule(in.Body); err != nil {
-		if errors.Is(err, alertstore.NoAlert) {
-			return nil, huma.Error404NotFound(
-				"Could not update rule with alertsource. Alert not found.")
-		}
-		log.Printf("alertsource update alert rule for id: %s, error: %v", in.AlertId, err)
-		return nil, huma.Error500InternalServerError(
-			"Internal error while updating the alert rule with source.")
 	}
 	return &struct{ Body alertstore.AlertRule }{in.Body}, nil
 }
