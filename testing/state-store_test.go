@@ -3051,7 +3051,7 @@ func TestDeleteAlert(t *testing.T) {
 				CreatedAlerts: map[string][]notifier.AlertCreated{},
 				Notifications: map[string][]notifier.AlertNotification{},
 				DeletedAlerts: map[string][]notifier.AlertDeleted{
-					UserEmail: []notifier.AlertDeleted{
+					UserEmail: {
 						{
 							Name:        RegisteredAlertName,
 							DeviceId:    RegisteredDeviceId,
@@ -3264,6 +3264,8 @@ func TestDeleteAlert(t *testing.T) {
 	a.RegisterHumaOperations(api)
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
+			a.Notifier, err = notifier.NewTestingGoMail()
+			require.Nil(t, err)
 			a.AlertSource, err = alertsource.NewTestingInflux(ConfigPath)
 			require.Nil(t, err)
 			defer a.AlertSource.Close()
@@ -3292,6 +3294,9 @@ func TestDeleteAlert(t *testing.T) {
 				if tc.wantAlertSourceCount != alertsCount {
 					t.Fatalf("wantAlertSourceCount: %d, got alertsCount: %d",
 						tc.wantAlertSourceCount, alertsCount)
+				}
+				if diff := cmp.Diff(tc.wantUserInboxes, a.Notifier.GetUserInboxes()); diff != "" {
+					t.Fatalf("user inboxes mismatch (-want +got):\n%s", diff)
 				}
 			}
 		})

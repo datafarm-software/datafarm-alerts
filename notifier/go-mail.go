@@ -17,6 +17,7 @@ func NewTestingGoMail() (Notifier, error) {
 		inboxes: Schema{
 			Notifications: make(map[string][]AlertNotification),
 			CreatedAlerts: make(map[string][]AlertCreated),
+			DeletedAlerts: make(map[string][]AlertDeleted),
 		},
 	}, nil
 }

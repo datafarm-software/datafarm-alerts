@@ -34,6 +34,10 @@ func (m *MockNotifier) AlertCreatedNotify(message AlertCreated, emails ...string
 	return fmt.Errorf("not implemented")
 }
 
+func (m *MockNotifier) AlertDeletedNotify(message AlertDeleted, emails ...string) error {
+	return fmt.Errorf("not implemented")
+}
+
 func (m *MockNotifier) GetUserInboxes() Schema {
 	return m.inboxes
 }
