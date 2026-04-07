@@ -49,7 +49,30 @@ func (g *TestingGomail) AlertNotify(message AlertNotification, emails ...string)
 }
 
 func (g *TestingGomail) AlertCreatedNotify(message AlertCreated, emails ...string) error {
-	return fmt.Errorf("not implemented")
+	var emailParts []string
+	var username, messageStr string
+	var err error
+	var mockSender gomail.SendFunc
+	var m *gomail.Message
+	for _, email := range emails {
+		emailParts = strings.Split(email, "@")
+		username = emailParts[0]
+		m = gomail.NewMessage()
+		messageStr, err = message.String(username)
+		if err != nil {
+			break
+		}
+		m.SetHeader("From", "tester@alerts.com")
+		m.SetHeader("Subject", "DataFarm Alert Notification")
+		m.SetBody("text/html", messageStr)
+		mockSender = gomail.SendFunc(g.Send)
+		if err = mockSender.Send("tester@alerts.com", []string{email}, m); err != nil {
+			break
+		}
+		g.inboxes.CreatedAlerts[email] = append(g.inboxes.CreatedAlerts[email],
+			message)
+	}
+	return err
 }
 
 func (g *TestingGomail) Send(from string, to []string, msg io.WriterTo) error {
