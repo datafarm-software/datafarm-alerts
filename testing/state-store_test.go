@@ -3038,14 +3038,32 @@ func TestDeleteAlert(t *testing.T) {
 		wantStatus                     int
 		alertId                        string
 		wantAlertRule                  alertstore.AlertRule
+		wantUserInboxes                notifier.Schema
 		mockAlertStore, wantAlertStore alertstore.Schema
 		wantAlertSourceCount           int
 	}{
 
 		"delete an alert": {
-			wantErr:              false,
-			wantStatus:           http.StatusOK,
-			alertId:              AlertId,
+			wantErr:    false,
+			wantStatus: http.StatusOK,
+			alertId:    AlertId,
+			wantUserInboxes: notifier.Schema{
+				CreatedAlerts: map[string][]notifier.AlertCreated{},
+				Notifications: map[string][]notifier.AlertNotification{},
+				DeletedAlerts: map[string][]notifier.AlertDeleted{
+					UserEmail: []notifier.AlertDeleted{
+						{
+							Name:        RegisteredAlertName,
+							DeviceId:    RegisteredDeviceId,
+							QueryField:  RegisteredQueryField,
+							Duration:    "24h",
+							AlertLevel:  alertstore.Crit,
+							AlertType:   alertstore.Range,
+							AlertValues: []float32{10, 20},
+						},
+					},
+				},
+			},
 			wantAlertSourceCount: 0,
 			mockAlertStore: alertstore.Schema{
 				AlertRecipients: []alertstore.AlertRecipient{

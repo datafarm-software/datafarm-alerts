@@ -19,6 +19,10 @@ const AlertCreatedNotification = "Hi %s, \nThis email to notify alert created wi
 
 const AlertDeletedNotification = "Hi %s,\n This email to notify that you will no longer receive alerts for alert: %s. Details: DeviceId: %s, QueryField: %s, Duration: %s, Type: %s, Condition: %s."
 
+type Message interface {
+	String(username string) (string, error)
+}
+
 type AlertNotification struct {
 	Name       string
 	DeviceId   string
@@ -28,11 +32,11 @@ type AlertNotification struct {
 	Timestamp  time.Time
 }
 
-func (a AlertNotification) String(username string) string {
+func (a AlertNotification) String(username string) (string, error) {
 	return fmt.Sprintf(
 		Notification,
 		username, alertstore.AlertLevelString[a.Level], a.Value,
-		a.Name, a.DeviceId, a.QueryField, a.Timestamp.String())
+		a.Name, a.DeviceId, a.QueryField, a.Timestamp.String()), nil
 }
 
 type AlertCreated struct {
