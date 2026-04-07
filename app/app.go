@@ -468,7 +468,7 @@ func (a *App) RespondToAlert(
 	if err != nil {
 		return nil, huma.Error500InternalServerError("Internal error getting alert recipients.")
 	}
-	message := notifier.AlertMessage{
+	message := notifier.AlertNotification{
 		Name:       alert.Name,
 		Value:      alert.Value,
 		DeviceId:   alertRule.DeviceId,
@@ -476,7 +476,7 @@ func (a *App) RespondToAlert(
 		Level:      alert.Level,
 		Timestamp:  alert.Time,
 	}
-	if err = a.Notifier.Notify(message, emails...); err != nil {
+	if err = a.Notifier.AlertNotify(message, emails...); err != nil {
 		log.Printf("notifying users: %v", err)
 		return nil, huma.Error500InternalServerError("Could not notify users.")
 	}
@@ -566,6 +566,20 @@ func (a *App) CreateAlertRule(
 	if err := a.AlertStore.StoreAlertRule(dbRecord); err != nil {
 		log.Printf("storing alert: %v", err)
 		return nil, huma.Error500InternalServerError("internal error storing the alert rule")
+	}
+	alertCreated := notifier.AlertCreated{
+		Name:        in.Body.Name,
+		DeviceId:    in.Body.DeviceId,
+		QueryField:  in.Body.QueryField,
+		Duration:    in.Body.Duration,
+		AlertLevel:  in.Body.AlertLevel,
+		AlertType:   in.Body.AlertType,
+		AlertValues: in.Body.RangeValues,
+	}
+	if err := a.Notifier.AlertCreatedNotify(alertCreated, in.Body.EmailAddresses...); err != nil {
+		log.Printf("alert created notify: %v", err)
+		return nil, huma.Error500InternalServerError(
+			"Internal error notifying users of alert creation.")
 	}
 	return &struct{ Body alertstore.CreatedRule }{
 		Body: alertstore.CreatedRule{
