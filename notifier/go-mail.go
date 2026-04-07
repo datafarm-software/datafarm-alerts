@@ -1,6 +1,7 @@
 package notifier
 
 import (
+	"fmt"
 	"io"
 	"strings"
 
@@ -8,12 +9,15 @@ import (
 )
 
 type TestingGomail struct {
-	testingInboxes map[string][]AlertMessage
+	inboxes Schema
 }
 
 func NewTestingGoMail() (Notifier, error) {
 	return &TestingGomail{
-		testingInboxes: make(map[string][]AlertMessage),
+		inboxes: Schema{
+			Notifications: make(map[string][]AlertNotification),
+			CreatedAlerts: make(map[string][]AlertCreated),
+		},
 	}, nil
 }
 
@@ -21,7 +25,7 @@ func (g *TestingGomail) Close() error {
 	return nil
 }
 
-func (g *TestingGomail) Notify(message AlertMessage, emails ...string) error {
+func (g *TestingGomail) AlertNotify(message AlertNotification, emails ...string) error {
 	var emailParts []string
 	var username string
 	var err error
@@ -33,22 +37,27 @@ func (g *TestingGomail) Notify(message AlertMessage, emails ...string) error {
 		m = gomail.NewMessage()
 		m.SetHeader("From", "tester@alerts.com")
 		m.SetHeader("Subject", "DataFarm Alert Notification")
-		m.SetBody("text/html", message.ToHtml(username))
+		m.SetBody("text/html", message.String(username))
 		mockSender = gomail.SendFunc(g.Send)
 		if err = mockSender.Send("tester@alerts.com", []string{email}, m); err != nil {
 			break
 		}
-		g.testingInboxes[email] = append(g.testingInboxes[email], message)
+		g.inboxes.Notifications[email] = append(g.inboxes.Notifications[email],
+			message)
 	}
 	return err
+}
+
+func (g *TestingGomail) AlertCreatedNotify(message AlertCreated, emails ...string) error {
+	return fmt.Errorf("not implemented")
 }
 
 func (g *TestingGomail) Send(from string, to []string, msg io.WriterTo) error {
 	return nil
 }
 
-func (g *TestingGomail) GetUserInboxes() map[string][]AlertMessage {
-	return g.testingInboxes
+func (g *TestingGomail) GetUserInboxes() Schema {
+	return g.inboxes
 }
 
 type GomailOpts struct {
@@ -75,7 +84,7 @@ func (g *Gomail) Close() error {
 	return nil
 }
 
-func (g *Gomail) Notify(message AlertMessage, emails ...string) error {
+func (g *Gomail) AlertNotify(message AlertNotification, emails ...string) error {
 	var emailParts []string
 	var username string
 	var err error
@@ -92,7 +101,7 @@ func (g *Gomail) Notify(message AlertMessage, emails ...string) error {
 		m.SetHeader("From", g.username)
 		m.SetHeader("To", email)
 		m.SetHeader("Subject", "DataFarm Alert Notification")
-		m.SetBody("text/html", message.ToHtml(username))
+		m.SetBody("text/html", message.String(username))
 		if err = sender.Send(g.username, []string{email}, m); err != nil {
 			break
 		}
@@ -100,6 +109,10 @@ func (g *Gomail) Notify(message AlertMessage, emails ...string) error {
 	return err
 }
 
-func (g *Gomail) GetUserInboxes() map[string][]AlertMessage {
-	return nil
+func (g *Gomail) AlertCreatedNotify(message AlertCreated, emails ...string) error {
+	return fmt.Errorf("not implemented")
+}
+
+func (g *Gomail) GetUserInboxes() Schema {
+	return Schema{}
 }
