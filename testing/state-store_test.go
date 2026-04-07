@@ -1006,6 +1006,21 @@ func TestCreateAlertRule(t *testing.T) {
 					},
 				},
 			},
+			wantUserInboxes: notifier.Schema{
+				Notifications: map[string][]notifier.AlertNotification{},
+				CreatedAlerts: map[string][]notifier.AlertCreated{
+					UserEmail: {
+						{
+							Name:       RegisteredAlertName,
+							DeviceId:   RegisteredDeviceId,
+							QueryField: RegisteredQueryField,
+							Duration:   "24h",
+							AlertLevel: alertstore.Crit,
+							AlertType:  alertstore.InactiveSensor,
+						},
+					},
+				},
+			},
 			alertRule: alertstore.AlertRule{
 				Name:           RegisteredAlertName,
 				Duration:       "24h",

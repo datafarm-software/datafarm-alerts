@@ -64,6 +64,10 @@ func (a AlertCreated) String(username string) (string, error) {
 				len(a.AlertValues))
 		}
 		condition = fmt.Sprintf("> %.2f, %.2f <", a.AlertValues[0], a.AlertValues[1])
+	case alertstore.InactiveSensor:
+		condition = "Inactive Sensor"
+	default:
+		return "", fmt.Errorf("unknown alert type: %d", a.AlertType)
 	}
 	return fmt.Sprintf(AlertCreatedNotification, username, a.Name, a.DeviceId,
 		a.QueryField, a.Duration, alertstore.AlertLevelString[a.AlertLevel],
