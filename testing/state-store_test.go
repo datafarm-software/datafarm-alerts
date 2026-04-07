@@ -3112,9 +3112,26 @@ func TestDeleteAlert(t *testing.T) {
 		},
 
 		"delete a specific alert": {
-			wantErr:              false,
-			wantStatus:           http.StatusOK,
-			alertId:              "alert2",
+			wantErr:    false,
+			wantStatus: http.StatusOK,
+			alertId:    "alert2",
+			wantUserInboxes: notifier.Schema{
+				CreatedAlerts: map[string][]notifier.AlertCreated{},
+				Notifications: map[string][]notifier.AlertNotification{},
+				DeletedAlerts: map[string][]notifier.AlertDeleted{
+					UserEmail: {
+						{
+							Name:        "Some other alert name",
+							DeviceId:    "device2",
+							QueryField:  "humidity",
+							Duration:    "48h",
+							AlertLevel:  alertstore.Warn,
+							AlertType:   alertstore.LessThan,
+							AlertValues: []float32{10},
+						},
+					},
+				},
+			},
 			wantAlertSourceCount: 1,
 			mockAlertStore: alertstore.Schema{
 				AlertRecipients: []alertstore.AlertRecipient{
@@ -3201,9 +3218,25 @@ func TestDeleteAlert(t *testing.T) {
 		},
 
 		"delete an inactive sensor alert": {
-			wantErr:              false,
-			wantStatus:           http.StatusOK,
-			alertId:              AlertId,
+			wantErr:    false,
+			wantStatus: http.StatusOK,
+			alertId:    AlertId,
+			wantUserInboxes: notifier.Schema{
+				CreatedAlerts: map[string][]notifier.AlertCreated{},
+				Notifications: map[string][]notifier.AlertNotification{},
+				DeletedAlerts: map[string][]notifier.AlertDeleted{
+					UserEmail: {
+						{
+							Name:       RegisteredAlertName,
+							DeviceId:   RegisteredDeviceId,
+							QueryField: RegisteredQueryField,
+							Duration:   "24h",
+							AlertLevel: alertstore.Crit,
+							AlertType:  alertstore.InactiveSensor,
+						},
+					},
+				},
+			},
 			wantAlertSourceCount: 0,
 			mockAlertStore: alertstore.Schema{
 				AlertRecipients: []alertstore.AlertRecipient{
@@ -3250,8 +3283,13 @@ func TestDeleteAlert(t *testing.T) {
 		},
 
 		"try to delete non existent alert": {
-			wantErr:        true,
-			wantStatus:     http.StatusNotFound,
+			wantErr:    true,
+			wantStatus: http.StatusNotFound,
+			wantUserInboxes: notifier.Schema{
+				Notifications: map[string][]notifier.AlertNotification{},
+				CreatedAlerts: map[string][]notifier.AlertCreated{},
+				DeletedAlerts: map[string][]notifier.AlertDeleted{},
+			},
 			alertId:        "alert2",
 			mockAlertStore: alertstore.Schema{},
 		},
