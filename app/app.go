@@ -748,6 +748,20 @@ func (a *App) DeleteAlertRule(ctx context.Context,
 		log.Printf("deleting source alert rule: %s: %v", in.AlertId, err)
 		return nil, huma.Error500InternalServerError("Internal error while deleting the alert rule from source.")
 	}
+	message := notifier.AlertDeleted{
+		Name:        alertRule.Name,
+		DeviceId:    alertRule.DeviceId,
+		QueryField:  alertRule.QueryField,
+		Duration:    alertRule.Duration,
+		AlertLevel:  alertRule.AlertLevel,
+		AlertType:   alertRule.AlertType,
+		AlertValues: alertRule.RangeValues,
+	}
+	if err = a.Notifier.AlertDeletedNotify(message, alertRule.EmailAddresses...); err != nil {
+		log.Printf("alertDeletedNotify: %v", err)
+		return nil, huma.Error500InternalServerError(
+			"Internal error notifying users alert is deleted.")
+	}
 	return &struct{ Body alertstore.AlertRule }{alertRule}, nil
 }
 
