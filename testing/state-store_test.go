@@ -21,7 +21,10 @@ import (
 )
 
 var a = &app.App{}
-var EmptyInboxes = notifier.Schema{}
+var EmptyInboxes = notifier.Schema{
+	Notifications: map[string][]notifier.AlertNotification{},
+	CreatedAlerts: map[string][]notifier.AlertCreated{},
+}
 var EmptyAlertStore = alertstore.Schema{}
 
 const ConfigPath = "../config.yml"
@@ -170,6 +173,7 @@ func TestRespondToAlert(t *testing.T) {
 		"send alert because still crit after duration": {
 			wantStatus: http.StatusNoContent,
 			wantUserInboxes: notifier.Schema{
+				CreatedAlerts: map[string][]notifier.AlertCreated{},
 				Notifications: map[string][]notifier.AlertNotification{
 					UserEmail: {
 						{
@@ -443,6 +447,7 @@ func TestRespondToAlert(t *testing.T) {
 		"send notification because alert level changing from ok to crit": {
 			wantStatus: http.StatusNoContent,
 			wantUserInboxes: notifier.Schema{
+				CreatedAlerts: map[string][]notifier.AlertCreated{},
 				Notifications: map[string][]notifier.AlertNotification{
 					UserEmail: {
 						{
@@ -524,6 +529,7 @@ func TestRespondToAlert(t *testing.T) {
 		"send notification because alert level changing from ok to warn": {
 			wantStatus: http.StatusNoContent,
 			wantUserInboxes: notifier.Schema{
+				CreatedAlerts: map[string][]notifier.AlertCreated{},
 				Notifications: map[string][]notifier.AlertNotification{
 					UserEmail: {
 						{
@@ -605,6 +611,7 @@ func TestRespondToAlert(t *testing.T) {
 		"send notification because alert level changing from warn to crit": {
 			wantStatus: http.StatusNoContent,
 			wantUserInboxes: notifier.Schema{
+				CreatedAlerts: map[string][]notifier.AlertCreated{},
 				Notifications: map[string][]notifier.AlertNotification{
 					UserEmail: {
 						{
@@ -808,6 +815,7 @@ func TestRespondToAlert(t *testing.T) {
 		"respond to first alert": {
 			wantStatus: http.StatusNoContent,
 			wantUserInboxes: notifier.Schema{
+				CreatedAlerts: map[string][]notifier.AlertCreated{},
 				Notifications: map[string][]notifier.AlertNotification{
 					UserEmail: {
 						{
