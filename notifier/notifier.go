@@ -10,7 +10,7 @@ import (
 type Schema struct {
 	Notifications map[string][]AlertNotification
 	CreatedAlerts map[string][]AlertCreated
-	DeletedAlerts map[string][]AlertDeleted
+	// DeletedAlerts map[string][]AlertDeleted
 }
 
 const Notification = "Hi %s,\nThis email to notify alert level %s - %.2f.\nDetails:\n- Name: %s\n- N- DeviceId: %s\n- N- QueryField: %s\n- N- Time Alert Triggered: %s"
@@ -79,5 +79,5 @@ type Notifier interface {
 	Close() error
 	AlertNotify(message AlertNotification, emails ...string) error
 	AlertCreatedNotify(message AlertCreated, emails ...string) error
-	AlertDeletedNotify(message AlertDeleted, emails ...string) error
+	// AlertDeletedNotify(message AlertDeleted, emails ...string) error
 }

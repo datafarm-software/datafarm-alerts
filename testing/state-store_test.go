@@ -21,7 +21,7 @@ import (
 )
 
 var a = &app.App{}
-var EmptyInboxes = map[string][]notifier.AlertMessage{}
+var EmptyInboxes = notifier.Schema{}
 var EmptyAlertStore = alertstore.Schema{}
 
 const ConfigPath = "../config.yml"
@@ -162,22 +162,24 @@ func TestShouldNotify(t *testing.T) {
 func TestRespondToAlert(t *testing.T) {
 	tests := map[string]struct {
 		wantStatus                     int
-		wantUserInboxes                map[string][]notifier.AlertMessage
+		wantUserInboxes                notifier.Schema
 		mockAlertStore, wantAlertStore alertstore.Schema
 		alert                          alertsource.InfluxAlert
 	}{
 
 		"send alert because still crit after duration": {
 			wantStatus: http.StatusNoContent,
-			wantUserInboxes: map[string][]notifier.AlertMessage{
-				UserEmail: {
-					{
-						Name:       RegisteredAlertName,
-						DeviceId:   RegisteredDeviceId,
-						Value:      NewValue,
-						QueryField: RegisteredQueryField,
-						Level:      alertstore.Crit,
-						Timestamp:  AfterDuration,
+			wantUserInboxes: notifier.Schema{
+				Notifications: map[string][]notifier.AlertNotification{
+					UserEmail: {
+						{
+							Name:       RegisteredAlertName,
+							DeviceId:   RegisteredDeviceId,
+							Value:      NewValue,
+							QueryField: RegisteredQueryField,
+							Level:      alertstore.Crit,
+							Timestamp:  AfterDuration,
+						},
 					},
 				},
 			},
@@ -440,15 +442,17 @@ func TestRespondToAlert(t *testing.T) {
 
 		"send notification because alert level changing from ok to crit": {
 			wantStatus: http.StatusNoContent,
-			wantUserInboxes: map[string][]notifier.AlertMessage{
-				UserEmail: {
-					{
-						Name:       RegisteredAlertName,
-						DeviceId:   RegisteredDeviceId,
-						QueryField: RegisteredQueryField,
-						Value:      NewValue,
-						Level:      alertstore.Crit,
-						Timestamp:  WithinDuration,
+			wantUserInboxes: notifier.Schema{
+				Notifications: map[string][]notifier.AlertNotification{
+					UserEmail: {
+						{
+							Name:       RegisteredAlertName,
+							DeviceId:   RegisteredDeviceId,
+							QueryField: RegisteredQueryField,
+							Value:      NewValue,
+							Level:      alertstore.Crit,
+							Timestamp:  WithinDuration,
+						},
 					},
 				},
 			},
@@ -519,15 +523,17 @@ func TestRespondToAlert(t *testing.T) {
 
 		"send notification because alert level changing from ok to warn": {
 			wantStatus: http.StatusNoContent,
-			wantUserInboxes: map[string][]notifier.AlertMessage{
-				UserEmail: {
-					{
-						Name:       RegisteredAlertName,
-						DeviceId:   RegisteredDeviceId,
-						QueryField: RegisteredQueryField,
-						Value:      NewValue,
-						Level:      alertstore.Warn,
-						Timestamp:  WithinDuration,
+			wantUserInboxes: notifier.Schema{
+				Notifications: map[string][]notifier.AlertNotification{
+					UserEmail: {
+						{
+							Name:       RegisteredAlertName,
+							DeviceId:   RegisteredDeviceId,
+							QueryField: RegisteredQueryField,
+							Value:      NewValue,
+							Level:      alertstore.Warn,
+							Timestamp:  WithinDuration,
+						},
 					},
 				},
 			},
@@ -598,15 +604,17 @@ func TestRespondToAlert(t *testing.T) {
 
 		"send notification because alert level changing from warn to crit": {
 			wantStatus: http.StatusNoContent,
-			wantUserInboxes: map[string][]notifier.AlertMessage{
-				UserEmail: {
-					{
-						Name:       RegisteredAlertName,
-						DeviceId:   RegisteredDeviceId,
-						QueryField: RegisteredQueryField,
-						Value:      NewValue,
-						Level:      alertstore.Crit,
-						Timestamp:  WithinDuration,
+			wantUserInboxes: notifier.Schema{
+				Notifications: map[string][]notifier.AlertNotification{
+					UserEmail: {
+						{
+							Name:       RegisteredAlertName,
+							DeviceId:   RegisteredDeviceId,
+							QueryField: RegisteredQueryField,
+							Value:      NewValue,
+							Level:      alertstore.Crit,
+							Timestamp:  WithinDuration,
+						},
 					},
 				},
 			},
@@ -799,15 +807,17 @@ func TestRespondToAlert(t *testing.T) {
 
 		"respond to first alert": {
 			wantStatus: http.StatusNoContent,
-			wantUserInboxes: map[string][]notifier.AlertMessage{
-				UserEmail: {
-					{
-						Name:       RegisteredAlertName,
-						DeviceId:   RegisteredDeviceId,
-						QueryField: RegisteredQueryField,
-						Value:      NewValue,
-						Level:      alertstore.Crit,
-						Timestamp:  AfterDuration,
+			wantUserInboxes: notifier.Schema{
+				Notifications: map[string][]notifier.AlertNotification{
+					UserEmail: {
+						{
+							Name:       RegisteredAlertName,
+							DeviceId:   RegisteredDeviceId,
+							QueryField: RegisteredQueryField,
+							Value:      NewValue,
+							Level:      alertstore.Crit,
+							Timestamp:  AfterDuration,
+						},
 					},
 				},
 			},
@@ -939,11 +949,13 @@ func TestCreateAlertRule(t *testing.T) {
 				CreatedAlerts: map[string][]notifier.AlertCreated{
 					UserEmail: {
 						{
-							Name:       RegisteredAlertName,
-							DeviceId:   RegisteredDeviceId,
-							QueryField: RegisteredQueryField,
-							Duration:   SomeDuration,
-							AlertType:  alertstore.Warn,
+							Name:        RegisteredAlertName,
+							DeviceId:    RegisteredDeviceId,
+							QueryField:  RegisteredQueryField,
+							Duration:    SomeDuration.String(),
+							AlertLevel:  alertstore.Crit,
+							AlertType:   alertstore.LessThan,
+							AlertValues: []float32{5},
 						},
 					},
 				},
