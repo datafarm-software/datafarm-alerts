@@ -228,7 +228,6 @@ func (g *Gorm) UpdateAlertRule(alertId string, dbRecord Schema) error {
 		if err != nil {
 			return err
 		}
-
 		for _, sar := range dbRecord.AlertRules {
 			if err = tx.Table("stored_alert_rules").
 				Where("alert_id = ?", sar.AlertId).
@@ -256,7 +255,6 @@ func (g *Gorm) CheckAlertRuleExists(ar AlertRule) (string, error) {
 		Where("device_alert_rules.query_field = ?", ar.QueryField).
 		Where("stored_alert_rules.duration = ?", ar.Duration).
 		Where("stored_alert_rules.alert_type = ?", ar.AlertType)
-
 	if ar.RangeValues != nil {
 		jsonRangeValues, err := json.Marshal(ar.RangeValues)
 		if err != nil {
@@ -264,7 +262,6 @@ func (g *Gorm) CheckAlertRuleExists(ar AlertRule) (string, error) {
 		}
 		db = db.Where("stored_alert_rules.range_values = ?", string(jsonRangeValues))
 	}
-
 	err = db.Select("device_alert_rules.alert_id").
 		Limit(1).
 		Scan(&alertId).Error

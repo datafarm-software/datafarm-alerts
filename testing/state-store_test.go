@@ -905,6 +905,7 @@ func TestCreateAlertRule(t *testing.T) {
 		wantStatus                                     int
 		wantAlertStore, mockAlertStore                 alertstore.Schema
 		startingAlertSourceCount, wantAlertSourceCount int
+		wantUserInboxes                                notifier.Schema
 		alertRule                                      alertstore.AlertRule
 	}{
 
@@ -912,12 +913,7 @@ func TestCreateAlertRule(t *testing.T) {
 			wantErr:              false,
 			wantStatus:           http.StatusOK,
 			wantAlertSourceCount: 1,
-			mockAlertStore: alertstore.Schema{
-				DeviceAlerts:    []alertstore.DeviceAlertRule{},
-				AlertRecipients: []alertstore.AlertRecipient{},
-				AlertStates:     []alertstore.AlertState{},
-				AlertRules:      []alertstore.StoredAlertRule{},
-			},
+			mockAlertStore:       alertstore.Schema{},
 			wantAlertStore: alertstore.Schema{
 				AlertRecipients: []alertstore.AlertRecipient{
 					{AlertId: AlertId, Email: UserEmail},
@@ -936,6 +932,19 @@ func TestCreateAlertRule(t *testing.T) {
 						Duration:    "24h",
 						AlertType:   alertstore.LessThan,
 						AlertLevel:  alertstore.Crit,
+					},
+				},
+			},
+			wantUserInboxes: notifier.Schema{
+				CreatedAlerts: map[string][]notifier.AlertCreated{
+					UserEmail: {
+						{
+							Name:       RegisteredAlertName,
+							DeviceId:   RegisteredDeviceId,
+							QueryField: RegisteredQueryField,
+							Duration:   SomeDuration,
+							AlertType:  alertstore.Warn,
+						},
 					},
 				},
 			},
@@ -1562,6 +1571,8 @@ func TestCreateAlertRule(t *testing.T) {
 
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
+			a.Notifier, err = notifier.NewTestingGoMail()
+			require.Nil(t, err)
 			a.AlertStore, err = alertstore.NewGorm(alertstore.Testing, "testing")
 			require.Nil(t, err)
 			defer a.AlertStore.Close()
@@ -1585,6 +1596,9 @@ func TestCreateAlertRule(t *testing.T) {
 					t.Fatalf(
 						"wantAlertSourceCount: %d, got alertsCount: %d",
 						tc.wantAlertSourceCount, gotAlertSourceCount)
+				}
+				if diff := cmp.Diff(tc.wantUserInboxes, a.Notifier.GetUserInboxes()); diff != "" {
+					t.Fatalf("user inboxes mismatch (-want +got):\n%s", diff)
 				}
 				if diff := cmp.Diff(tc.wantResponse, got); diff != "" {
 					t.Fatalf("response mismatch (-want +got):\n%s", diff)
