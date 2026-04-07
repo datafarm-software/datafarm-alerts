@@ -910,13 +910,13 @@ func TestRespondToAlert(t *testing.T) {
 
 func TestCreateAlertRule(t *testing.T) {
 	tests := map[string]struct {
-		wantErr                                        bool
-		wantResponse                                   alertstore.CreatedRule
-		wantStatus                                     int
-		wantAlertStore, mockAlertStore                 alertstore.Schema
-		startingAlertSourceCount, wantAlertSourceCount int
-		wantUserInboxes                                notifier.Schema
-		alertRule                                      alertstore.AlertRule
+		wantErr                        bool
+		wantResponse                   alertstore.CreatedRule
+		wantStatus                     int
+		wantAlertStore, mockAlertStore alertstore.Schema
+		wantAlertSourceCount           int
+		wantUserInboxes                notifier.Schema
+		alertRule                      alertstore.AlertRule
 	}{
 
 		"successfully create a less than alert rule": {
@@ -946,13 +946,14 @@ func TestCreateAlertRule(t *testing.T) {
 				},
 			},
 			wantUserInboxes: notifier.Schema{
+				Notifications: map[string][]notifier.AlertNotification{},
 				CreatedAlerts: map[string][]notifier.AlertCreated{
 					UserEmail: {
 						{
 							Name:        RegisteredAlertName,
 							DeviceId:    RegisteredDeviceId,
 							QueryField:  RegisteredQueryField,
-							Duration:    SomeDuration.String(),
+							Duration:    "24h",
 							AlertLevel:  alertstore.Crit,
 							AlertType:   alertstore.LessThan,
 							AlertValues: []float32{5},
@@ -1051,6 +1052,22 @@ func TestCreateAlertRule(t *testing.T) {
 					},
 				},
 			},
+			wantUserInboxes: notifier.Schema{
+				Notifications: map[string][]notifier.AlertNotification{},
+				CreatedAlerts: map[string][]notifier.AlertCreated{
+					UserEmail: {
+						{
+							Name:        RegisteredAlertName,
+							DeviceId:    RegisteredDeviceId,
+							QueryField:  RegisteredQueryField,
+							Duration:    "24h",
+							AlertLevel:  alertstore.Crit,
+							AlertType:   alertstore.GreaterThan,
+							AlertValues: []float32{5},
+						},
+					},
+				},
+			},
 			alertRule: alertstore.AlertRule{
 				RangeValues:    []float32{5},
 				Name:           RegisteredAlertName,
@@ -1098,6 +1115,22 @@ func TestCreateAlertRule(t *testing.T) {
 					},
 				},
 			},
+			wantUserInboxes: notifier.Schema{
+				Notifications: map[string][]notifier.AlertNotification{},
+				CreatedAlerts: map[string][]notifier.AlertCreated{
+					UserEmail: {
+						{
+							Name:        RegisteredAlertName,
+							DeviceId:    RegisteredDeviceId,
+							QueryField:  RegisteredQueryField,
+							Duration:    "24h",
+							AlertLevel:  alertstore.Crit,
+							AlertType:   alertstore.Range,
+							AlertValues: []float32{5, 10},
+						},
+					},
+				},
+			},
 			alertRule: alertstore.AlertRule{
 				RangeValues:    []float32{5, 10},
 				Name:           RegisteredAlertName,
@@ -1123,6 +1156,10 @@ func TestCreateAlertRule(t *testing.T) {
 				AlertRules:      []alertstore.StoredAlertRule{},
 			},
 			wantAlertStore: EmptyAlertStore,
+			wantUserInboxes: notifier.Schema{
+				Notifications: map[string][]notifier.AlertNotification{},
+				CreatedAlerts: map[string][]notifier.AlertCreated{},
+			},
 			alertRule: alertstore.AlertRule{
 				Name:        RegisteredAlertName,
 				RangeValues: []float32{5, 10},
@@ -1140,6 +1177,10 @@ func TestCreateAlertRule(t *testing.T) {
 				AlertRules:      []alertstore.StoredAlertRule{},
 			},
 			wantAlertStore: EmptyAlertStore,
+			wantUserInboxes: notifier.Schema{
+				Notifications: map[string][]notifier.AlertNotification{},
+				CreatedAlerts: map[string][]notifier.AlertCreated{},
+			},
 			alertRule: alertstore.AlertRule{
 				Name:        RegisteredAlertName,
 				RangeValues: []float32{5},
@@ -1170,6 +1211,33 @@ func TestCreateAlertRule(t *testing.T) {
 			wantAlertSourceCount: 2,
 			wantResponse: alertstore.CreatedRule{
 				AlertId: "alert2",
+			},
+			wantUserInboxes: notifier.Schema{
+				Notifications: map[string][]notifier.AlertNotification{},
+				CreatedAlerts: map[string][]notifier.AlertCreated{
+					AnotherUserEmail: {
+						{
+							Name:        "Some other alert name",
+							DeviceId:    RegisteredDeviceId,
+							QueryField:  RegisteredQueryField,
+							Duration:    "24h",
+							AlertLevel:  alertstore.Crit,
+							AlertType:   alertstore.LessThan,
+							AlertValues: []float32{5},
+						},
+					},
+					"user3@alert.com": {
+						{
+							Name:        "Some other alert name",
+							DeviceId:    RegisteredDeviceId,
+							QueryField:  RegisteredQueryField,
+							Duration:    "24h",
+							AlertLevel:  alertstore.Crit,
+							AlertType:   alertstore.LessThan,
+							AlertValues: []float32{5},
+						},
+					},
+				},
 			},
 			alertRule: alertstore.AlertRule{
 				Name:           "Some other alert name",
@@ -1289,6 +1357,10 @@ func TestCreateAlertRule(t *testing.T) {
 					},
 				},
 			},
+			wantUserInboxes: notifier.Schema{
+				Notifications: map[string][]notifier.AlertNotification{},
+				CreatedAlerts: map[string][]notifier.AlertCreated{},
+			},
 			alertRule: alertstore.AlertRule{
 				Name:           "Some other alert name",
 				RangeValues:    []float32{5},
@@ -1341,8 +1413,7 @@ func TestCreateAlertRule(t *testing.T) {
 					},
 				},
 			},
-			startingAlertSourceCount: 1,
-			wantAlertSourceCount:     2,
+			wantAlertSourceCount: 2,
 			mockAlertStore: alertstore.Schema{
 				AlertRecipients: []alertstore.AlertRecipient{
 					{AlertId: AlertId, Email: UserEmail},
@@ -1361,6 +1432,22 @@ func TestCreateAlertRule(t *testing.T) {
 						Duration:    "24h",
 						AlertType:   alertstore.LessThan,
 						AlertLevel:  alertstore.Crit,
+					},
+				},
+			},
+			wantUserInboxes: notifier.Schema{
+				Notifications: map[string][]notifier.AlertNotification{},
+				CreatedAlerts: map[string][]notifier.AlertCreated{
+					UserEmail: {
+						{
+							Name:        RegisteredAlertName,
+							DeviceId:    RegisteredDeviceId,
+							QueryField:  "humidity",
+							Duration:    "24h",
+							AlertLevel:  alertstore.Crit,
+							AlertType:   alertstore.LessThan,
+							AlertValues: []float32{5},
+						},
 					},
 				},
 			},
@@ -1438,8 +1525,34 @@ func TestCreateAlertRule(t *testing.T) {
 					},
 				},
 			},
-			startingAlertSourceCount: 1,
-			wantAlertSourceCount:     2,
+			wantAlertSourceCount: 2,
+			wantUserInboxes: notifier.Schema{
+				Notifications: map[string][]notifier.AlertNotification{},
+				CreatedAlerts: map[string][]notifier.AlertCreated{
+					UserEmail: {
+						{
+							Name:        RegisteredAlertName,
+							DeviceId:    RegisteredDeviceId,
+							QueryField:  RegisteredQueryField,
+							Duration:    "24h",
+							AlertLevel:  alertstore.Crit,
+							AlertType:   alertstore.Range,
+							AlertValues: []float32{10, 20},
+						},
+					},
+					"user2@alert.com": {
+						{
+							Name:        RegisteredAlertName,
+							DeviceId:    RegisteredDeviceId,
+							QueryField:  RegisteredQueryField,
+							Duration:    "24h",
+							AlertLevel:  alertstore.Crit,
+							AlertType:   alertstore.Range,
+							AlertValues: []float32{10, 20},
+						},
+					},
+				},
+			},
 			alertRule: alertstore.AlertRule{
 				Name:           RegisteredAlertName,
 				EmailAddresses: []string{UserEmail, "user2@alert.com"},
@@ -1514,8 +1627,34 @@ func TestCreateAlertRule(t *testing.T) {
 					},
 				},
 			},
-			startingAlertSourceCount: 1,
-			wantAlertSourceCount:     2,
+			wantAlertSourceCount: 2,
+			wantUserInboxes: notifier.Schema{
+				Notifications: map[string][]notifier.AlertNotification{},
+				CreatedAlerts: map[string][]notifier.AlertCreated{
+					UserEmail: {
+						{
+							Name:        RegisteredAlertName,
+							DeviceId:    RegisteredDeviceId,
+							QueryField:  RegisteredQueryField,
+							Duration:    "24h",
+							AlertLevel:  alertstore.Crit,
+							AlertType:   alertstore.LessThan,
+							AlertValues: []float32{10},
+						},
+					},
+					"user2@alert.com": {
+						{
+							Name:        RegisteredAlertName,
+							DeviceId:    RegisteredDeviceId,
+							QueryField:  RegisteredQueryField,
+							Duration:    "24h",
+							AlertLevel:  alertstore.Crit,
+							AlertType:   alertstore.LessThan,
+							AlertValues: []float32{10},
+						},
+					},
+				},
+			},
 			alertRule: alertstore.AlertRule{
 				Name:           RegisteredAlertName,
 				EmailAddresses: []string{UserEmail, "user2@alert.com"},
@@ -1556,6 +1695,22 @@ func TestCreateAlertRule(t *testing.T) {
 						Duration:    "24h",
 						AlertType:   alertstore.LessThan,
 						AlertLevel:  alertstore.Warn,
+					},
+				},
+			},
+			wantUserInboxes: notifier.Schema{
+				Notifications: map[string][]notifier.AlertNotification{},
+				CreatedAlerts: map[string][]notifier.AlertCreated{
+					UserEmail: {
+						{
+							Name:        RegisteredAlertName,
+							DeviceId:    RegisteredDeviceId,
+							QueryField:  RegisteredQueryField,
+							Duration:    "24h",
+							AlertLevel:  alertstore.Warn,
+							AlertType:   alertstore.LessThan,
+							AlertValues: []float32{5},
+						},
 					},
 				},
 			},
