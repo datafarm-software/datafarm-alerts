@@ -1,14 +1,20 @@
 package notifier
 
-import "log"
+import (
+	"fmt"
+	"log"
+)
 
 type MockNotifier struct {
-	inboxes map[string][]AlertMessage
+	inboxes Schema
 }
 
-func NewMockNotifier() (*MockNotifier, error) {
+func NewMockNotifier() (Notifier, error) {
 	return &MockNotifier{
-		inboxes: make(map[string][]AlertMessage),
+		inboxes: Schema{
+			Notifications: make(map[string][]AlertNotification),
+			CreatedAlerts: make(map[string][]AlertCreated),
+		},
 	}, nil
 }
 
@@ -16,14 +22,18 @@ func (m *MockNotifier) Close() error {
 	return nil
 }
 
-func (m *MockNotifier) Notify(message AlertMessage, emails ...string) error {
+func (m *MockNotifier) AlertNotify(message AlertNotification, emails ...string) error {
 	for _, e := range emails {
-		m.inboxes[e] = append(m.inboxes[e], message)
+		m.inboxes.Notifications[e] = append(m.inboxes.Notifications[e], message)
 	}
 	log.Printf("message:\n %v", message)
 	return nil
 }
 
-func (m *MockNotifier) GetUserInboxes() map[string][]AlertMessage {
+func (m *MockNotifier) AlertCreatedNotify(message AlertCreated, emails ...string) error {
+	return fmt.Errorf("not implemented")
+}
+
+func (m *MockNotifier) GetUserInboxes() Schema {
 	return m.inboxes
 }
