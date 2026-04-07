@@ -10,12 +10,14 @@ import (
 type Schema struct {
 	Notifications map[string][]AlertNotification
 	CreatedAlerts map[string][]AlertCreated
-	// DeletedAlerts map[string][]AlertDeleted
+	DeletedAlerts map[string][]AlertDeleted
 }
 
 const Notification = "Hi %s,\nThis email to notify alert level %s - %.2f.\nDetails:\n- Name: %s\n- N- DeviceId: %s\n- N- QueryField: %s\n- N- Time Alert Triggered: %s"
 
-const AlertCreatedNotification = "Hi %s, \nThis email to notify alert created with the following details. Alert Name: %s, DeviceId: %s, QueryField: %s, Duration: %s. Level: %s Condition: %s"
+const AlertCreatedNotification = "Hi %s, \nThis email to notify alert created with the following details. Alert Name: %s, DeviceId: %s, QueryField: %s, Duration: %s. Type: %s, Condition: %s"
+
+const AlertDeletedNotification = "Hi %s,\n This email to notify that you will no longer receive alerts for alert: %s. Details: DeviceId: %s, QueryField: %s, Duration: %s, Type: %s, Condition: %s."
 
 type AlertNotification struct {
 	Name       string
@@ -44,32 +46,52 @@ type AlertCreated struct {
 }
 
 func (a AlertCreated) String(username string) (string, error) {
+	condition, err := formatAlertCondition(a.AlertType, a.AlertValues)
+	if err != nil {
+		return "", err
+	}
+	return fmt.Sprintf(AlertCreatedNotification, username, a.Name, a.DeviceId,
+		a.QueryField, a.Duration, alertstore.AlertLevelString[a.AlertLevel],
+		condition), nil
+}
+
+func formatAlertCondition(alertType alertstore.AlertType, alertValues []float32) (string, error) {
 	var condition string
-	switch a.AlertType {
+	switch alertType {
 	case alertstore.LessThan:
-		if len(a.AlertValues) != 1 {
+		if len(alertValues) != 1 {
 			return "", fmt.Errorf("received len(%d) alertValues slice on LessThan type",
-				len(a.AlertValues))
+				len(alertValues))
 		}
-		condition = fmt.Sprintf("< %.2f", a.AlertValues[0])
+		condition = fmt.Sprintf("< %.2f", alertValues[0])
 	case alertstore.GreaterThan:
-		if len(a.AlertValues) != 1 {
+		if len(alertValues) != 1 {
 			return "", fmt.Errorf("received len(%d) alertValues slice on GreaterThan type",
-				len(a.AlertValues))
+				len(alertValues))
 		}
-		condition = fmt.Sprintf("< %.2f", a.AlertValues[0])
+		condition = fmt.Sprintf("< %.2f", alertValues[0])
 	case alertstore.Range:
-		if len(a.AlertValues) != 2 {
+		if len(alertValues) != 2 {
 			return "", fmt.Errorf("received len(%d) alertValues slice on Range type",
-				len(a.AlertValues))
+				len(alertValues))
 		}
-		condition = fmt.Sprintf("> %.2f, %.2f <", a.AlertValues[0], a.AlertValues[1])
+		condition = fmt.Sprintf("> %.2f, %.2f <", alertValues[0], alertValues[1])
 	case alertstore.InactiveSensor:
 		condition = "Inactive Sensor"
 	default:
-		return "", fmt.Errorf("unknown alert type: %d", a.AlertType)
+		return "", fmt.Errorf("unknown alert type: %d", alertType)
 	}
-	return fmt.Sprintf(AlertCreatedNotification, username, a.Name, a.DeviceId,
+	return condition, nil
+}
+
+type AlertDeleted AlertCreated
+
+func (a AlertDeleted) String(username string) (string, error) {
+	condition, err := formatAlertCondition(a.AlertType, a.AlertValues)
+	if err != nil {
+		return "", err
+	}
+	return fmt.Sprintf(AlertDeletedNotification, username, a.Name, a.DeviceId,
 		a.QueryField, a.Duration, alertstore.AlertLevelString[a.AlertLevel],
 		condition), nil
 }
@@ -83,5 +105,5 @@ type Notifier interface {
 	Close() error
 	AlertNotify(message AlertNotification, emails ...string) error
 	AlertCreatedNotify(message AlertCreated, emails ...string) error
-	// AlertDeletedNotify(message AlertDeleted, emails ...string) error
+	AlertDeletedNotify(message AlertDeleted, emails ...string) error
 }
