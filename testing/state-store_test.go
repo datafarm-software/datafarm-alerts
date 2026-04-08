@@ -3346,6 +3346,7 @@ func TestRemoveUsersFromAlertRule(t *testing.T) {
 		wantErr                        bool
 		mockAlertStore, wantAlertStore alertstore.Schema
 		wantStatus                     int
+		wantUserInboxes                notifier.Schema
 		emailsToRemove                 []string
 		alertId                        string
 		wantAlertSourceCount           int
@@ -3408,6 +3409,23 @@ func TestRemoveUsersFromAlertRule(t *testing.T) {
 				},
 				AlertStates: []alertstore.AlertState{},
 			},
+			wantUserInboxes: notifier.Schema{
+				Notifications: map[string][]notifier.AlertNotification{},
+				CreatedAlerts: map[string][]notifier.AlertCreated{},
+				DeletedAlerts: map[string][]notifier.AlertDeleted{
+					AnotherUserEmail: {
+						{
+							Name:        RegisteredAlertName,
+							DeviceId:    RegisteredDeviceId,
+							QueryField:  RegisteredQueryField,
+							Duration:    "24h",
+							AlertLevel:  alertstore.Warn,
+							AlertType:   alertstore.LessThan,
+							AlertValues: []float32{OldValue},
+						},
+					},
+				},
+			},
 			wantStatus:           http.StatusOK,
 			wantAlertSourceCount: 1,
 			emailsToRemove:       []string{AnotherUserEmail},
@@ -3425,10 +3443,7 @@ func TestRemoveUsersFromAlertRule(t *testing.T) {
 					},
 				},
 				AlertRecipients: []alertstore.AlertRecipient{
-					{
-						AlertId: AlertId,
-						Email:   UserEmail,
-					},
+					{AlertId: AlertId, Email: UserEmail},
 				},
 				AlertRules: []alertstore.StoredAlertRule{
 					{
@@ -3451,10 +3466,7 @@ func TestRemoveUsersFromAlertRule(t *testing.T) {
 					},
 				},
 				AlertRecipients: []alertstore.AlertRecipient{
-					{
-						AlertId: AlertId,
-						Email:   UserEmail,
-					},
+					{AlertId: AlertId, Email: UserEmail},
 				},
 				AlertRules: []alertstore.StoredAlertRule{
 					{
@@ -3467,6 +3479,11 @@ func TestRemoveUsersFromAlertRule(t *testing.T) {
 					},
 				},
 				AlertStates: []alertstore.AlertState{},
+			},
+			wantUserInboxes: notifier.Schema{
+				Notifications: map[string][]notifier.AlertNotification{},
+				CreatedAlerts: map[string][]notifier.AlertCreated{},
+				DeletedAlerts: map[string][]notifier.AlertDeleted{},
 			},
 			wantStatus:           http.StatusOK,
 			wantAlertSourceCount: 1,
@@ -3485,10 +3502,7 @@ func TestRemoveUsersFromAlertRule(t *testing.T) {
 					},
 				},
 				AlertRecipients: []alertstore.AlertRecipient{
-					{
-						AlertId: AlertId,
-						Email:   UserEmail,
-					},
+					{AlertId: AlertId, Email: UserEmail},
 				},
 				AlertRules: []alertstore.StoredAlertRule{
 					{
@@ -3506,6 +3520,23 @@ func TestRemoveUsersFromAlertRule(t *testing.T) {
 				AlertRecipients: []alertstore.AlertRecipient{},
 				AlertRules:      []alertstore.StoredAlertRule{},
 				AlertStates:     []alertstore.AlertState{},
+			},
+			wantUserInboxes: notifier.Schema{
+				Notifications: map[string][]notifier.AlertNotification{},
+				CreatedAlerts: map[string][]notifier.AlertCreated{},
+				DeletedAlerts: map[string][]notifier.AlertDeleted{
+					UserEmail: {
+						{
+							Name:        RegisteredAlertName,
+							DeviceId:    RegisteredDeviceId,
+							QueryField:  RegisteredQueryField,
+							Duration:    "24h",
+							AlertLevel:  alertstore.Warn,
+							AlertType:   alertstore.LessThan,
+							AlertValues: []float32{OldValue},
+						},
+					},
+				},
 			},
 			wantStatus:     http.StatusNoContent,
 			emailsToRemove: []string{UserEmail},
@@ -3523,10 +3554,7 @@ func TestRemoveUsersFromAlertRule(t *testing.T) {
 					},
 				},
 				AlertRecipients: []alertstore.AlertRecipient{
-					{
-						AlertId: AlertId,
-						Email:   UserEmail,
-					},
+					{AlertId: AlertId, Email: UserEmail},
 				},
 				AlertRules: []alertstore.StoredAlertRule{
 					{
@@ -3544,6 +3572,23 @@ func TestRemoveUsersFromAlertRule(t *testing.T) {
 				AlertRecipients: []alertstore.AlertRecipient{},
 				AlertRules:      []alertstore.StoredAlertRule{},
 				AlertStates:     []alertstore.AlertState{},
+			},
+			wantUserInboxes: notifier.Schema{
+				Notifications: map[string][]notifier.AlertNotification{},
+				CreatedAlerts: map[string][]notifier.AlertCreated{},
+				DeletedAlerts: map[string][]notifier.AlertDeleted{
+					UserEmail: {
+						{
+							Name:        RegisteredAlertName,
+							DeviceId:    RegisteredDeviceId,
+							QueryField:  RegisteredQueryField,
+							Duration:    "24h",
+							AlertLevel:  alertstore.Warn,
+							AlertType:   alertstore.LessThan,
+							AlertValues: []float32{OldValue},
+						},
+					},
+				},
 			},
 			wantStatus:     http.StatusNoContent,
 			emailsToRemove: []string{UserEmail, AnotherUserEmail},
@@ -3591,6 +3636,8 @@ func TestRemoveUsersFromAlertRule(t *testing.T) {
 	a.RegisterHumaOperations(api)
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
+			a.Notifier, err = notifier.NewTestingGoMail()
+			require.Nil(t, err)
 			a.AlertSource, err = alertsource.NewTestingInflux(ConfigPath)
 			require.Nil(t, err)
 			defer a.AlertSource.Close()
@@ -3622,6 +3669,9 @@ func TestRemoveUsersFromAlertRule(t *testing.T) {
 				if tc.wantAlertSourceCount != alertsCount {
 					t.Fatalf("wantAlertSourceCount: %d, got alertsCount: %d",
 						tc.wantAlertSourceCount, alertsCount)
+				}
+				if diff := cmp.Diff(tc.wantUserInboxes, a.Notifier.GetUserInboxes()); diff != "" {
+					t.Fatalf("user inboxes mismatch (-want +got):\n%s", diff)
 				}
 			}
 		})
