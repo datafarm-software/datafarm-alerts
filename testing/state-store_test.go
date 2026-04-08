@@ -900,6 +900,7 @@ func TestRespondToAlert(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			a.Notifier, err = notifier.NewTestingGoMail()
 			require.Nil(t, err)
+			defer a.Notifier.Close()
 			a.AlertStore, err = alertstore.NewGorm(alertstore.Testing, "testing")
 			require.Nil(t, err)
 			defer a.AlertStore.Close()
@@ -1769,6 +1770,7 @@ func TestCreateAlertRule(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			a.Notifier, err = notifier.NewTestingGoMail()
 			require.Nil(t, err)
+			defer a.Notifier.Close()
 			a.AlertStore, err = alertstore.NewGorm(alertstore.Testing, "testing")
 			require.Nil(t, err)
 			defer a.AlertStore.Close()
@@ -1902,6 +1904,7 @@ func TestUpdateAlertRule(t *testing.T) {
 		wantErr                        bool
 		wantStatus                     int
 		alertId                        string
+		wantUserInboxes                notifier.Schema
 		updatedAlertRule               alertstore.AlertRule
 		mockAlertStore, wantAlertStore alertstore.Schema
 		wantAlertSourceCount           int
@@ -1921,6 +1924,23 @@ func TestUpdateAlertRule(t *testing.T) {
 				QueryField:     RegisteredQueryField,
 				AlertType:      alertstore.Range,
 				AlertLevel:     alertstore.Crit,
+			},
+			wantUserInboxes: notifier.Schema{
+				Notifications: map[string][]notifier.AlertNotification{},
+				DeletedAlerts: map[string][]notifier.AlertDeleted{},
+				CreatedAlerts: map[string][]notifier.AlertCreated{
+					UserEmail: {
+						{
+							Name:        RegisteredAlertName,
+							DeviceId:    RegisteredDeviceId,
+							QueryField:  RegisteredQueryField,
+							Duration:    "24h",
+							AlertLevel:  alertstore.Crit,
+							AlertType:   alertstore.Range,
+							AlertValues: []float32{10, 20},
+						},
+					},
+				},
 			},
 			mockAlertStore: alertstore.Schema{
 				AlertRecipients: []alertstore.AlertRecipient{
@@ -1988,6 +2008,23 @@ func TestUpdateAlertRule(t *testing.T) {
 				QueryField:     RegisteredQueryField,
 				AlertType:      alertstore.LessThan,
 				AlertLevel:     alertstore.Crit,
+			},
+			wantUserInboxes: notifier.Schema{
+				Notifications: map[string][]notifier.AlertNotification{},
+				DeletedAlerts: map[string][]notifier.AlertDeleted{},
+				CreatedAlerts: map[string][]notifier.AlertCreated{
+					"user2@alerts.com": {
+						{
+							Name:        RegisteredAlertName,
+							DeviceId:    RegisteredDeviceId,
+							QueryField:  RegisteredQueryField,
+							Duration:    "24h",
+							AlertLevel:  alertstore.Crit,
+							AlertType:   alertstore.LessThan,
+							AlertValues: []float32{10},
+						},
+					},
+				},
 			},
 			mockAlertStore: alertstore.Schema{
 				AlertRecipients: []alertstore.AlertRecipient{
@@ -2100,6 +2137,23 @@ func TestUpdateAlertRule(t *testing.T) {
 				AlertType:      alertstore.Range,
 				AlertLevel:     alertstore.Crit,
 			},
+			wantUserInboxes: notifier.Schema{
+				Notifications: map[string][]notifier.AlertNotification{},
+				DeletedAlerts: map[string][]notifier.AlertDeleted{},
+				CreatedAlerts: map[string][]notifier.AlertCreated{
+					UserEmail: {
+						{
+							Name:        RegisteredAlertName,
+							DeviceId:    RegisteredDeviceId,
+							QueryField:  RegisteredQueryField,
+							Duration:    "24h",
+							AlertLevel:  alertstore.Crit,
+							AlertType:   alertstore.Range,
+							AlertValues: []float32{10, 20},
+						},
+					},
+				},
+			},
 			mockAlertStore: alertstore.Schema{
 				AlertRecipients: []alertstore.AlertRecipient{
 					{AlertId: AlertId, Email: UserEmail},
@@ -2178,6 +2232,23 @@ func TestUpdateAlertRule(t *testing.T) {
 				AlertType:      alertstore.GreaterThan,
 				AlertLevel:     alertstore.Crit,
 			},
+			wantUserInboxes: notifier.Schema{
+				Notifications: map[string][]notifier.AlertNotification{},
+				DeletedAlerts: map[string][]notifier.AlertDeleted{},
+				CreatedAlerts: map[string][]notifier.AlertCreated{
+					UserEmail: {
+						{
+							Name:        RegisteredAlertName,
+							DeviceId:    RegisteredDeviceId,
+							QueryField:  RegisteredQueryField,
+							Duration:    "24h",
+							AlertLevel:  alertstore.Crit,
+							AlertType:   alertstore.GreaterThan,
+							AlertValues: []float32{10},
+						},
+					},
+				},
+			},
 			mockAlertStore: alertstore.Schema{
 				AlertRecipients: []alertstore.AlertRecipient{
 					{AlertId: AlertId, Email: UserEmail},
@@ -2247,6 +2318,23 @@ func TestUpdateAlertRule(t *testing.T) {
 				AlertType:      alertstore.LessThan,
 				AlertLevel:     alertstore.Crit,
 			},
+			wantUserInboxes: notifier.Schema{
+				Notifications: map[string][]notifier.AlertNotification{},
+				DeletedAlerts: map[string][]notifier.AlertDeleted{},
+				CreatedAlerts: map[string][]notifier.AlertCreated{
+					UserEmail: {
+						{
+							Name:        RegisteredAlertName,
+							DeviceId:    RegisteredDeviceId,
+							QueryField:  RegisteredQueryField,
+							Duration:    "24h",
+							AlertLevel:  alertstore.Crit,
+							AlertType:   alertstore.LessThan,
+							AlertValues: []float32{10},
+						},
+					},
+				},
+			},
 			mockAlertStore: alertstore.Schema{
 				AlertRecipients: []alertstore.AlertRecipient{
 					{AlertId: AlertId, Email: UserEmail},
@@ -2315,6 +2403,23 @@ func TestUpdateAlertRule(t *testing.T) {
 				QueryField:     RegisteredQueryField,
 				AlertType:      alertstore.Range,
 				AlertLevel:     alertstore.Crit,
+			},
+			wantUserInboxes: notifier.Schema{
+				Notifications: map[string][]notifier.AlertNotification{},
+				DeletedAlerts: map[string][]notifier.AlertDeleted{},
+				CreatedAlerts: map[string][]notifier.AlertCreated{
+					UserEmail: {
+						{
+							Name:        RegisteredAlertName,
+							DeviceId:    RegisteredDeviceId,
+							QueryField:  RegisteredQueryField,
+							Duration:    "24h",
+							AlertLevel:  alertstore.Crit,
+							AlertType:   alertstore.Range,
+							AlertValues: []float32{10, 20},
+						},
+					},
+				},
 			},
 			mockAlertStore: alertstore.Schema{
 				AlertRecipients: []alertstore.AlertRecipient{
@@ -2569,6 +2674,22 @@ func TestUpdateAlertRule(t *testing.T) {
 				AlertLevel:     alertstore.Crit,
 				AlertType:      alertstore.InactiveSensor,
 			},
+			wantUserInboxes: notifier.Schema{
+				Notifications: map[string][]notifier.AlertNotification{},
+				DeletedAlerts: map[string][]notifier.AlertDeleted{},
+				CreatedAlerts: map[string][]notifier.AlertCreated{
+					UserEmail: {
+						{
+							Name:       RegisteredAlertName,
+							DeviceId:   RegisteredDeviceId,
+							QueryField: RegisteredQueryField,
+							Duration:   "24h",
+							AlertLevel: alertstore.Crit,
+							AlertType:  alertstore.InactiveSensor,
+						},
+					},
+				},
+			},
 			mockAlertStore: alertstore.Schema{
 				AlertRecipients: []alertstore.AlertRecipient{
 					{AlertId: AlertId, Email: UserEmail},
@@ -2634,6 +2755,34 @@ func TestUpdateAlertRule(t *testing.T) {
 				QueryField:     RegisteredQueryField,
 				AlertLevel:     alertstore.Crit,
 				AlertType:      alertstore.Range,
+			},
+			wantUserInboxes: notifier.Schema{
+				Notifications: map[string][]notifier.AlertNotification{},
+				DeletedAlerts: map[string][]notifier.AlertDeleted{},
+				CreatedAlerts: map[string][]notifier.AlertCreated{
+					UserEmail: {
+						{
+							Name:        RegisteredAlertName,
+							DeviceId:    RegisteredDeviceId,
+							QueryField:  RegisteredQueryField,
+							Duration:    "24h",
+							AlertLevel:  alertstore.Crit,
+							AlertType:   alertstore.Range,
+							AlertValues: []float32{10, 20},
+						},
+					},
+					"user2@alert.com": {
+						{
+							Name:        RegisteredAlertName,
+							DeviceId:    RegisteredDeviceId,
+							QueryField:  RegisteredQueryField,
+							Duration:    "24h",
+							AlertLevel:  alertstore.Crit,
+							AlertType:   alertstore.Range,
+							AlertValues: []float32{10, 20},
+						},
+					},
+				},
 			},
 			mockAlertStore: alertstore.Schema{
 				AlertRecipients: []alertstore.AlertRecipient{
@@ -2705,6 +2854,23 @@ func TestUpdateAlertRule(t *testing.T) {
 				AlertLevel:     alertstore.Crit,
 				AlertType:      alertstore.Range,
 			},
+			wantUserInboxes: notifier.Schema{
+				Notifications: map[string][]notifier.AlertNotification{},
+				DeletedAlerts: map[string][]notifier.AlertDeleted{},
+				CreatedAlerts: map[string][]notifier.AlertCreated{
+					UserEmail: {
+						{
+							Name:        RegisteredAlertName,
+							DeviceId:    RegisteredDeviceId,
+							QueryField:  RegisteredQueryField,
+							Duration:    "24h",
+							AlertLevel:  alertstore.Crit,
+							AlertType:   alertstore.Range,
+							AlertValues: []float32{10, 20},
+						},
+					},
+				},
+			},
 			mockAlertStore: alertstore.Schema{
 				AlertRecipients: []alertstore.AlertRecipient{
 					{AlertId: AlertId, Email: UserEmail},
@@ -2720,10 +2886,10 @@ func TestUpdateAlertRule(t *testing.T) {
 					{
 						AlertId:     AlertId,
 						Name:        RegisteredAlertName,
-						RangeValues: []float32{10, 20},
+						RangeValues: []float32{10},
 						Duration:    "24h",
-						AlertLevel:  alertstore.Crit,
-						AlertType:   alertstore.Range,
+						AlertLevel:  alertstore.Warn,
+						AlertType:   alertstore.LessThan,
 					},
 				},
 			},
@@ -2825,6 +2991,23 @@ func TestUpdateAlertRule(t *testing.T) {
 				AlertType:      alertstore.GreaterThan,
 				AlertLevel:     alertstore.Warn,
 			},
+			wantUserInboxes: notifier.Schema{
+				Notifications: map[string][]notifier.AlertNotification{},
+				DeletedAlerts: map[string][]notifier.AlertDeleted{},
+				CreatedAlerts: map[string][]notifier.AlertCreated{
+					UserEmail: {
+						{
+							Name:        RegisteredAlertName,
+							DeviceId:    RegisteredDeviceId,
+							QueryField:  RegisteredQueryField,
+							Duration:    "24h",
+							AlertLevel:  alertstore.Warn,
+							AlertType:   alertstore.GreaterThan,
+							AlertValues: []float32{10},
+						},
+					},
+				},
+			},
 			mockAlertStore: alertstore.Schema{
 				AlertRecipients: []alertstore.AlertRecipient{
 					{AlertId: AlertId, Email: UserEmail},
@@ -2887,6 +3070,9 @@ func TestUpdateAlertRule(t *testing.T) {
 	a.RegisterHumaOperations(api)
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
+			a.Notifier, err = notifier.NewTestingGoMail()
+			require.Nil(t, err)
+			defer a.Notifier.Close()
 			a.AlertStore, err = alertstore.NewGorm(alertstore.Testing, "testing")
 			defer a.AlertStore.Close()
 			err = a.AlertStore.PrepareDb(tc.mockAlertStore)
@@ -2915,6 +3101,9 @@ func TestUpdateAlertRule(t *testing.T) {
 				if alertSourceCount != tc.wantAlertSourceCount {
 					t.Fatalf("alertSourceCount: %d, wantAlertSourceCount: %d",
 						alertSourceCount, tc.wantAlertSourceCount)
+				}
+				if diff := cmp.Diff(tc.wantUserInboxes, a.Notifier.GetUserInboxes()); diff != "" {
+					t.Fatalf("user inboxes mismatch (-want +got):\n%s", diff)
 				}
 			}
 		})
@@ -3306,6 +3495,7 @@ func TestDeleteAlert(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			a.Notifier, err = notifier.NewTestingGoMail()
 			require.Nil(t, err)
+			defer a.Notifier.Close()
 			a.AlertSource, err = alertsource.NewTestingInflux(ConfigPath)
 			require.Nil(t, err)
 			defer a.AlertSource.Close()
@@ -3636,6 +3826,7 @@ func TestRemoveUsersFromAlertRule(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			a.Notifier, err = notifier.NewTestingGoMail()
 			require.Nil(t, err)
+			defer a.Notifier.Close()
 			a.AlertSource, err = alertsource.NewTestingInflux(ConfigPath)
 			require.Nil(t, err)
 			defer a.AlertSource.Close()
@@ -3909,6 +4100,7 @@ func TestAddUsersToAlertRule(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			a.Notifier, err = notifier.NewTestingGoMail()
 			require.Nil(t, err)
+			defer a.Notifier.Close()
 			a.AlertSource, err = alertsource.NewTestingInflux(ConfigPath)
 			require.Nil(t, err)
 			defer a.AlertSource.Close()

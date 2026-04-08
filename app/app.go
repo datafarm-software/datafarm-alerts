@@ -38,7 +38,7 @@ type App struct {
 func Start(opts Opts) error {
 	var err error
 	app := &App{}
-	app.Notifier, err = notifier.NewMockNotifier()
+	app.Notifier, err = notifier.NewGomail(opts.Gomail)
 	if err != nil {
 		return fmt.Errorf("init notifier: %v", err)
 	}
