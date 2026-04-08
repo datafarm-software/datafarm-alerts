@@ -13,7 +13,7 @@ type Schema struct {
 	DeletedAlerts map[string][]AlertDeleted
 }
 
-const Notification = "Hi %s,\nThis email to notify alert level %s - %.2f.\nDetails:\n- Name: %s\n- N- DeviceId: %s\n- N- QueryField: %s\n- N- Time Alert Triggered: %s"
+const Notification = "Hi %s,\nThis email to notify alert level %s - %.2f. Alert Conditions: - Name: %s -DeviceId: %s -QueryField: %s -Time Alert Triggered: %s -Based on condition: %s"
 
 const AlertCreatedNotification = "Hi %s, \nThis email to notify alert created with the following details. Alert Name: %s, DeviceId: %s, QueryField: %s, Duration: %s. Type: %s, Condition: %s"
 
@@ -26,19 +26,25 @@ type Message interface {
 }
 
 type AlertNotification struct {
-	Name       string
-	DeviceId   string
-	QueryField string
-	Value      float64
-	Level      alertstore.AlertLevel
-	Timestamp  time.Time
+	Name             string
+	DeviceId         string
+	QueryField       string
+	Value            float64
+	AlertRangeValues []float32
+	AlertType        alertstore.AlertType
+	Level            alertstore.AlertLevel
+	Timestamp        time.Time
 }
 
 func (a AlertNotification) String(username string) (string, error) {
+	condition, err := formatAlertCondition(a.AlertType, a.AlertRangeValues)
+	if err != nil {
+		return "", err
+	}
 	return fmt.Sprintf(
 		Notification,
 		username, alertstore.AlertLevelString[a.Level], a.Value,
-		a.Name, a.DeviceId, a.QueryField, a.Timestamp.String()), nil
+		a.Name, a.DeviceId, a.QueryField, a.Timestamp.String(), condition), nil
 }
 
 type AlertCreated struct {

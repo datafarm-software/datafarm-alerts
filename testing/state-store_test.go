@@ -178,12 +178,14 @@ func TestRespondToAlert(t *testing.T) {
 				Notifications: map[string][]notifier.AlertNotification{
 					UserEmail: {
 						{
-							Name:       RegisteredAlertName,
-							DeviceId:   RegisteredDeviceId,
-							Value:      NewValue,
-							QueryField: RegisteredQueryField,
-							Level:      alertstore.Crit,
-							Timestamp:  AfterDuration,
+							Name:             RegisteredAlertName,
+							DeviceId:         RegisteredDeviceId,
+							Value:            NewValue,
+							QueryField:       RegisteredQueryField,
+							Level:            alertstore.Crit,
+							Timestamp:        AfterDuration,
+							AlertType:        alertstore.GreaterThan,
+							AlertRangeValues: []float32{OldValue},
 						},
 					},
 				},
@@ -201,8 +203,12 @@ func TestRespondToAlert(t *testing.T) {
 				},
 				AlertRules: []alertstore.StoredAlertRule{
 					{
-						AlertId:  AlertId,
-						Duration: "24h",
+						AlertId:     AlertId,
+						Duration:    "24h",
+						RangeValues: []float32{OldValue},
+						Name:        RegisteredAlertName,
+						AlertType:   alertstore.GreaterThan,
+						AlertLevel:  alertstore.Crit,
 					},
 				},
 				AlertStates: []alertstore.AlertState{
@@ -237,8 +243,12 @@ func TestRespondToAlert(t *testing.T) {
 				},
 				AlertRules: []alertstore.StoredAlertRule{
 					{
-						AlertId:  AlertId,
-						Duration: "24h",
+						AlertId:     AlertId,
+						Duration:    "24h",
+						RangeValues: []float32{OldValue},
+						Name:        RegisteredAlertName,
+						AlertType:   alertstore.GreaterThan,
+						AlertLevel:  alertstore.Crit,
 					},
 				},
 				AlertStates: []alertstore.AlertState{
@@ -453,12 +463,14 @@ func TestRespondToAlert(t *testing.T) {
 				Notifications: map[string][]notifier.AlertNotification{
 					UserEmail: {
 						{
-							Name:       RegisteredAlertName,
-							DeviceId:   RegisteredDeviceId,
-							QueryField: RegisteredQueryField,
-							Value:      NewValue,
-							Level:      alertstore.Crit,
-							Timestamp:  WithinDuration,
+							Name:             RegisteredAlertName,
+							DeviceId:         RegisteredDeviceId,
+							QueryField:       RegisteredQueryField,
+							Value:            NewValue,
+							Level:            alertstore.Crit,
+							Timestamp:        WithinDuration,
+							AlertType:        alertstore.GreaterThan,
+							AlertRangeValues: []float32{OldValue},
 						},
 					},
 				},
@@ -476,8 +488,12 @@ func TestRespondToAlert(t *testing.T) {
 				},
 				AlertRules: []alertstore.StoredAlertRule{
 					{
-						AlertId:  AlertId,
-						Duration: "24h",
+						AlertId:     AlertId,
+						Duration:    "24h",
+						RangeValues: []float32{OldValue},
+						Name:        RegisteredAlertName,
+						AlertType:   alertstore.GreaterThan,
+						AlertLevel:  alertstore.Crit,
 					},
 				},
 				AlertStates: []alertstore.AlertState{
@@ -512,8 +528,12 @@ func TestRespondToAlert(t *testing.T) {
 				},
 				AlertRules: []alertstore.StoredAlertRule{
 					{
-						AlertId:  AlertId,
-						Duration: "24h",
+						AlertId:     AlertId,
+						Duration:    "24h",
+						RangeValues: []float32{OldValue},
+						Name:        RegisteredAlertName,
+						AlertType:   alertstore.GreaterThan,
+						AlertLevel:  alertstore.Crit,
 					},
 				},
 				AlertStates: []alertstore.AlertState{
@@ -536,12 +556,14 @@ func TestRespondToAlert(t *testing.T) {
 				Notifications: map[string][]notifier.AlertNotification{
 					UserEmail: {
 						{
-							Name:       RegisteredAlertName,
-							DeviceId:   RegisteredDeviceId,
-							QueryField: RegisteredQueryField,
-							Value:      NewValue,
-							Level:      alertstore.Warn,
-							Timestamp:  WithinDuration,
+							Name:             RegisteredAlertName,
+							DeviceId:         RegisteredDeviceId,
+							QueryField:       RegisteredQueryField,
+							Value:            NewValue,
+							Level:            alertstore.Warn,
+							Timestamp:        WithinDuration,
+							AlertType:        alertstore.GreaterThan,
+							AlertRangeValues: []float32{OldValue},
 						},
 					},
 				},
@@ -559,8 +581,12 @@ func TestRespondToAlert(t *testing.T) {
 				},
 				AlertRules: []alertstore.StoredAlertRule{
 					{
-						AlertId:  AlertId,
-						Duration: "24h",
+						AlertId:     AlertId,
+						Duration:    "24h",
+						RangeValues: []float32{OldValue},
+						Name:        RegisteredAlertName,
+						AlertType:   alertstore.GreaterThan,
+						AlertLevel:  alertstore.Crit,
 					},
 				},
 				AlertStates: []alertstore.AlertState{
@@ -595,8 +621,12 @@ func TestRespondToAlert(t *testing.T) {
 				},
 				AlertRules: []alertstore.StoredAlertRule{
 					{
-						AlertId:  AlertId,
-						Duration: "24h",
+						AlertId:     AlertId,
+						Duration:    "24h",
+						RangeValues: []float32{OldValue},
+						Name:        RegisteredAlertName,
+						AlertType:   alertstore.GreaterThan,
+						AlertLevel:  alertstore.Crit,
 					},
 				},
 				AlertStates: []alertstore.AlertState{
@@ -619,12 +649,14 @@ func TestRespondToAlert(t *testing.T) {
 				Notifications: map[string][]notifier.AlertNotification{
 					UserEmail: {
 						{
-							Name:       RegisteredAlertName,
-							DeviceId:   RegisteredDeviceId,
-							QueryField: RegisteredQueryField,
-							Value:      NewValue,
-							Level:      alertstore.Crit,
-							Timestamp:  WithinDuration,
+							Name:             RegisteredAlertName,
+							DeviceId:         RegisteredDeviceId,
+							QueryField:       RegisteredQueryField,
+							Value:            NewValue,
+							Level:            alertstore.Crit,
+							Timestamp:        WithinDuration,
+							AlertType:        alertstore.GreaterThan,
+							AlertRangeValues: []float32{OldValue},
 						},
 					},
 				},
@@ -642,8 +674,12 @@ func TestRespondToAlert(t *testing.T) {
 				},
 				AlertRules: []alertstore.StoredAlertRule{
 					{
-						AlertId:  AlertId,
-						Duration: "24h",
+						AlertId:     AlertId,
+						Duration:    "24h",
+						RangeValues: []float32{OldValue},
+						Name:        RegisteredAlertName,
+						AlertType:   alertstore.GreaterThan,
+						AlertLevel:  alertstore.Crit,
 					},
 				},
 				AlertStates: []alertstore.AlertState{
@@ -678,8 +714,12 @@ func TestRespondToAlert(t *testing.T) {
 				},
 				AlertRules: []alertstore.StoredAlertRule{
 					{
-						AlertId:  AlertId,
-						Duration: "24h",
+						AlertId:     AlertId,
+						Duration:    "24h",
+						RangeValues: []float32{OldValue},
+						Name:        RegisteredAlertName,
+						AlertType:   alertstore.GreaterThan,
+						AlertLevel:  alertstore.Crit,
 					},
 				},
 				AlertStates: []alertstore.AlertState{
@@ -824,12 +864,14 @@ func TestRespondToAlert(t *testing.T) {
 				Notifications: map[string][]notifier.AlertNotification{
 					UserEmail: {
 						{
-							Name:       RegisteredAlertName,
-							DeviceId:   RegisteredDeviceId,
-							QueryField: RegisteredQueryField,
-							Value:      NewValue,
-							Level:      alertstore.Crit,
-							Timestamp:  AfterDuration,
+							Name:             RegisteredAlertName,
+							DeviceId:         RegisteredDeviceId,
+							QueryField:       RegisteredQueryField,
+							Value:            NewValue,
+							Level:            alertstore.Crit,
+							Timestamp:        AfterDuration,
+							AlertType:        alertstore.GreaterThan,
+							AlertRangeValues: []float32{OldValue},
 						},
 					},
 				},
@@ -847,8 +889,12 @@ func TestRespondToAlert(t *testing.T) {
 				},
 				AlertRules: []alertstore.StoredAlertRule{
 					{
-						AlertId:  AlertId,
-						Duration: "24h",
+						AlertId:     AlertId,
+						Duration:    "24h",
+						RangeValues: []float32{OldValue},
+						Name:        RegisteredAlertName,
+						AlertType:   alertstore.GreaterThan,
+						AlertLevel:  alertstore.Crit,
 					},
 				},
 				AlertStates: []alertstore.AlertState{},
@@ -875,8 +921,12 @@ func TestRespondToAlert(t *testing.T) {
 				},
 				AlertRules: []alertstore.StoredAlertRule{
 					{
-						AlertId:  AlertId,
-						Duration: "24h",
+						AlertId:     AlertId,
+						Duration:    "24h",
+						RangeValues: []float32{OldValue},
+						Name:        RegisteredAlertName,
+						AlertType:   alertstore.GreaterThan,
+						AlertLevel:  alertstore.Crit,
 					},
 				},
 				AlertStates: []alertstore.AlertState{

@@ -469,12 +469,14 @@ func (a *App) RespondToAlert(
 		return nil, huma.Error500InternalServerError("Internal error getting alert recipients.")
 	}
 	message := notifier.AlertNotification{
-		Name:       alert.Name,
-		Value:      alert.Value,
-		DeviceId:   alertRule.DeviceId,
-		QueryField: alertRule.QueryField,
-		Level:      alert.Level,
-		Timestamp:  alert.Time,
+		Name:             alert.Name,
+		Value:            alert.Value,
+		DeviceId:         alertRule.DeviceId,
+		QueryField:       alertRule.QueryField,
+		Level:            alert.Level,
+		Timestamp:        alert.Time,
+		AlertRangeValues: alertRule.RangeValues,
+		AlertType:        alertRule.AlertType,
 	}
 	if err = a.Notifier.AlertNotify(message, emails...); err != nil {
 		log.Printf("notifying users: %v", err)
