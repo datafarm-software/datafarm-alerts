@@ -1,7 +1,6 @@
 package notifier
 
 import (
-	"fmt"
 	"log"
 )
 
@@ -26,20 +25,23 @@ func (m *MockNotifier) AlertNotify(message AlertNotification, emails ...string) 
 	for _, e := range emails {
 		m.inboxes.Notifications[e] = append(m.inboxes.Notifications[e], message)
 	}
-	log.Printf("message:\n %v", message)
+	log.Printf("received notification:\n %v", message)
 	return nil
 }
 
 func (m *MockNotifier) AlertCreatedNotify(message AlertCreated, emails ...string) error {
-	return fmt.Errorf("not implemented")
+	log.Printf("created alert: %v\n", message)
+	return nil
 }
 
 func (m *MockNotifier) AlertDeletedNotify(message AlertDeleted, emails ...string) error {
-	return fmt.Errorf("not implemented")
+	log.Printf("deleted alert: %v\n", message)
+	return nil
 }
 
 func (m *MockNotifier) AlertUpdatedNotify(message AlertUpdated, emails ...string) error {
-	return fmt.Errorf("not implemented")
+	log.Printf("updated alert: %v\n", message)
+	return nil
 }
 
 func (m *MockNotifier) GetUserInboxes() Schema {

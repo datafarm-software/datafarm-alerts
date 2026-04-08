@@ -38,18 +38,18 @@ type App struct {
 func Start(opts Opts) error {
 	var err error
 	app := &App{}
-	app.Notifier, err = notifier.NewGomail(opts.Gomail)
+	app.Notifier, err = notifier.NewMockNotifier()
 	if err != nil {
 		return fmt.Errorf("init notifier: %v", err)
 	}
-	app.AlertStore, err = alertstore.NewGorm(alertstore.Production, "alerts")
+	app.AlertStore, err = alertstore.NewGorm(alertstore.Testing, "test")
 	if err != nil {
 		return fmt.Errorf("init alertstore: %v", err)
 	}
 	if err = app.AlertStore.PrepareDb(alertstore.Schema{}); err != nil {
 		return fmt.Errorf("prepare alertstore: %v", err)
 	}
-	app.AlertSource, err = alertsource.NewInflux(opts.Influx)
+	app.AlertSource, err = alertsource.NewTestingInflux("config.yml")
 	if err != nil {
 		return fmt.Errorf("init alertsource: %v", err)
 	}
