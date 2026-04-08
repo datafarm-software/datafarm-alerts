@@ -24,6 +24,7 @@ var a = &app.App{}
 var EmptyInboxes = notifier.Schema{
 	Notifications: map[string][]notifier.AlertNotification{},
 	CreatedAlerts: map[string][]notifier.AlertCreated{},
+	DeletedAlerts: map[string][]notifier.AlertDeleted{},
 }
 var EmptyAlertStore = alertstore.Schema{}
 
@@ -173,6 +174,7 @@ func TestRespondToAlert(t *testing.T) {
 		"send alert because still crit after duration": {
 			wantStatus: http.StatusNoContent,
 			wantUserInboxes: notifier.Schema{
+				DeletedAlerts: map[string][]notifier.AlertDeleted{},
 				CreatedAlerts: map[string][]notifier.AlertCreated{},
 				Notifications: map[string][]notifier.AlertNotification{
 					UserEmail: {
@@ -447,6 +449,7 @@ func TestRespondToAlert(t *testing.T) {
 		"send notification because alert level changing from ok to crit": {
 			wantStatus: http.StatusNoContent,
 			wantUserInboxes: notifier.Schema{
+				DeletedAlerts: map[string][]notifier.AlertDeleted{},
 				CreatedAlerts: map[string][]notifier.AlertCreated{},
 				Notifications: map[string][]notifier.AlertNotification{
 					UserEmail: {
@@ -529,6 +532,7 @@ func TestRespondToAlert(t *testing.T) {
 		"send notification because alert level changing from ok to warn": {
 			wantStatus: http.StatusNoContent,
 			wantUserInboxes: notifier.Schema{
+				DeletedAlerts: map[string][]notifier.AlertDeleted{},
 				CreatedAlerts: map[string][]notifier.AlertCreated{},
 				Notifications: map[string][]notifier.AlertNotification{
 					UserEmail: {
@@ -611,6 +615,7 @@ func TestRespondToAlert(t *testing.T) {
 		"send notification because alert level changing from warn to crit": {
 			wantStatus: http.StatusNoContent,
 			wantUserInboxes: notifier.Schema{
+				DeletedAlerts: map[string][]notifier.AlertDeleted{},
 				CreatedAlerts: map[string][]notifier.AlertCreated{},
 				Notifications: map[string][]notifier.AlertNotification{
 					UserEmail: {
@@ -815,6 +820,7 @@ func TestRespondToAlert(t *testing.T) {
 		"respond to first alert": {
 			wantStatus: http.StatusNoContent,
 			wantUserInboxes: notifier.Schema{
+				DeletedAlerts: map[string][]notifier.AlertDeleted{},
 				CreatedAlerts: map[string][]notifier.AlertCreated{},
 				Notifications: map[string][]notifier.AlertNotification{
 					UserEmail: {
@@ -954,6 +960,7 @@ func TestCreateAlertRule(t *testing.T) {
 				},
 			},
 			wantUserInboxes: notifier.Schema{
+				DeletedAlerts: map[string][]notifier.AlertDeleted{},
 				Notifications: map[string][]notifier.AlertNotification{},
 				CreatedAlerts: map[string][]notifier.AlertCreated{
 					UserEmail: {
@@ -1015,6 +1022,7 @@ func TestCreateAlertRule(t *testing.T) {
 				},
 			},
 			wantUserInboxes: notifier.Schema{
+				DeletedAlerts: map[string][]notifier.AlertDeleted{},
 				Notifications: map[string][]notifier.AlertNotification{},
 				CreatedAlerts: map[string][]notifier.AlertCreated{
 					UserEmail: {
@@ -1076,6 +1084,7 @@ func TestCreateAlertRule(t *testing.T) {
 				},
 			},
 			wantUserInboxes: notifier.Schema{
+				DeletedAlerts: map[string][]notifier.AlertDeleted{},
 				Notifications: map[string][]notifier.AlertNotification{},
 				CreatedAlerts: map[string][]notifier.AlertCreated{
 					UserEmail: {
@@ -1139,6 +1148,7 @@ func TestCreateAlertRule(t *testing.T) {
 				},
 			},
 			wantUserInboxes: notifier.Schema{
+				DeletedAlerts: map[string][]notifier.AlertDeleted{},
 				Notifications: map[string][]notifier.AlertNotification{},
 				CreatedAlerts: map[string][]notifier.AlertCreated{
 					UserEmail: {
@@ -1178,11 +1188,8 @@ func TestCreateAlertRule(t *testing.T) {
 				AlertStates:     []alertstore.AlertState{},
 				AlertRules:      []alertstore.StoredAlertRule{},
 			},
-			wantAlertStore: EmptyAlertStore,
-			wantUserInboxes: notifier.Schema{
-				Notifications: map[string][]notifier.AlertNotification{},
-				CreatedAlerts: map[string][]notifier.AlertCreated{},
-			},
+			wantAlertStore:  EmptyAlertStore,
+			wantUserInboxes: EmptyInboxes,
 			alertRule: alertstore.AlertRule{
 				Name:        RegisteredAlertName,
 				RangeValues: []float32{5, 10},
@@ -1199,11 +1206,8 @@ func TestCreateAlertRule(t *testing.T) {
 				AlertStates:     []alertstore.AlertState{},
 				AlertRules:      []alertstore.StoredAlertRule{},
 			},
-			wantAlertStore: EmptyAlertStore,
-			wantUserInboxes: notifier.Schema{
-				Notifications: map[string][]notifier.AlertNotification{},
-				CreatedAlerts: map[string][]notifier.AlertCreated{},
-			},
+			wantAlertStore:  EmptyAlertStore,
+			wantUserInboxes: EmptyInboxes,
 			alertRule: alertstore.AlertRule{
 				Name:        RegisteredAlertName,
 				RangeValues: []float32{5},
@@ -1236,6 +1240,7 @@ func TestCreateAlertRule(t *testing.T) {
 				AlertId: "alert2",
 			},
 			wantUserInboxes: notifier.Schema{
+				DeletedAlerts: map[string][]notifier.AlertDeleted{},
 				Notifications: map[string][]notifier.AlertNotification{},
 				CreatedAlerts: map[string][]notifier.AlertCreated{
 					AnotherUserEmail: {
@@ -1380,10 +1385,7 @@ func TestCreateAlertRule(t *testing.T) {
 					},
 				},
 			},
-			wantUserInboxes: notifier.Schema{
-				Notifications: map[string][]notifier.AlertNotification{},
-				CreatedAlerts: map[string][]notifier.AlertCreated{},
-			},
+			wantUserInboxes: EmptyInboxes,
 			alertRule: alertstore.AlertRule{
 				Name:           "Some other alert name",
 				RangeValues:    []float32{5},
@@ -1459,6 +1461,7 @@ func TestCreateAlertRule(t *testing.T) {
 				},
 			},
 			wantUserInboxes: notifier.Schema{
+				DeletedAlerts: map[string][]notifier.AlertDeleted{},
 				Notifications: map[string][]notifier.AlertNotification{},
 				CreatedAlerts: map[string][]notifier.AlertCreated{
 					UserEmail: {
@@ -1550,6 +1553,7 @@ func TestCreateAlertRule(t *testing.T) {
 			},
 			wantAlertSourceCount: 2,
 			wantUserInboxes: notifier.Schema{
+				DeletedAlerts: map[string][]notifier.AlertDeleted{},
 				Notifications: map[string][]notifier.AlertNotification{},
 				CreatedAlerts: map[string][]notifier.AlertCreated{
 					UserEmail: {
@@ -1652,6 +1656,7 @@ func TestCreateAlertRule(t *testing.T) {
 			},
 			wantAlertSourceCount: 2,
 			wantUserInboxes: notifier.Schema{
+				DeletedAlerts: map[string][]notifier.AlertDeleted{},
 				Notifications: map[string][]notifier.AlertNotification{},
 				CreatedAlerts: map[string][]notifier.AlertCreated{
 					UserEmail: {
@@ -1722,6 +1727,7 @@ func TestCreateAlertRule(t *testing.T) {
 				},
 			},
 			wantUserInboxes: notifier.Schema{
+				DeletedAlerts: map[string][]notifier.AlertDeleted{},
 				Notifications: map[string][]notifier.AlertNotification{},
 				CreatedAlerts: map[string][]notifier.AlertCreated{
 					UserEmail: {
@@ -3283,15 +3289,11 @@ func TestDeleteAlert(t *testing.T) {
 		},
 
 		"try to delete non existent alert": {
-			wantErr:    true,
-			wantStatus: http.StatusNotFound,
-			wantUserInboxes: notifier.Schema{
-				Notifications: map[string][]notifier.AlertNotification{},
-				CreatedAlerts: map[string][]notifier.AlertCreated{},
-				DeletedAlerts: map[string][]notifier.AlertDeleted{},
-			},
-			alertId:        "alert2",
-			mockAlertStore: alertstore.Schema{},
+			wantErr:         true,
+			wantStatus:      http.StatusNotFound,
+			wantUserInboxes: EmptyInboxes,
+			alertId:         "alert2",
+			mockAlertStore:  alertstore.Schema{},
 		},
 	}
 
@@ -3480,11 +3482,7 @@ func TestRemoveUsersFromAlertRule(t *testing.T) {
 				},
 				AlertStates: []alertstore.AlertState{},
 			},
-			wantUserInboxes: notifier.Schema{
-				Notifications: map[string][]notifier.AlertNotification{},
-				CreatedAlerts: map[string][]notifier.AlertCreated{},
-				DeletedAlerts: map[string][]notifier.AlertDeleted{},
-			},
+			wantUserInboxes:      EmptyInboxes,
 			wantStatus:           http.StatusOK,
 			wantAlertSourceCount: 1,
 			emailsToRemove:       []string{AnotherUserEmail},
