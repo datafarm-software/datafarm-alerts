@@ -879,6 +879,20 @@ func (a *App) RemoveUsersFromAlertRule(ctx context.Context, in *struct {
 		return nil, huma.Error500InternalServerError(
 			"Internal error removing users from alert rule.")
 	}
+	message := notifier.AlertDeleted{
+		Name:        ar.Name,
+		DeviceId:    ar.DeviceId,
+		QueryField:  ar.QueryField,
+		Duration:    ar.Duration,
+		AlertLevel:  ar.AlertLevel,
+		AlertType:   ar.AlertType,
+		AlertValues: ar.RangeValues,
+	}
+	if err = a.Notifier.AlertDeletedNotify(message, emailsToDelete...); err != nil {
+		log.Printf("alertDeletedNotify: %v", err)
+		return nil, huma.Error500InternalServerError(
+			"Internal error notifying users unregistered from alert.")
+	}
 	return &struct {
 		Status int
 		Body   alertstore.MutateAlertUsersResponse
