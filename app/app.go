@@ -803,6 +803,20 @@ func (a *App) AddUsersToAlertRule(ctx context.Context, in *struct {
 		return nil, huma.Error500InternalServerError(
 			"Internal error while updating alert rule.")
 	}
+	alertCreated := notifier.AlertCreated{
+		Name:        ar.Name,
+		DeviceId:    ar.DeviceId,
+		QueryField:  ar.QueryField,
+		Duration:    ar.Duration,
+		AlertLevel:  ar.AlertLevel,
+		AlertType:   ar.AlertType,
+		AlertValues: ar.RangeValues,
+	}
+	if err := a.Notifier.AlertCreatedNotify(alertCreated, in.Body...); err != nil {
+		log.Printf("alert created notify: %v", err)
+		return nil, huma.Error500InternalServerError(
+			"Internal error notifying users of alert registration.")
+	}
 	return &struct {
 		Body alertstore.MutateAlertUsersResponse
 	}{
