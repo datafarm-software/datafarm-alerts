@@ -17,6 +17,8 @@ const Notification = "Hi %s,\nThis email to notify alert level %s - %.2f.\nDetai
 
 const AlertCreatedNotification = "Hi %s, \nThis email to notify alert created with the following details. Alert Name: %s, DeviceId: %s, QueryField: %s, Duration: %s. Type: %s, Condition: %s"
 
+const AlertUpdatedNotification = "Hi %s, \nThis email to notify alert which you are registered for has been updated to the following details. Alert Name: %s, DeviceId: %s, QueryField: %s, Duration: %s. Type: %s, Condition: %s"
+
 const AlertDeletedNotification = "Hi %s,\n This email to notify that you will no longer receive alerts for alert: %s. Details: DeviceId: %s, QueryField: %s, Duration: %s, Type: %s, Condition: %s."
 
 type Message interface {
@@ -100,6 +102,18 @@ func (a AlertDeleted) String(username string) (string, error) {
 		condition), nil
 }
 
+type AlertUpdated AlertCreated
+
+func (a AlertUpdated) String(username string) (string, error) {
+	condition, err := formatAlertCondition(a.AlertType, a.AlertValues)
+	if err != nil {
+		return "", err
+	}
+	return fmt.Sprintf(AlertUpdatedNotification, username, a.Name, a.DeviceId,
+		a.QueryField, a.Duration, alertstore.AlertLevelString[a.AlertLevel],
+		condition), nil
+}
+
 type TestingNotifier interface {
 	GetUserInboxes() Schema
 }
@@ -110,4 +124,5 @@ type Notifier interface {
 	AlertNotify(message AlertNotification, emails ...string) error
 	AlertCreatedNotify(message AlertCreated, emails ...string) error
 	AlertDeletedNotify(message AlertDeleted, emails ...string) error
+	AlertUpdatedNotify(message AlertUpdated, emails ...string) error
 }
