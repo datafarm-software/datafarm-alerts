@@ -58,6 +58,22 @@ func (g *TestingGomail) AlertCreatedNotify(message AlertCreated, emails ...strin
 	return nil
 }
 
+func (g *TestingGomail) AlertUpdatedNotify(message AlertUpdated, emails ...string) error {
+	var err error
+	for _, email := range emails {
+		err = g.sendEmail(message, email)
+		if err != nil {
+			break
+		}
+		g.inboxes.CreatedAlerts[email] = append(g.inboxes.CreatedAlerts[email],
+			AlertCreated(message))
+	}
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 func (g *TestingGomail) AlertDeletedNotify(message AlertDeleted, emails ...string) error {
 	var err error
 	for _, email := range emails {
@@ -157,6 +173,10 @@ func (g *Gomail) AlertNotify(message AlertNotification, emails ...string) error 
 }
 
 func (g *Gomail) AlertCreatedNotify(message AlertCreated, emails ...string) error {
+	return g.sendEmails(message, emails...)
+}
+
+func (g *Gomail) AlertUpdatedNotify(message AlertUpdated, emails ...string) error {
 	return g.sendEmails(message, emails...)
 }
 
