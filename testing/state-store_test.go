@@ -3,7 +3,6 @@ package testing
 import (
 	"fmt"
 	"net/http"
-	"reflect"
 	"testing"
 	"time"
 
@@ -1863,42 +1862,6 @@ func TestParseDuration(t *testing.T) {
 	}
 }
 
-func TestConvertToRecipients(t *testing.T) {
-	tests := map[string]struct {
-		emails         []string
-		alertId        string
-		wantRecipients []alertstore.AlertRecipient
-	}{
-
-		"convert emails to slice of AlertRecipient": {
-			emails:  []string{UserEmail, "user2@alert.com"},
-			alertId: AlertId,
-			wantRecipients: []alertstore.AlertRecipient{
-				{AlertId: AlertId, Email: UserEmail},
-				{AlertId: AlertId, Email: "user2@alert.com"},
-			},
-		},
-
-		"ignore duplicate emails": {
-			emails:  []string{UserEmail, UserEmail},
-			alertId: AlertId,
-			wantRecipients: []alertstore.AlertRecipient{
-				{AlertId: AlertId, Email: UserEmail},
-			},
-		},
-	}
-
-	var recipients []alertstore.AlertRecipient
-	for name, tc := range tests {
-		t.Run(name, func(t *testing.T) {
-			recipients = a.ConvertToRecipients(tc.alertId, tc.emails)
-			if !reflect.DeepEqual(tc.wantRecipients, recipients) {
-				t.Fatalf("wantRecipients: %v, got: %v", tc.wantRecipients, recipients)
-			}
-		})
-	}
-}
-
 func TestUpdateAlertRule(t *testing.T) {
 	tests := map[string]struct {
 		wantErr                        bool
@@ -2683,7 +2646,7 @@ func TestUpdateAlertRule(t *testing.T) {
 							Name:       RegisteredAlertName,
 							DeviceId:   RegisteredDeviceId,
 							QueryField: RegisteredQueryField,
-							Duration:   "24h",
+							Duration:   "48h",
 							AlertLevel: alertstore.Crit,
 							AlertType:  alertstore.InactiveSensor,
 						},

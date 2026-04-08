@@ -635,7 +635,8 @@ func (a *App) UpdateAlertRule(
 		}
 	}
 	var dbRecord alertstore.Schema
-	dbRecord.AlertRecipients = a.ConvertToRecipients(in.AlertId, in.Body.EmailAddresses)
+	uniqueEmails := removeDuplicates(in.Body.EmailAddresses)
+	dbRecord.AlertRecipients = a.ConvertToRecipients(in.AlertId, uniqueEmails)
 	dbRecord.DeviceAlerts = []alertstore.DeviceAlertRule{
 		{
 			DeviceId:   in.Body.DeviceId,
@@ -693,7 +694,7 @@ func (a *App) UpdateAlertRule(
 		AlertType:   in.Body.AlertType,
 		AlertValues: in.Body.RangeValues,
 	}
-	if err = a.Notifier.AlertUpdatedNotify(message, in.Body.EmailAddresses...); err != nil {
+	if err = a.Notifier.AlertUpdatedNotify(message, uniqueEmails...); err != nil {
 		log.Printf("update alert notify: %v", err)
 		return nil, huma.Error500InternalServerError(
 			"Internal error while notifying users of updated alert rule.")
@@ -701,17 +702,25 @@ func (a *App) UpdateAlertRule(
 	return &struct{ Body alertstore.AlertRule }{in.Body}, nil
 }
 
+func removeDuplicates[T comparable](slice []T) []T {
+	seen := make(map[T]struct{})
+	result := []T{}
+	for _, v := range slice {
+		if _, ok := seen[v]; !ok {
+			seen[v] = struct{}{}
+			result = append(result, v)
+		}
+	}
+	return result
+}
+
 func (a *App) ConvertToRecipients(alertId string, emails []string) []alertstore.AlertRecipient {
 	recipients := make([]alertstore.AlertRecipient, 0, len(emails))
-	emailExists := make(map[string]bool, len(emails))
 	for _, email := range emails {
-		if !emailExists[email] {
-			recipients = append(recipients, alertstore.AlertRecipient{
-				AlertId: alertId,
-				Email:   email,
-			})
-			emailExists[email] = true
-		}
+		recipients = append(recipients, alertstore.AlertRecipient{
+			AlertId: alertId,
+			Email:   email,
+		})
 	}
 	return recipients
 }
