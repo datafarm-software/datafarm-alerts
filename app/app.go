@@ -684,6 +684,20 @@ func (a *App) UpdateAlertRule(
 		log.Printf("updating alert state for id: %s, err: %v", alertState.Id, err)
 		return nil, huma.Error500InternalServerError("Internal error updating alert state.")
 	}
+	message := notifier.AlertUpdated{
+		Name:        in.Body.Name,
+		DeviceId:    in.Body.DeviceId,
+		QueryField:  in.Body.QueryField,
+		Duration:    in.Body.Duration,
+		AlertLevel:  in.Body.AlertLevel,
+		AlertType:   in.Body.AlertType,
+		AlertValues: in.Body.RangeValues,
+	}
+	if err = a.Notifier.AlertUpdatedNotify(message, in.Body.EmailAddresses...); err != nil {
+		log.Printf("update alert notify: %v", err)
+		return nil, huma.Error500InternalServerError(
+			"Internal error while notifying users of updated alert rule.")
+	}
 	return &struct{ Body alertstore.AlertRule }{in.Body}, nil
 }
 
