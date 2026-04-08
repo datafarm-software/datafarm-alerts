@@ -3632,6 +3632,7 @@ func TestAddUsersToAlertRule(t *testing.T) {
 	tests := map[string]struct {
 		wantErr                        bool
 		mockAlertStore, wantAlertStore alertstore.Schema
+		wantUserInboxes                notifier.Schema
 		wantStatus                     int
 		emailsToAdd                    []string
 		alertId                        string
@@ -3695,7 +3696,24 @@ func TestAddUsersToAlertRule(t *testing.T) {
 				},
 				AlertStates: []alertstore.AlertState{},
 			},
-			wantStatus:           http.StatusOK,
+			wantStatus: http.StatusOK,
+			wantUserInboxes: notifier.Schema{
+				DeletedAlerts: map[string][]notifier.AlertDeleted{},
+				Notifications: map[string][]notifier.AlertNotification{},
+				CreatedAlerts: map[string][]notifier.AlertCreated{
+					AnotherUserEmail: {
+						{
+							Name:        RegisteredAlertName,
+							DeviceId:    RegisteredDeviceId,
+							QueryField:  RegisteredQueryField,
+							Duration:    "24h",
+							AlertLevel:  alertstore.Warn,
+							AlertType:   alertstore.LessThan,
+							AlertValues: []float32{OldValue},
+						},
+					},
+				},
+			},
 			emailsToAdd:          []string{AnotherUserEmail},
 			alertId:              AlertId,
 			wantAlertSourceCount: 1,
@@ -3766,6 +3784,34 @@ func TestAddUsersToAlertRule(t *testing.T) {
 				},
 				AlertStates: []alertstore.AlertState{},
 			},
+			wantUserInboxes: notifier.Schema{
+				DeletedAlerts: map[string][]notifier.AlertDeleted{},
+				Notifications: map[string][]notifier.AlertNotification{},
+				CreatedAlerts: map[string][]notifier.AlertCreated{
+					UserEmail: {
+						{
+							Name:        RegisteredAlertName,
+							DeviceId:    RegisteredDeviceId,
+							QueryField:  RegisteredQueryField,
+							Duration:    "24h",
+							AlertLevel:  alertstore.Warn,
+							AlertType:   alertstore.LessThan,
+							AlertValues: []float32{OldValue},
+						},
+					},
+					"user3@alert.com": {
+						{
+							Name:        RegisteredAlertName,
+							DeviceId:    RegisteredDeviceId,
+							QueryField:  RegisteredQueryField,
+							Duration:    "24h",
+							AlertLevel:  alertstore.Warn,
+							AlertType:   alertstore.LessThan,
+							AlertValues: []float32{OldValue},
+						},
+					},
+				},
+			},
 			wantStatus:           http.StatusOK,
 			emailsToAdd:          []string{UserEmail, "user3@alert.com"},
 			alertId:              AlertId,
@@ -3813,6 +3859,8 @@ func TestAddUsersToAlertRule(t *testing.T) {
 	a.RegisterHumaOperations(api)
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
+			a.Notifier, err = notifier.NewTestingGoMail()
+			require.Nil(t, err)
 			a.AlertSource, err = alertsource.NewTestingInflux(ConfigPath)
 			require.Nil(t, err)
 			defer a.AlertSource.Close()
@@ -3833,7 +3881,6 @@ func TestAddUsersToAlertRule(t *testing.T) {
 				if diff := cmp.Diff(tc.wantAlertStore, a.AlertStore.GetSnapshot()); diff != "" {
 					t.Fatalf("alertStore mismatch (-want +got):\n%s", diff)
 				}
-
 				var mu alertstore.MutateAlertUsersResponse
 				body := resp.Body.Bytes()
 				err = json.Unmarshal(body, &mu)
@@ -3845,6 +3892,9 @@ func TestAddUsersToAlertRule(t *testing.T) {
 				if tc.wantAlertSourceCount != alertsCount {
 					t.Fatalf("wantAlertSourceCount: %d, got alertsCount: %d",
 						tc.wantAlertSourceCount, alertsCount)
+				}
+				if diff := cmp.Diff(tc.wantUserInboxes, a.Notifier.GetUserInboxes()); diff != "" {
+					t.Fatalf("user inboxes mismatch (-want +got):\n%s", diff)
 				}
 			}
 		})
