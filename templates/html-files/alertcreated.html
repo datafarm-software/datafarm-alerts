@@ -1,0 +1,18 @@
+{{define "alert-create"}}
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Alert Created</title>
+    <link href="css/style.css" rel="stylesheet" />
+  </head>
+
+  <body>
+    <p>
+      Hallo {{.UserInfo.Username}}! You just created an alert called
+      {{.Message.Name}}.
+    </p>
+  </body>
+</html>
+{{end}}
