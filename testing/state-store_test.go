@@ -15,6 +15,7 @@ import (
 	"github.com/geraud22/sensordata-alerts/alertstore"
 	"github.com/geraud22/sensordata-alerts/app"
 	"github.com/geraud22/sensordata-alerts/notifier"
+	"github.com/geraud22/sensordata-alerts/templates"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 )
@@ -947,6 +948,8 @@ func TestRespondToAlert(t *testing.T) {
 	a.RegisterHumaOperations(api)
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
+			a.Templater, err = templates.NewMockTemplater()
+			require.Nil(t, err)
 			a.Notifier, err = notifier.NewTestingGoMail()
 			require.Nil(t, err)
 			defer a.Notifier.Close()
@@ -1817,6 +1820,8 @@ func TestCreateAlertRule(t *testing.T) {
 
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
+			a.Templater, err = templates.NewMockTemplater()
+			require.Nil(t, err)
 			a.Notifier, err = notifier.NewTestingGoMail()
 			require.Nil(t, err)
 			defer a.Notifier.Close()
@@ -3083,6 +3088,8 @@ func TestUpdateAlertRule(t *testing.T) {
 	a.RegisterHumaOperations(api)
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
+			a.Templater, err = templates.NewMockTemplater()
+			require.Nil(t, err)
 			a.Notifier, err = notifier.NewTestingGoMail()
 			require.Nil(t, err)
 			defer a.Notifier.Close()
@@ -3506,6 +3513,8 @@ func TestDeleteAlert(t *testing.T) {
 	a.RegisterHumaOperations(api)
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
+			a.Templater, err = templates.NewMockTemplater()
+			require.Nil(t, err)
 			a.Notifier, err = notifier.NewTestingGoMail()
 			require.Nil(t, err)
 			defer a.Notifier.Close()
@@ -3837,6 +3846,8 @@ func TestRemoveUsersFromAlertRule(t *testing.T) {
 	a.RegisterHumaOperations(api)
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
+			a.Templater, err = templates.NewMockTemplater()
+			require.Nil(t, err)
 			a.Notifier, err = notifier.NewTestingGoMail()
 			require.Nil(t, err)
 			defer a.Notifier.Close()
@@ -4111,6 +4122,8 @@ func TestAddUsersToAlertRule(t *testing.T) {
 	a.RegisterHumaOperations(api)
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
+			a.Templater, err = templates.NewMockTemplater()
+			require.Nil(t, err)
 			a.Notifier, err = notifier.NewTestingGoMail()
 			require.Nil(t, err)
 			defer a.Notifier.Close()
