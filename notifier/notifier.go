@@ -5,6 +5,8 @@ import (
 	"time"
 
 	"github.com/geraud22/sensordata-alerts/alertstore"
+	"github.com/geraud22/sensordata-alerts/auth"
+	"github.com/geraud22/sensordata-alerts/templates"
 )
 
 type Schema struct {
@@ -127,5 +129,5 @@ type TestingNotifier interface {
 type Notifier interface {
 	TestingNotifier
 	Close() error
-	Notify(message Message, html string, emails ...string) error
+	Notify(Message, templates.Templater, ...auth.UserInfo) error
 }

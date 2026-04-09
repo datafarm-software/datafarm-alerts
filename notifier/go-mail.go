@@ -5,6 +5,7 @@ import (
 	"io"
 	"strings"
 
+	"github.com/geraud22/sensordata-alerts/templates"
 	"gopkg.in/gomail.v2"
 )
 
@@ -105,9 +106,9 @@ func (g *Gomail) Close() error {
 	return nil
 }
 
-func (g *Gomail) sendEmails(html string, emails ...string) error {
+func (g *Gomail) sendEmails(message Message, html string, emails ...string) error {
 	var emailParts []string
-	var username string
+	var username, messageStr string
 	sender, err := g.dialer.Dial()
 	if err != nil {
 		return err
@@ -121,7 +122,11 @@ func (g *Gomail) sendEmails(html string, emails ...string) error {
 		m.SetHeader("From", g.username)
 		m.SetHeader("To", email)
 		m.SetHeader("Subject", "DataFarm Alert Notification")
-		m.SetBody("text/html", html)
+		messageStr, err = message.String(username)
+		if err != nil {
+			break
+		}
+		m.SetBody("text/html", messageStr)
 		if err = sender.Send(g.username, []string{email}, m); err != nil {
 			break
 		}
@@ -129,7 +134,24 @@ func (g *Gomail) sendEmails(html string, emails ...string) error {
 	return err
 }
 
-func (g *Gomail) Notify(message Message, html string, emails ...string) error {
+func (g *Gomail) Notify(message Message, templater templates.Templater, emails ...string) error {
+	if templater == nil {
+		return fmt.Errorf("received nil templater")
+	}
+	var tmplName templates.TemplateName
+	switch t := message.(type) {
+	case AlertNotification:
+		tmplName = templates.AlertNotificationTempl
+	case AlertCreated:
+		tmplName = templates.AlertCreatedTempl
+	case AlertUpdated:
+		tmplName = templates.AlertUpdatedTempl
+	case AlertDeleted:
+		tmplName = templates.AlertDeletedTempl
+	default:
+		return fmt.Errorf("unknown message type: %v", t)
+	}
+	html, err := templater.Render(tmplName, message)
 	return g.sendEmails(message, emails...)
 }
 

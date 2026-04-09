@@ -5,11 +5,17 @@ import (
 	"html/template"
 	"io/fs"
 	"path/filepath"
-	"strings"
 )
 
+type TemplateName string
+
+const AlertNotificationTempl TemplateName = "alert-notification"
+const AlertCreatedTempl TemplateName = "alert-create"
+const AlertDeletedTempl TemplateName = "alert-delete"
+const AlertUpdatedTempl TemplateName = "alert-update"
+
 type Templater interface {
-	Execute(name string, data any) (*strings.Builder, error)
+	Render(name TemplateName, data any) (string, error)
 }
 
 func findHtmlPaths(files fs.FS) ([]string, error) {

@@ -33,8 +33,8 @@ func NewGohtml(opts GohtmlOpts) (Templater, error) {
 	return &Gohtml{tmpl}, nil
 }
 
-func (g *Gohtml) Execute(name string, pagedata any) (*strings.Builder, error) {
+func (g *Gohtml) Render(name TemplateName, pagedata any) (string, error) {
 	sb := strings.Builder{}
-	err := g.tmpl.ExecuteTemplate(&sb, name, pagedata)
-	return &sb, err
+	err := g.tmpl.ExecuteTemplate(&sb, string(name), pagedata)
+	return sb.String(), err
 }

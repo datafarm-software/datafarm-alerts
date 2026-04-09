@@ -480,13 +480,7 @@ func (a *App) RespondToAlert(
 		AlertRangeValues: alertRule.RangeValues,
 		AlertType:        alertRule.AlertType,
 	}
-	html, err := a.Templater.Execute("alert-notification", message)
-	if err != nil {
-		log.Printf("creating notification template: %v", err)
-		return nil, huma.Error500InternalServerError(
-			"Internal error creating notification template.")
-	}
-	if err = a.Notifier.Notify(message, html.String(), emails...); err != nil {
+	if err = a.Notifier.Notify(message, a.Templater, emails...); err != nil {
 		log.Printf("notifying users: %v", err)
 		return nil, huma.Error500InternalServerError("Internal error notifying users.")
 	}
