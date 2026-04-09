@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"os"
 	"strings"
 
 	"github.com/geraud22/sensordata-alerts/auth"
@@ -30,52 +31,75 @@ func (g *TestingGomail) Close() error {
 }
 
 func (g *TestingGomail) Notify(
-	message Message, _ templates.Templater, users ...auth.UserInfo) error {
+	message Message, tmpl templates.Templater, users ...auth.UserInfo) error {
 	var err error
-Loop:
+	var emailParts []string
+	var username, html string
+	var userInfo auth.UserInfo
 	for _, u := range users {
-		err = g.sendEmail(message, u.EmailAddress)
-		if err != nil {
-			break
-		}
+		emailParts = strings.Split(u.EmailAddress, "@")
+		username = emailParts[0]
+		userInfo = auth.UserInfo{Username: username, EmailAddress: u.EmailAddress}
 		switch t := message.(type) {
 		case AlertNotification:
 			g.inboxes.Notifications[u.EmailAddress] = append(
 				g.inboxes.Notifications[u.EmailAddress], t)
 			log.Printf("received notification:\n %v", t)
+			html, err = tmpl.Render(templates.AlertNotificationTempl, struct {
+				Message  AlertNotification
+				UserInfo auth.UserInfo
+			}{Message: t, UserInfo: userInfo})
 		case AlertCreated:
 			g.inboxes.CreatedAlerts[u.EmailAddress] = append(
 				g.inboxes.CreatedAlerts[u.EmailAddress], t)
 			log.Printf("created alert: %v\n", t)
+			html, err = tmpl.Render(templates.AlertCreatedTempl, struct {
+				Message  AlertCreated
+				UserInfo auth.UserInfo
+			}{Message: t, UserInfo: userInfo})
 		case AlertUpdated:
 			g.inboxes.CreatedAlerts[u.EmailAddress] = append(
 				g.inboxes.CreatedAlerts[u.EmailAddress], AlertCreated(t))
 			log.Printf("updated alert: %v\n", t)
+			html, err = tmpl.Render(templates.AlertUpdatedTempl, struct {
+				Message  AlertUpdated
+				UserInfo auth.UserInfo
+			}{Message: t, UserInfo: userInfo})
 		case AlertDeleted:
 			g.inboxes.DeletedAlerts[u.EmailAddress] = append(
 				g.inboxes.DeletedAlerts[u.EmailAddress], t)
 			log.Printf("deleted alert: %v\n", t)
+			html, err = tmpl.Render(templates.AlertDeletedTempl, struct {
+				Message  AlertDeleted
+				UserInfo auth.UserInfo
+			}{Message: t, UserInfo: userInfo})
 		default:
 			err = fmt.Errorf("message is unknown type: %T", t)
-			break Loop
+		}
+		if err != nil {
+			break
+		}
+		if err = g.sendEmail(html, u.EmailAddress); err != nil {
+			break
+		}
+		if err = g.toFile(html); err != nil {
+			break
 		}
 	}
 	return err
 }
 
-func (g *TestingGomail) sendEmail(message Message, email string) error {
-	emailParts := strings.Split(email, "@")
-	username := emailParts[0]
+func (g *TestingGomail) toFile(html string) error {
+	return os.WriteFile("example-email.html", []byte(html), 0644)
+}
+
+func (g *TestingGomail) sendEmail(html, email string) error {
 	m := gomail.NewMessage()
-	messageStr, err := message.String(username)
-	if err != nil {
-		return fmt.Errorf("message to string: %v", err)
-	}
 	m.SetHeader("From", "tester@alerts.com")
 	m.SetHeader("Subject", "DataFarm Alert Notification")
-	m.SetBody("text/html", messageStr)
+	m.SetBody("text/html", html)
 	mockSender := gomail.SendFunc(g.Send)
-	if err = mockSender.Send("tester@alerts.com", []string{email}, m); err != nil {
+	if err := mockSender.Send("tester@alerts.com", []string{email}, m); err != nil {
 		return fmt.Errorf("mockSender send: %v", err)
 	}
 	return nil
