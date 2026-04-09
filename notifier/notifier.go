@@ -126,6 +126,11 @@ type TestingNotifier interface {
 	GetUserInboxes() Schema
 }
 
+type EmailContent struct {
+	Message  Message
+	UserInfo auth.UserInfo
+}
+
 type Notifier interface {
 	TestingNotifier
 	Close() error

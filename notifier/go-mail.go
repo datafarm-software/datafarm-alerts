@@ -5,6 +5,7 @@ import (
 	"io"
 	"strings"
 
+	"github.com/geraud22/sensordata-alerts/auth"
 	"github.com/geraud22/sensordata-alerts/templates"
 	"gopkg.in/gomail.v2"
 )
@@ -106,38 +107,13 @@ func (g *Gomail) Close() error {
 	return nil
 }
 
-func (g *Gomail) sendEmails(message Message, html string, emails ...string) error {
-	var emailParts []string
-	var username, messageStr string
+func (g *Gomail) sendEmails(message Message, templater templates.Templater,
+	users ...auth.UserInfo) error {
 	sender, err := g.dialer.Dial()
 	if err != nil {
 		return err
 	}
 	defer sender.Close()
-	var m *gomail.Message
-	for _, email := range emails {
-		emailParts = strings.Split(email, "@")
-		username = emailParts[0]
-		m = gomail.NewMessage()
-		m.SetHeader("From", g.username)
-		m.SetHeader("To", email)
-		m.SetHeader("Subject", "DataFarm Alert Notification")
-		messageStr, err = message.String(username)
-		if err != nil {
-			break
-		}
-		m.SetBody("text/html", messageStr)
-		if err = sender.Send(g.username, []string{email}, m); err != nil {
-			break
-		}
-	}
-	return err
-}
-
-func (g *Gomail) Notify(message Message, templater templates.Templater, emails ...string) error {
-	if templater == nil {
-		return fmt.Errorf("received nil templater")
-	}
 	var tmplName templates.TemplateName
 	switch t := message.(type) {
 	case AlertNotification:
@@ -151,7 +127,39 @@ func (g *Gomail) Notify(message Message, templater templates.Templater, emails .
 	default:
 		return fmt.Errorf("unknown message type: %v", t)
 	}
-	html, err := templater.Render(tmplName, message)
+	var emailParts []string
+	var html string
+	ec := EmailContent{Message: message}
+	var m *gomail.Message
+	for _, u := range users {
+		emailParts = strings.Split(u.EmailAddress, "@")
+		u.Username = emailParts[0]
+		ec.UserInfo = u
+		html, err = templater.Render(tmplName, ec)
+		if err != nil {
+			err = fmt.Errorf("rendering: %s, error: %v", tmplName, err)
+			break
+		}
+		m = gomail.NewMessage()
+		m.SetHeader("From", g.username)
+		m.SetHeader("To", u.EmailAddress)
+		m.SetHeader("Subject", "DataFarm Alert Notification")
+		m.SetBody("text/html", html)
+		if err = sender.Send(g.username, []string{u.EmailAddress}, m); err != nil {
+			break
+		}
+	}
+	return err
+}
+
+func (g *Gomail) Notify(message Message, templater templates.Templater,
+	users ...auth.UserInfo) error {
+	if templater == nil {
+		return fmt.Errorf("received nil templater")
+	}
+	if len(users) < 1 {
+		return fmt.Errorf("no users to notify")
+	}
 	return g.sendEmails(message, emails...)
 }
 
