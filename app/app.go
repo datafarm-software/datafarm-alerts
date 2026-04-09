@@ -708,7 +708,11 @@ func (a *App) UpdateAlertRule(
 		AlertType:   in.Body.AlertType,
 		AlertValues: in.Body.RangeValues,
 	}
-	if err = a.Notifier.AlertUpdatedNotify(message, uniqueEmails...); err != nil {
+	users := make([]auth.UserInfo, 0, len(uniqueEmails))
+	for _, e := range uniqueEmails {
+		users = append(users, auth.UserInfo{EmailAddress: e})
+	}
+	if err = a.Notifier.Notify(message, a.Templater, users...); err != nil {
 		log.Printf("update alert notify: %v", err)
 		return nil, huma.Error500InternalServerError(
 			"Internal error while notifying users of updated alert rule.")
@@ -794,7 +798,11 @@ func (a *App) DeleteAlertRule(ctx context.Context,
 		AlertType:   alertRule.AlertType,
 		AlertValues: alertRule.RangeValues,
 	}
-	if err = a.Notifier.AlertDeletedNotify(message, alertRule.EmailAddresses...); err != nil {
+	users := make([]auth.UserInfo, 0, len(alertRule.EmailAddresses))
+	for _, e := range alertRule.EmailAddresses {
+		users = append(users, auth.UserInfo{EmailAddress: e})
+	}
+	if err = a.Notifier.Notify(message, a.Templater, users...); err != nil {
 		log.Printf("alertDeletedNotify: %v", err)
 		return nil, huma.Error500InternalServerError(
 			"Internal error notifying users alert is deleted.")
@@ -818,7 +826,8 @@ func (a *App) AddUsersToAlertRule(ctx context.Context, in *struct {
 		}
 	}
 	var dbRecord alertstore.Schema
-	dbRecord.AlertRecipients = a.ConvertToRecipients(in.AlertId, in.Body)
+	uniqueEmails := removeDuplicates(in.Body)
+	dbRecord.AlertRecipients = a.ConvertToRecipients(in.AlertId, uniqueEmails)
 	dbRecord.DeviceAlerts = []alertstore.DeviceAlertRule{
 		{
 			DeviceId:   ar.DeviceId,
@@ -849,7 +858,11 @@ func (a *App) AddUsersToAlertRule(ctx context.Context, in *struct {
 		AlertType:   ar.AlertType,
 		AlertValues: ar.RangeValues,
 	}
-	if err := a.Notifier.AlertCreatedNotify(alertCreated, in.Body...); err != nil {
+	users := make([]auth.UserInfo, 0, len(uniqueEmails))
+	for _, e := range uniqueEmails {
+		users = append(users, auth.UserInfo{EmailAddress: e})
+	}
+	if err := a.Notifier.Notify(alertCreated, a.Templater, users...); err != nil {
 		log.Printf("alert created notify: %v", err)
 		return nil, huma.Error500InternalServerError(
 			"Internal error notifying users of alert registration.")
@@ -910,6 +923,7 @@ func (a *App) RemoveUsersFromAlertRule(ctx context.Context, in *struct {
 			Body   alertstore.MutateAlertUsersResponse
 		}{Status: http.StatusNoContent}, nil
 	}
+	uniqueEmails := removeDuplicates(emailsToDelete)
 	ars := a.ConvertToRecipients(in.AlertId, emailsToDelete)
 	err = a.AlertStore.RemoveUsersFromAlertRule(ars)
 	if err != nil {
@@ -925,7 +939,11 @@ func (a *App) RemoveUsersFromAlertRule(ctx context.Context, in *struct {
 		AlertType:   ar.AlertType,
 		AlertValues: ar.RangeValues,
 	}
-	if err = a.Notifier.AlertDeletedNotify(message, emailsToDelete...); err != nil {
+	users := make([]auth.UserInfo, 0, len(uniqueEmails))
+	for _, e := range uniqueEmails {
+		users = append(users, auth.UserInfo{EmailAddress: e})
+	}
+	if err = a.Notifier.Notify(message, a.Templater, users...); err != nil {
 		log.Printf("alertDeletedNotify: %v", err)
 		return nil, huma.Error500InternalServerError(
 			"Internal error notifying users unregistered from alert.")
