@@ -90,6 +90,9 @@ func (g *TestingGomail) Notify(
 }
 
 func (g *TestingGomail) toFile(html string) error {
+	if html == "" {
+		return nil
+	}
 	return os.WriteFile("example-email.html", []byte(html), 0644)
 }
 
@@ -145,27 +148,45 @@ func (g *Gomail) sendEmails(message Message, templater templates.Templater,
 	}
 	defer sender.Close()
 	var tmplName templates.TemplateName
-	switch t := message.(type) {
-	case AlertNotification:
-		tmplName = templates.AlertNotificationTempl
-	case AlertCreated:
-		tmplName = templates.AlertCreatedTempl
-	case AlertUpdated:
-		tmplName = templates.AlertUpdatedTempl
-	case AlertDeleted:
-		tmplName = templates.AlertDeletedTempl
-	default:
-		return fmt.Errorf("unknown message type: %v", t)
-	}
+	var tmplContent any
 	var emailParts []string
 	var html string
-	ec := EmailContent{Message: message}
 	var m *gomail.Message
 	for _, u := range users {
 		emailParts = strings.Split(u.EmailAddress, "@")
 		u.Username = emailParts[0]
-		ec.UserInfo = u
-		html, err = templater.Render(tmplName, ec)
+		switch t := message.(type) {
+		case AlertNotification:
+			tmplName = templates.AlertNotificationTempl
+			tmplContent = struct {
+				Message  AlertNotification
+				UserInfo auth.UserInfo
+			}{Message: t, UserInfo: u}
+		case AlertCreated:
+			tmplName = templates.AlertCreatedTempl
+			tmplContent = struct {
+				Message  AlertCreated
+				UserInfo auth.UserInfo
+			}{Message: t, UserInfo: u}
+		case AlertUpdated:
+			tmplName = templates.AlertUpdatedTempl
+			tmplContent = struct {
+				Message  AlertUpdated
+				UserInfo auth.UserInfo
+			}{Message: t, UserInfo: u}
+		case AlertDeleted:
+			tmplName = templates.AlertDeletedTempl
+			tmplContent = struct {
+				Message  AlertDeleted
+				UserInfo auth.UserInfo
+			}{Message: t, UserInfo: u}
+		default:
+			err = fmt.Errorf("unknown message type: %v", t)
+		}
+		if err != nil {
+			break
+		}
+		html, err = templater.Render(tmplName, tmplContent)
 		if err != nil {
 			err = fmt.Errorf("rendering: %s, error: %v", tmplName, err)
 			break
