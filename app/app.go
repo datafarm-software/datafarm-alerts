@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 	"reflect"
 	"slices"
 	"time"
@@ -55,6 +56,11 @@ func Start(opts Opts) error {
 	app.AlertSource, err = alertsource.NewTestingInflux("config.yml")
 	if err != nil {
 		return fmt.Errorf("init alertsource: %v", err)
+	}
+	gohtmlOpts := templates.GohtmlOpts{Files: os.DirFS("templates")}
+	app.Templater, err = templates.NewGohtml(gohtmlOpts)
+	if err != nil {
+		return fmt.Errorf("init templater: %v", err)
 	}
 	cli := humacli.New(func(hooks humacli.Hooks, options *Opts) {
 		router := http.NewServeMux()
