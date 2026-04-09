@@ -16,6 +16,7 @@ import (
 	"github.com/geraud22/sensordata-alerts/alertsource"
 	"github.com/geraud22/sensordata-alerts/alertstore"
 	"github.com/geraud22/sensordata-alerts/notifier"
+	"github.com/geraud22/sensordata-alerts/templates"
 )
 
 type HttpOpts struct {
@@ -33,6 +34,7 @@ type App struct {
 	AlertSource alertsource.AlertSource
 	AlertStore  alertstore.AlertStore
 	Notifier    notifier.Notifier
+	Templater   templates.Templater
 }
 
 func Start(opts Opts) error {
@@ -477,6 +479,12 @@ func (a *App) RespondToAlert(
 		Timestamp:        alert.Time,
 		AlertRangeValues: alertRule.RangeValues,
 		AlertType:        alertRule.AlertType,
+	}
+	notificationTemplate, err := a.Templater.Execute("alert-notification", message)
+	if err != nil {
+		log.Printf("creating notification template: %v", err)
+		return nil, huma.Error500InternalServerError(
+			"Internale error creating notification template.")
 	}
 	if err = a.Notifier.AlertNotify(message, emails...); err != nil {
 		log.Printf("notifying users: %v", err)
