@@ -41,7 +41,7 @@ type App struct {
 func Start(opts Opts) error {
 	var err error
 	app := &App{}
-	app.Notifier, err = notifier.NewMockNotifier()
+	app.Notifier, err = notifier.NewTestingGoMail()
 	if err != nil {
 		return fmt.Errorf("init notifier: %v", err)
 	}
@@ -551,7 +551,8 @@ func (a *App) CreateAlertRule(
 		log.Printf("registering alert: %v", err)
 		return nil, huma.Error500InternalServerError("Internal error while registering the alert.")
 	}
-	recipients := a.ConvertToRecipients(alertId, in.Body.EmailAddresses)
+	uniqueEmails := removeDuplicates(in.Body.EmailAddresses)
+	recipients := a.ConvertToRecipients(alertId, uniqueEmails)
 	dbRecord := alertstore.Schema{
 		DeviceAlerts: []alertstore.DeviceAlertRule{
 			{
@@ -585,7 +586,11 @@ func (a *App) CreateAlertRule(
 		AlertType:   in.Body.AlertType,
 		AlertValues: in.Body.RangeValues,
 	}
-	if err := a.Notifier.AlertCreatedNotify(alertCreated, in.Body.EmailAddresses...); err != nil {
+	users := make([]auth.UserInfo, 0, len(uniqueEmails))
+	for _, e := range uniqueEmails {
+		users = append(users, auth.UserInfo{EmailAddress: e})
+	}
+	if err := a.Notifier.Notify(alertCreated, a.Templater, users...); err != nil {
 		log.Printf("alert created notify: %v", err)
 		return nil, huma.Error500InternalServerError(
 			"Internal error notifying users of alert creation.")

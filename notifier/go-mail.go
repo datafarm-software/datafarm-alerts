@@ -3,6 +3,7 @@ package notifier
 import (
 	"fmt"
 	"io"
+	"log"
 	"strings"
 
 	"github.com/geraud22/sensordata-alerts/auth"
@@ -41,15 +42,19 @@ Loop:
 		case AlertNotification:
 			g.inboxes.Notifications[u.EmailAddress] = append(
 				g.inboxes.Notifications[u.EmailAddress], t)
+			log.Printf("received notification:\n %v", t)
 		case AlertCreated:
 			g.inboxes.CreatedAlerts[u.EmailAddress] = append(
 				g.inboxes.CreatedAlerts[u.EmailAddress], t)
+			log.Printf("created alert: %v\n", t)
 		case AlertUpdated:
-			g.inboxes.CreatedAlerts[u.EmailAddress] = append(g.inboxes.CreatedAlerts[u.EmailAddress],
-				AlertCreated(t))
+			g.inboxes.CreatedAlerts[u.EmailAddress] = append(
+				g.inboxes.CreatedAlerts[u.EmailAddress], AlertCreated(t))
+			log.Printf("updated alert: %v\n", t)
 		case AlertDeleted:
-			g.inboxes.DeletedAlerts[u.EmailAddress] = append(g.inboxes.DeletedAlerts[u.EmailAddress],
-				t)
+			g.inboxes.DeletedAlerts[u.EmailAddress] = append(
+				g.inboxes.DeletedAlerts[u.EmailAddress], t)
+			log.Printf("deleted alert: %v\n", t)
 		default:
 			err = fmt.Errorf("message is unknown type: %T", t)
 			break Loop
