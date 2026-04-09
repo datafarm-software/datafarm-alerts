@@ -15,6 +15,7 @@ import (
 	"github.com/danielgtaylor/huma/v2/humacli"
 	"github.com/geraud22/sensordata-alerts/alertsource"
 	"github.com/geraud22/sensordata-alerts/alertstore"
+	"github.com/geraud22/sensordata-alerts/auth"
 	"github.com/geraud22/sensordata-alerts/notifier"
 	"github.com/geraud22/sensordata-alerts/templates"
 )
@@ -480,7 +481,11 @@ func (a *App) RespondToAlert(
 		AlertRangeValues: alertRule.RangeValues,
 		AlertType:        alertRule.AlertType,
 	}
-	if err = a.Notifier.Notify(message, a.Templater, emails...); err != nil {
+	users := make([]auth.UserInfo, 0, len(emails))
+	for _, e := range emails {
+		users = append(users, auth.UserInfo{EmailAddress: e})
+	}
+	if err = a.Notifier.Notify(message, a.Templater, users...); err != nil {
 		log.Printf("notifying users: %v", err)
 		return nil, huma.Error500InternalServerError("Internal error notifying users.")
 	}

@@ -28,26 +28,27 @@ func (g *TestingGomail) Close() error {
 	return nil
 }
 
-func (g *TestingGomail) Notify(message Message, emails ...string) error {
+func (g *TestingGomail) Notify(
+	message Message, _ templates.Templater, users ...auth.UserInfo) error {
 	var err error
 Loop:
-	for _, email := range emails {
-		err = g.sendEmail(message, email)
+	for _, u := range users {
+		err = g.sendEmail(message, u.EmailAddress)
 		if err != nil {
 			break
 		}
 		switch t := message.(type) {
 		case AlertNotification:
-			g.inboxes.Notifications[email] = append(
-				g.inboxes.Notifications[email], t)
+			g.inboxes.Notifications[u.EmailAddress] = append(
+				g.inboxes.Notifications[u.EmailAddress], t)
 		case AlertCreated:
-			g.inboxes.CreatedAlerts[email] = append(
-				g.inboxes.CreatedAlerts[email], t)
+			g.inboxes.CreatedAlerts[u.EmailAddress] = append(
+				g.inboxes.CreatedAlerts[u.EmailAddress], t)
 		case AlertUpdated:
-			g.inboxes.CreatedAlerts[email] = append(g.inboxes.CreatedAlerts[email],
+			g.inboxes.CreatedAlerts[u.EmailAddress] = append(g.inboxes.CreatedAlerts[u.EmailAddress],
 				AlertCreated(t))
 		case AlertDeleted:
-			g.inboxes.DeletedAlerts[email] = append(g.inboxes.DeletedAlerts[email],
+			g.inboxes.DeletedAlerts[u.EmailAddress] = append(g.inboxes.DeletedAlerts[u.EmailAddress],
 				t)
 		default:
 			err = fmt.Errorf("message is unknown type: %T", t)
@@ -160,7 +161,7 @@ func (g *Gomail) Notify(message Message, templater templates.Templater,
 	if len(users) < 1 {
 		return fmt.Errorf("no users to notify")
 	}
-	return g.sendEmails(message, emails...)
+	return g.sendEmails(message, templater, users...)
 }
 
 func (g *Gomail) GetUserInboxes() Schema {
