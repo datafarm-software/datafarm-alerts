@@ -26,68 +26,33 @@ func (g *TestingGomail) Close() error {
 	return nil
 }
 
-func (g *TestingGomail) AlertNotify(message AlertNotification, emails ...string) error {
+func (g *TestingGomail) Notify(message Message, emails ...string) error {
 	var err error
+Loop:
 	for _, email := range emails {
 		err = g.sendEmail(message, email)
 		if err != nil {
 			break
 		}
-		g.inboxes.Notifications[email] = append(g.inboxes.Notifications[email],
-			message)
-	}
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-func (g *TestingGomail) AlertCreatedNotify(message AlertCreated, emails ...string) error {
-	var err error
-	for _, email := range emails {
-		err = g.sendEmail(message, email)
-		if err != nil {
-			break
+		switch t := message.(type) {
+		case AlertNotification:
+			g.inboxes.Notifications[email] = append(
+				g.inboxes.Notifications[email], t)
+		case AlertCreated:
+			g.inboxes.CreatedAlerts[email] = append(
+				g.inboxes.CreatedAlerts[email], t)
+		case AlertUpdated:
+			g.inboxes.CreatedAlerts[email] = append(g.inboxes.CreatedAlerts[email],
+				AlertCreated(t))
+		case AlertDeleted:
+			g.inboxes.DeletedAlerts[email] = append(g.inboxes.DeletedAlerts[email],
+				t)
+		default:
+			err = fmt.Errorf("message is unknown type: %T", t)
+			break Loop
 		}
-		g.inboxes.CreatedAlerts[email] = append(g.inboxes.CreatedAlerts[email],
-			message)
 	}
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-func (g *TestingGomail) AlertUpdatedNotify(message AlertUpdated, emails ...string) error {
-	var err error
-	for _, email := range emails {
-		err = g.sendEmail(message, email)
-		if err != nil {
-			break
-		}
-		g.inboxes.CreatedAlerts[email] = append(g.inboxes.CreatedAlerts[email],
-			AlertCreated(message))
-	}
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-func (g *TestingGomail) AlertDeletedNotify(message AlertDeleted, emails ...string) error {
-	var err error
-	for _, email := range emails {
-		err = g.sendEmail(message, email)
-		if err != nil {
-			break
-		}
-		g.inboxes.DeletedAlerts[email] = append(g.inboxes.DeletedAlerts[email],
-			message)
-	}
-	if err != nil {
-		return err
-	}
-	return nil
+	return err
 }
 
 func (g *TestingGomail) sendEmail(message Message, email string) error {
@@ -140,9 +105,9 @@ func (g *Gomail) Close() error {
 	return nil
 }
 
-func (g *Gomail) sendEmails(message Message, emails ...string) error {
+func (g *Gomail) sendEmails(html string, emails ...string) error {
 	var emailParts []string
-	var username, messageStr string
+	var username string
 	sender, err := g.dialer.Dial()
 	if err != nil {
 		return err
@@ -156,11 +121,7 @@ func (g *Gomail) sendEmails(message Message, emails ...string) error {
 		m.SetHeader("From", g.username)
 		m.SetHeader("To", email)
 		m.SetHeader("Subject", "DataFarm Alert Notification")
-		messageStr, err = message.String(username)
-		if err != nil {
-			break
-		}
-		m.SetBody("text/html", messageStr)
+		m.SetBody("text/html", html)
 		if err = sender.Send(g.username, []string{email}, m); err != nil {
 			break
 		}
@@ -168,19 +129,7 @@ func (g *Gomail) sendEmails(message Message, emails ...string) error {
 	return err
 }
 
-func (g *Gomail) AlertNotify(message AlertNotification, emails ...string) error {
-	return g.sendEmails(message, emails...)
-}
-
-func (g *Gomail) AlertCreatedNotify(message AlertCreated, emails ...string) error {
-	return g.sendEmails(message, emails...)
-}
-
-func (g *Gomail) AlertUpdatedNotify(message AlertUpdated, emails ...string) error {
-	return g.sendEmails(message, emails...)
-}
-
-func (g *Gomail) AlertDeletedNotify(message AlertDeleted, emails ...string) error {
+func (g *Gomail) Notify(message Message, html string, emails ...string) error {
 	return g.sendEmails(message, emails...)
 }
 

@@ -127,8 +127,5 @@ type TestingNotifier interface {
 type Notifier interface {
 	TestingNotifier
 	Close() error
-	AlertNotify(message AlertNotification, emails ...string) error
-	AlertCreatedNotify(message AlertCreated, emails ...string) error
-	AlertDeletedNotify(message AlertDeleted, emails ...string) error
-	AlertUpdatedNotify(message AlertUpdated, emails ...string) error
+	Notify(message Message, html string, emails ...string) error
 }

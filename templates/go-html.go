@@ -16,11 +16,20 @@ type Gohtml struct {
 }
 
 func NewGohtml(opts GohtmlOpts) (Templater, error) {
+	if opts.Files == nil {
+		return nil, fmt.Errorf("nil files")
+	}
 	htmlPaths, err := findHtmlPaths(opts.Files)
 	if err != nil {
 		return nil, fmt.Errorf("finding htmlPaths: %v", err)
 	}
+	if len(htmlPaths) < 1 {
+		return nil, fmt.Errorf("found no html files")
+	}
 	tmpl, err := parseTemplates(opts.Files, htmlPaths)
+	if err != nil {
+		return nil, fmt.Errorf("parseTemplates: %v", err)
+	}
 	return &Gohtml{tmpl}, nil
 }
 
