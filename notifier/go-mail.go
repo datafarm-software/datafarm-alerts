@@ -138,6 +138,10 @@ func generateEmails(
 		switch t := message.(type) {
 		case AlertNotification:
 			tmplName = templates.AlertNotificationTempl
+			t.Condition, err = formatAlertCondition(t.AlertType, t.AlertValues)
+			if err != nil {
+				break
+			}
 			tmplContent = struct {
 				Message  AlertNotification
 				UserInfo auth.UserInfo

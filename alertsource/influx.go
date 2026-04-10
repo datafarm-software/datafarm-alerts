@@ -94,7 +94,7 @@ func (i *InfluxAlert) AlertLevel() alertstore.AlertLevel {
 }
 
 func (i *InfluxAlert) AlertState() alertstore.AlertState {
-	t := time.Unix(0, int64(i.SourceTimestamp))
+	t := time.Unix(int64(i.SourceTimestamp), 0)
 	return alertstore.AlertState{
 		Time:  t,
 		Name:  i.Name,
