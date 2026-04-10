@@ -20,6 +20,14 @@ const (
 	InactiveSensor
 )
 
+var AlertTypeString = []string{
+	"Less Than", "Greater Than", "Range", "Inactive Sensor",
+}
+
+func AlertTypeToString(a AlertType) string {
+	return AlertTypeString[a]
+}
+
 type AlertLevel int
 
 var AlertLevelString = []string{
@@ -27,6 +35,10 @@ var AlertLevelString = []string{
 	"WARN",
 	"CRIT",
 	"INVALID",
+}
+
+func AlertLevelToString(a AlertLevel) string {
+	return AlertLevelString[a]
 }
 
 const (

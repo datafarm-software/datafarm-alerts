@@ -35,6 +35,7 @@ type AlertNotification struct {
 	AlertRangeValues []float32
 	AlertType        alertstore.AlertType
 	Level            alertstore.AlertLevel
+	Condition        string
 	Timestamp        time.Time
 }
 
@@ -57,6 +58,7 @@ type AlertCreated struct {
 	AlertLevel  alertstore.AlertLevel
 	AlertType   alertstore.AlertType
 	AlertValues []float32
+	Condition   string
 }
 
 func (a AlertCreated) String(username string) (string, error) {
@@ -83,7 +85,7 @@ func formatAlertCondition(alertType alertstore.AlertType, alertValues []float32)
 			return "", fmt.Errorf("received len(%d) alertValues slice on GreaterThan type",
 				len(alertValues))
 		}
-		condition = fmt.Sprintf("< %.2f", alertValues[0])
+		condition = fmt.Sprintf("%.2f <", alertValues[0])
 	case alertstore.Range:
 		if len(alertValues) != 2 {
 			return "", fmt.Errorf("received len(%d) alertValues slice on Range type",

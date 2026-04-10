@@ -16,7 +16,7 @@ type TestingGomail struct {
 	inboxes Schema
 }
 
-func NewTestingGoMail() (Notifier, error) {
+func NewTestingGomail() (Notifier, error) {
 	return &TestingGomail{
 		inboxes: Schema{
 			Notifications: make(map[string][]AlertNotification),
@@ -130,18 +130,30 @@ func generateEmails(
 			}{Message: t, UserInfo: u}
 		case AlertCreated:
 			tmplName = templates.AlertCreatedTempl
+			t.Condition, err = formatAlertCondition(t.AlertType, t.AlertValues)
+			if err != nil {
+				break
+			}
 			tmplContent = struct {
 				Message  AlertCreated
 				UserInfo auth.UserInfo
 			}{Message: t, UserInfo: u}
 		case AlertUpdated:
 			tmplName = templates.AlertUpdatedTempl
+			t.Condition, err = formatAlertCondition(t.AlertType, t.AlertValues)
+			if err != nil {
+				break
+			}
 			tmplContent = struct {
 				Message  AlertUpdated
 				UserInfo auth.UserInfo
 			}{Message: t, UserInfo: u}
 		case AlertDeleted:
 			tmplName = templates.AlertDeletedTempl
+			t.Condition, err = formatAlertCondition(t.AlertType, t.AlertValues)
+			if err != nil {
+				break
+			}
 			tmplContent = struct {
 				Message  AlertDeleted
 				UserInfo auth.UserInfo

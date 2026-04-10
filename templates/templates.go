@@ -5,6 +5,8 @@ import (
 	"html/template"
 	"io/fs"
 	"path/filepath"
+
+	"github.com/geraud22/sensordata-alerts/alertstore"
 )
 
 type TemplateName string
@@ -38,5 +40,9 @@ func findHtmlPaths(files fs.FS) ([]string, error) {
 }
 
 func parseTemplates(files fs.FS, htmlPaths []string) (*template.Template, error) {
-	return template.New("base").ParseFS(files, htmlPaths...)
+	funcMap := map[string]any{
+		"alertTypeToString":  alertstore.AlertTypeToString,
+		"alertLevelToString": alertstore.AlertLevelToString,
+	}
+	return template.New("base").Funcs(funcMap).ParseFS(files, htmlPaths...)
 }
