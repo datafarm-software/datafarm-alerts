@@ -60,36 +60,9 @@
                                             which you can now expect to receive email notifications
                                             for.<br />Alert details:<br />
                                         </p>
-                                        <ul style="
-                          margin: 0 0 12px 0;
-                          font-size: 16px;
-                          line-height: 24px;
-                          font-family: Arial, sans-serif;
-                        ">
-                                            <li>Name: {{.Message.Name}}</li>
-                                            <li>DeviceId: {{.Message.DeviceId}}</li>
-                                            <li>QueryField: {{.Message.QueryField}}</li>
-                                            <li>Duration: {{.Message.Duration}}</li>
-                                            <li>
-                                                AlertLevel: {{alertLevelToString .Message.AlertLevel}}
-                                            </li>
-                                            <li>
-                                                AlertType: {{alertTypeToString .Message.AlertType}}
-                                            </li>
-                                            <li>Condition: {{.Message.Condition}}</li>
-                                        </ul>
+                                        {{template "alert-details" .Message}}
                                         <br />
-                                        <p style="
-                          margin: 0 0 12px 0;
-                          font-size: 16px;
-                          line-height: 24px;
-                          font-family: Arial, sans-serif;
-                        ">
-                                            If you would like to stop receiving notifications for
-                                            this alert, you can unsubscribe by deleting the alert
-                                            associated with the threshold, on the
-                                            <a href="https://datafarm.co.za">DataFarm Viewing Platform</a>.
-                                        </p>
+                                        {{template "delete-alert-link"}}
                                         <br />
                                         <p style="
                           margin: 0 0 12px 0;

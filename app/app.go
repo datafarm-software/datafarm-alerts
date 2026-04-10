@@ -44,7 +44,7 @@ type App struct {
 func Start(opts Opts) error {
 	var err error
 	app := &App{}
-	app.Notifier, err = notifier.NewGomail(opts.Gomail)
+	app.Notifier, err = notifier.NewTestingGomail()
 	if err != nil {
 		return fmt.Errorf("init notifier: %v", err)
 	}
@@ -55,7 +55,7 @@ func Start(opts Opts) error {
 	if err = app.AlertStore.PrepareDb(alertstore.Schema{}); err != nil {
 		return fmt.Errorf("prepare alertstore: %v", err)
 	}
-	app.AlertSource, err = alertsource.NewTestingInflux("config.yml")
+	app.AlertSource, err = alertsource.NewInflux(opts.Influx)
 	if err != nil {
 		return fmt.Errorf("init alertsource: %v", err)
 	}
