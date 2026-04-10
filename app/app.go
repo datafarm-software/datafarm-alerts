@@ -12,7 +12,9 @@ import (
 	"time"
 
 	"github.com/danielgtaylor/huma/v2"
-	"github.com/danielgtaylor/huma/v2/adapters/humago"
+	"github.com/gorilla/mux"
+
+	"github.com/danielgtaylor/huma/v2/adapters/humamux"
 	"github.com/danielgtaylor/huma/v2/humacli"
 	"github.com/geraud22/sensordata-alerts/alertsource"
 	"github.com/geraud22/sensordata-alerts/alertstore"
@@ -63,9 +65,9 @@ func Start(opts Opts) error {
 		return fmt.Errorf("init templater: %v", err)
 	}
 	cli := humacli.New(func(hooks humacli.Hooks, options *Opts) {
-		router := http.NewServeMux()
+		router := mux.NewRouter()
 		config := huma.DefaultConfig("SensorData Alerts API", "1.0.0")
-		api := humago.New(router, config)
+		api := humamux.New(router, config)
 		app.RegisterHumaOperations(api)
 		server := &http.Server{
 			Addr:    fmt.Sprintf("%s:%d", opts.Http.Address, opts.Http.Port),
