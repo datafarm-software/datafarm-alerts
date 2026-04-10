@@ -9,6 +9,8 @@ import (
 
 	"github.com/geraud22/sensordata-alerts/auth"
 	"github.com/geraud22/sensordata-alerts/templates"
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
 	"gopkg.in/gomail.v2"
 )
 
@@ -66,7 +68,7 @@ func (g *TestingGomail) toFile(html string) error {
 	return os.WriteFile("example-email.html", []byte(html), 0644)
 }
 
-const logoCID = "datafarm-logo.png"
+const logoCID = "email-logo.png"
 
 func newMessage(from, to, subject, html string) *gomail.Message {
 	m := gomail.NewMessage()
@@ -74,7 +76,7 @@ func newMessage(from, to, subject, html string) *gomail.Message {
 	m.SetHeader("To", to)
 	m.SetHeader("Subject", subject)
 	m.SetBody("text/html", html)
-	m.Embed("templates/assets/datafarm-logo.png",
+	m.Embed("templates/assets/email-logo.png",
 		gomail.SetHeader(map[string][]string{
 			"Content-ID": {"<" + logoCID + ">"},
 		}),
@@ -120,7 +122,7 @@ func generateEmails(
 	var html string
 	for _, u := range users {
 		emailParts = strings.Split(u.EmailAddress, "@")
-		u.Username = emailParts[0]
+		u.Username = cases.Title(language.English).String(emailParts[0])
 		switch t := message.(type) {
 		case AlertNotification:
 			tmplName = templates.AlertNotificationTempl
