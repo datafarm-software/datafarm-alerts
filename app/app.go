@@ -484,7 +484,7 @@ func (a *App) RespondToAlert(
 		Value:            alert.Value,
 		DeviceId:         alertRule.DeviceId,
 		QueryField:       alertRule.QueryField,
-		Level:            alert.Level,
+		AlertLevel:       alert.Level,
 		Timestamp:        alert.Time,
 		AlertRangeValues: alertRule.RangeValues,
 		AlertType:        alertRule.AlertType,

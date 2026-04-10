@@ -7,6 +7,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/geraud22/sensordata-alerts/alertstore"
 	"github.com/geraud22/sensordata-alerts/auth"
 	"github.com/geraud22/sensordata-alerts/templates"
 	"golang.org/x/text/cases"
@@ -44,11 +45,22 @@ func (g *TestingGomail) Notify(
 		return fmt.Errorf("generating emails: %v", err)
 	}
 	var m *gomail.Message
+	var v AlertNotification
+	var ok bool
 	for email, html := range emails {
 		m = newMessage("tester@alerts.com", email, "Test Alert Notification", html)
 		if err = mockSender.Send("tester@alerts.com", []string{email}, m); err != nil {
 			err = fmt.Errorf("mockSender send: %v", err)
 			break
+		}
+		if v, ok = message.(AlertNotification); ok {
+			switch v.AlertLevel {
+			case alertstore.Crit:
+				m.SetHeader("X-Priority", "1")
+				m.SetHeader("Priority", "urgent")
+				m.SetHeader("Importance", "high")
+			default:
+			}
 		}
 		if err = g.toFile(html); err != nil {
 			err = fmt.Errorf("toHtml: %v", err)
@@ -194,11 +206,22 @@ func (g *Gomail) Notify(message Message, templater templates.Templater,
 		return fmt.Errorf("generating emails: %v", err)
 	}
 	var m *gomail.Message
+	var v AlertNotification
+	var ok bool
 	for email, html := range emails {
 		m = newMessage(g.username, email, "DataFarm Alert Notification", html)
 		if err = sender.Send(g.username, []string{email}, m); err != nil {
 			err = fmt.Errorf("mockSender send: %v", err)
 			break
+		}
+		if v, ok = message.(AlertNotification); ok {
+			switch v.AlertLevel {
+			case alertstore.Crit:
+				m.SetHeader("X-Priority", "1")
+				m.SetHeader("Priority", "urgent")
+				m.SetHeader("Importance", "high")
+			default:
+			}
 		}
 	}
 	if err != nil {
