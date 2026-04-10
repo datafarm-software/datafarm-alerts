@@ -3,6 +3,7 @@ package notifier
 import (
 	"fmt"
 	"io"
+	"log"
 	"os"
 	"strings"
 
@@ -31,6 +32,7 @@ func (g *TestingGomail) Close() error {
 
 func (g *TestingGomail) Notify(
 	message Message, tmpl templates.Templater, users ...auth.UserInfo) error {
+	log.Printf("notifying message %T: %v", message, message)
 	mockSender := gomail.SendFunc(
 		func(from string, to []string, msg io.WriterTo) error {
 			return nil
@@ -42,13 +44,17 @@ func (g *TestingGomail) Notify(
 	var m *gomail.Message
 	for email, html := range emails {
 		m = newMessage("tester@alerts.com", email, "Test Alert Notification", html)
-		if err := mockSender.Send("tester@alerts.com", []string{email}, m); err != nil {
+		if err = mockSender.Send("tester@alerts.com", []string{email}, m); err != nil {
 			err = fmt.Errorf("mockSender send: %v", err)
+			break
+		}
+		if err = g.toFile(html); err != nil {
+			err = fmt.Errorf("toHtml: %v", err)
 			break
 		}
 	}
 	if err != nil {
-		return fmt.Errorf("testing loop: %v", err)
+		return err
 	}
 	return nil
 }
@@ -175,7 +181,7 @@ func (g *Gomail) Notify(message Message, templater templates.Templater,
 	}
 	var m *gomail.Message
 	for email, html := range emails {
-		m = newMessage("tester@alerts.com", email, "Test Alert Notification", html)
+		m = newMessage(g.username, email, "DataFarm Alert Notification", html)
 		if err = sender.Send(g.username, []string{email}, m); err != nil {
 			err = fmt.Errorf("mockSender send: %v", err)
 			break
