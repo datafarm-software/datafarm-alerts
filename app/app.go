@@ -123,7 +123,7 @@ func (a *App) RegisterHumaOperations(api huma.API) {
 		Path:    "/alert/notify",
 		Tags:    []string{"Post Alerts"},
 		Summary: "Post an alert.",
-		Hidden:  true,
+		Hidden:  false,
 	}
 	huma.Register(api, operation, a.RespondToAlert)
 	operation = huma.Operation{
@@ -480,14 +480,15 @@ func (a *App) RespondToAlert(
 		return nil, huma.Error500InternalServerError("Internal error getting alert recipients.")
 	}
 	message := notifier.AlertNotification{
-		Name:             alert.Name,
-		Value:            alert.Value,
-		DeviceId:         alertRule.DeviceId,
-		QueryField:       alertRule.QueryField,
-		AlertLevel:       alert.Level,
-		Timestamp:        alert.Time,
-		AlertRangeValues: alertRule.RangeValues,
-		AlertType:        alertRule.AlertType,
+		Name:        alert.Name,
+		Value:       alert.Value,
+		DeviceId:    alertRule.DeviceId,
+		QueryField:  alertRule.QueryField,
+		AlertLevel:  alert.Level,
+		Timestamp:   alert.Time,
+		AlertValues: alertRule.RangeValues,
+		Duration:    alertRule.Duration,
+		AlertType:   alertRule.AlertType,
 	}
 	users := make([]auth.UserInfo, 0, len(emails))
 	for _, e := range emails {

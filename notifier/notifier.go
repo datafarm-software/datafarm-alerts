@@ -28,25 +28,26 @@ type Message interface {
 }
 
 type AlertNotification struct {
-	Name             string
-	DeviceId         string
-	QueryField       string
-	Value            float64
-	AlertRangeValues []float32
-	AlertType        alertstore.AlertType
-	Level            alertstore.AlertLevel
-	Condition        string
-	Timestamp        time.Time
+	Name        string
+	DeviceId    string
+	QueryField  string
+	Value       float64
+	Duration    string
+	AlertValues []float32
+	AlertType   alertstore.AlertType
+	AlertLevel  alertstore.AlertLevel
+	Condition   string
+	Timestamp   time.Time
 }
 
 func (a AlertNotification) String(username string) (string, error) {
-	condition, err := formatAlertCondition(a.AlertType, a.AlertRangeValues)
+	condition, err := formatAlertCondition(a.AlertType, a.AlertValues)
 	if err != nil {
 		return "", err
 	}
 	return fmt.Sprintf(
 		Notification,
-		username, alertstore.AlertLevelString[a.Level], a.Value,
+		username, alertstore.AlertLevelString[a.AlertLevel], a.Value,
 		a.Name, a.DeviceId, a.QueryField, a.Timestamp.String(), condition), nil
 }
 
