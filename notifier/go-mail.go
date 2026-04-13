@@ -47,12 +47,8 @@ func (g *TestingGomail) Notify(
 	var m *gomail.Message
 	var v AlertNotification
 	var ok bool
-	for email, html := range emails {
-		m = newMessage("tester@alerts.com", email, "Test Alert Notification", html)
-		if err = mockSender.Send("tester@alerts.com", []string{email}, m); err != nil {
-			err = fmt.Errorf("mockSender send: %v", err)
-			break
-		}
+	for recipient, email := range emails {
+		m = newMessage("tester@alerts.com", recipient, email)
 		if v, ok = message.(AlertNotification); ok {
 			switch v.AlertLevel {
 			case alertstore.Crit:
@@ -62,7 +58,11 @@ func (g *TestingGomail) Notify(
 			default:
 			}
 		}
-		if err = g.toFile(html); err != nil {
+		if err = mockSender.Send("tester@alerts.com", []string{recipient}, m); err != nil {
+			err = fmt.Errorf("mockSender send: %v", err)
+			break
+		}
+		if err = g.toFile(email.html); err != nil {
 			err = fmt.Errorf("toHtml: %v", err)
 			break
 		}
@@ -82,12 +82,12 @@ func (g *TestingGomail) toFile(html string) error {
 
 const logoCID = "email-logo.png"
 
-func newMessage(from, to, subject, html string) *gomail.Message {
+func newMessage(from, to string, email Email) *gomail.Message {
 	m := gomail.NewMessage()
 	m.SetHeader("From", from)
 	m.SetHeader("To", to)
-	m.SetHeader("Subject", subject)
-	m.SetBody("text/html", html)
+	m.SetHeader("Subject", email.subject)
+	m.SetBody("text/html", email.html)
 	m.Embed("templates/assets/email-logo.png",
 		gomail.SetHeader(map[string][]string{
 			"Content-ID": {"<" + logoCID + ">"},
@@ -124,19 +124,25 @@ func (g *Gomail) Close() error {
 	return nil
 }
 
+type Email struct {
+	subject string
+	html    string
+}
+
 func generateEmails(
 	message Message, templater templates.Templater, users ...auth.UserInfo) (
-	emails map[string]string, err error) {
-	emails = make(map[string]string, len(users))
+	emails map[string]Email, err error) {
+	emails = make(map[string]Email, len(users))
 	var tmplName templates.TemplateName
 	var tmplContent any
 	var emailParts []string
-	var html string
+	var email Email
 	for _, u := range users {
 		emailParts = strings.Split(u.EmailAddress, "@")
 		u.Username = cases.Title(language.English).String(emailParts[0])
 		switch t := message.(type) {
 		case AlertNotification:
+			email.subject = t.Name
 			tmplName = templates.AlertNotificationTempl
 			t.Condition, err = formatAlertCondition(t.AlertType, t.AlertValues)
 			if err != nil {
@@ -147,6 +153,7 @@ func generateEmails(
 				UserInfo auth.UserInfo
 			}{Message: t, UserInfo: u}
 		case AlertCreated:
+			email.subject = t.Name
 			tmplName = templates.AlertCreatedTempl
 			t.Condition, err = formatAlertCondition(t.AlertType, t.AlertValues)
 			if err != nil {
@@ -157,6 +164,7 @@ func generateEmails(
 				UserInfo auth.UserInfo
 			}{Message: t, UserInfo: u}
 		case AlertUpdated:
+			email.subject = t.Name
 			tmplName = templates.AlertUpdatedTempl
 			t.Condition, err = formatAlertCondition(t.AlertType, t.AlertValues)
 			if err != nil {
@@ -167,6 +175,7 @@ func generateEmails(
 				UserInfo auth.UserInfo
 			}{Message: t, UserInfo: u}
 		case AlertDeleted:
+			email.subject = t.Name
 			tmplName = templates.AlertDeletedTempl
 			t.Condition, err = formatAlertCondition(t.AlertType, t.AlertValues)
 			if err != nil {
@@ -182,12 +191,12 @@ func generateEmails(
 		if err != nil {
 			break
 		}
-		html, err = templater.Render(tmplName, tmplContent)
+		email.html, err = templater.Render(tmplName, tmplContent)
 		if err != nil {
 			err = fmt.Errorf("rendering: %s, error: %v", tmplName, err)
 			break
 		}
-		emails[u.EmailAddress] = html
+		emails[u.EmailAddress] = email
 	}
 	return emails, err
 }
@@ -212,20 +221,19 @@ func (g *Gomail) Notify(message Message, templater templates.Templater,
 	var m *gomail.Message
 	var v AlertNotification
 	var ok bool
-	for email, html := range emails {
-		m = newMessage(g.username, email, "DataFarm Alert Notification", html)
-		if err = sender.Send(g.username, []string{email}, m); err != nil {
-			err = fmt.Errorf("mockSender send: %v", err)
-			break
-		}
+	for recipient, email := range emails {
+		m = newMessage(g.username, recipient, email)
 		if v, ok = message.(AlertNotification); ok {
 			switch v.AlertLevel {
 			case alertstore.Crit:
 				m.SetHeader("X-Priority", "1")
 				m.SetHeader("Priority", "urgent")
 				m.SetHeader("Importance", "high")
-			default:
 			}
+		}
+		if err = sender.Send(g.username, []string{recipient}, m); err != nil {
+			err = fmt.Errorf("mockSender send: %v", err)
+			break
 		}
 	}
 	if err != nil {
