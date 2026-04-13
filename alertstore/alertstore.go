@@ -32,8 +32,8 @@ type AlertLevel int
 
 var AlertLevelString = []string{
 	"OK",
-	"WARNING",
-	"CRITICAL",
+	"WARN",
+	"CRIT",
 	"INVALID",
 }
 

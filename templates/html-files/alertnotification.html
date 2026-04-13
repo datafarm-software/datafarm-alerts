@@ -56,11 +56,10 @@
                           line-height: 24px;
                           font-family: Arial, sans-serif;
                         ">
-                                            Please be aware that a sensor has gone into Alert
-                                            State:<br />
+                                            Please be aware this sensor has gone into Alert State:
                                             {{if eq .Message.AlertLevel 1}}<span
-                                                style="color: #d9a002">WARN</span>{{else if eq .Message.AlertLevel
-                                            2}}<span style="color: #d90202">CRIT</span>{{end}}
+                                                style="color: #d9a002">WARNING</span>{{else if eq .Message.AlertLevel
+                                            2}}<span style="color: #d90202">CRITICAL</span>{{end}}
                                         </p>
                                         <p style="
                           margin: 0 0 12px 0;
@@ -68,12 +67,10 @@
                           line-height: 24px;
                           font-family: Arial, sans-serif;
                         ">
-                                            Timestamp: {{.Message.Timestamp}},<br />
-                                            Sensor Value: {{.Message.Value}}
+                                            Sensor Value: {{.Message.Value}},<br />
+                                            Alert Condition: {{.Message.Condition}} Timestamp:
+                                            {{.Message.Timestamp}},<br />
                                         </p>
-                                        <br />
-                                        {{template "alert-details" .Message}}
-                                        <br />
                                         {{template "delete-alert-link"}}
                                         <br />
                                         <p style="

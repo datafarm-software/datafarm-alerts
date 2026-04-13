@@ -44,7 +44,7 @@ type App struct {
 func Start(opts Opts) error {
 	var err error
 	app := &App{}
-	app.Notifier, err = notifier.NewGomail(opts.Gomail)
+	app.Notifier, err = notifier.NewTestingGomail()
 	if err != nil {
 		return fmt.Errorf("init notifier: %v", err)
 	}
@@ -466,6 +466,9 @@ func (a *App) RespondToAlert(
 		return nil, huma.Error500InternalServerError("Internal error parsing the duration of the alert.")
 	}
 	shouldNotify := a.ShouldNotify(alert, previousAlert)
+	log.Printf("shouldNotify: %v", shouldNotify)
+	log.Printf("alert: %v", alert)
+	log.Printf("previous: %v", previousAlert)
 	if shouldNotify || alert.Level != previousAlert.Level {
 		if err = a.AlertStore.UpdateAlertState(alert); err != nil {
 			log.Printf("updating alert state for id: %s, err: %v", alert.Id, err)

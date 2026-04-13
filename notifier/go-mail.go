@@ -3,7 +3,6 @@ package notifier
 import (
 	"fmt"
 	"io"
-	"log"
 	"os"
 	"strings"
 
@@ -14,71 +13,6 @@ import (
 	"golang.org/x/text/language"
 	"gopkg.in/gomail.v2"
 )
-
-type TestingGomail struct {
-	inboxes Schema
-}
-
-func NewTestingGomail() (Notifier, error) {
-	return &TestingGomail{
-		inboxes: Schema{
-			Notifications: make(map[string][]AlertNotification),
-			CreatedAlerts: make(map[string][]AlertCreated),
-			DeletedAlerts: make(map[string][]AlertDeleted),
-		},
-	}, nil
-}
-
-func (g *TestingGomail) Close() error {
-	return nil
-}
-
-func (g *TestingGomail) Notify(
-	message Message, tmpl templates.Templater, users ...auth.UserInfo) error {
-	log.Printf("notifying message %T: %v", message, message)
-	mockSender := gomail.SendFunc(
-		func(from string, to []string, msg io.WriterTo) error {
-			return nil
-		})
-	emails, err := generateEmails(message, tmpl, users...)
-	if err != nil {
-		return fmt.Errorf("generating emails: %v", err)
-	}
-	var m *gomail.Message
-	var v AlertNotification
-	var ok bool
-	for recipient, email := range emails {
-		m = newMessage("tester@alerts.com", recipient, email)
-		if v, ok = message.(AlertNotification); ok {
-			switch v.AlertLevel {
-			case alertstore.Crit:
-				m.SetHeader("X-Priority", "1")
-				m.SetHeader("Priority", "urgent")
-				m.SetHeader("Importance", "high")
-			default:
-			}
-		}
-		if err = mockSender.Send("tester@alerts.com", []string{recipient}, m); err != nil {
-			err = fmt.Errorf("mockSender send: %v", err)
-			break
-		}
-		if err = g.toFile(email.html); err != nil {
-			err = fmt.Errorf("toHtml: %v", err)
-			break
-		}
-	}
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-func (g *TestingGomail) toFile(html string) error {
-	if html == "" {
-		return nil
-	}
-	return os.WriteFile("example-email.html", []byte(html), 0644)
-}
 
 const logoCID = "email-logo.png"
 
@@ -96,10 +30,6 @@ func newMessage(from, to string, email Email) *gomail.Message {
 	return m
 }
 
-func (g *TestingGomail) GetUserInboxes() Schema {
-	return g.inboxes
-}
-
 type GomailOpts struct {
 	SmtpServer string `mapstructure:"smtpServer" validate:"required"`
 	SmtpPort   int    `mapstructure:"smtpPort"`
@@ -109,15 +39,26 @@ type GomailOpts struct {
 
 type Gomail struct {
 	dialer   *gomail.Dialer
+	mode     alertstore.Mode
+	inboxes  Schema
 	username string
 }
 
-func NewGomail(opts GomailOpts) (Notifier, error) {
+func NewGomail(mode alertstore.Mode, opts GomailOpts) (Notifier, error) {
 	d := gomail.NewDialer(opts.SmtpServer, opts.SmtpPort, opts.Username, opts.Password)
-	return &Gomail{
+	g := Gomail{
 		dialer:   d,
 		username: opts.Username,
-	}, nil
+		mode:     mode,
+	}
+	if mode == alertstore.Testing {
+		g.inboxes = Schema{
+			Notifications: make(map[string][]AlertNotification),
+			CreatedAlerts: make(map[string][]AlertCreated),
+			DeletedAlerts: make(map[string][]AlertDeleted),
+		}
+	}
+	return &g, nil
 }
 
 func (g *Gomail) Close() error {
@@ -129,7 +70,7 @@ type Email struct {
 	html    string
 }
 
-func generateEmails(
+func (g *Gomail) generateEmails(
 	message Message, templater templates.Templater, users ...auth.UserInfo) (
 	emails map[string]Email, err error) {
 	emails = make(map[string]Email, len(users))
@@ -153,6 +94,10 @@ func generateEmails(
 				Message  AlertNotification
 				UserInfo auth.UserInfo
 			}{Message: t, UserInfo: u}
+			if g.mode == alertstore.Testing {
+				g.inboxes.Notifications[u.EmailAddress] = append(
+					g.inboxes.Notifications[u.EmailAddress], t)
+			}
 		case AlertCreated:
 			email.subject = "DataFarm Alert Created"
 			tmplName = templates.AlertCreatedTempl
@@ -164,6 +109,10 @@ func generateEmails(
 				Message  AlertCreated
 				UserInfo auth.UserInfo
 			}{Message: t, UserInfo: u}
+			if g.mode == alertstore.Testing {
+				g.inboxes.CreatedAlerts[u.EmailAddress] = append(
+					g.inboxes.CreatedAlerts[u.EmailAddress], t)
+			}
 		case AlertUpdated:
 			email.subject = "DataFarm Alert Updated"
 			tmplName = templates.AlertUpdatedTempl
@@ -175,6 +124,10 @@ func generateEmails(
 				Message  AlertUpdated
 				UserInfo auth.UserInfo
 			}{Message: t, UserInfo: u}
+			if g.mode == alertstore.Testing {
+				g.inboxes.CreatedAlerts[u.EmailAddress] = append(
+					g.inboxes.CreatedAlerts[u.EmailAddress], AlertCreated(t))
+			}
 		case AlertDeleted:
 			email.subject = "DataFarm Alert Deleted"
 			tmplName = templates.AlertDeletedTempl
@@ -186,6 +139,10 @@ func generateEmails(
 				Message  AlertDeleted
 				UserInfo auth.UserInfo
 			}{Message: t, UserInfo: u}
+			if g.mode == alertstore.Testing {
+				g.inboxes.DeletedAlerts[u.EmailAddress] = append(
+					g.inboxes.DeletedAlerts[u.EmailAddress], t)
+			}
 		default:
 			err = fmt.Errorf("unknown message type: %v", t)
 		}
@@ -202,20 +159,33 @@ func generateEmails(
 	return emails, err
 }
 
+type mockSender struct{}
+
+func (m *mockSender) Send(from string, to []string, msg io.WriterTo) error {
+	return nil
+}
+
+func (m *mockSender) Close() error { return nil }
+
 func (g *Gomail) Notify(message Message, templater templates.Templater,
-	users ...auth.UserInfo) error {
+	users ...auth.UserInfo) (err error) {
 	if templater == nil {
 		return fmt.Errorf("received nil templater")
 	}
 	if len(users) < 1 {
 		return fmt.Errorf("no users to notify")
 	}
-	sender, err := g.dialer.Dial()
-	if err != nil {
-		return err
+	var sender gomail.SendCloser
+	if g.mode == alertstore.Testing {
+		sender = &mockSender{}
+	} else {
+		sender, err = g.dialer.Dial()
+		if err != nil {
+			return err
+		}
 	}
 	defer sender.Close()
-	emails, err := generateEmails(message, templater, users...)
+	emails, err := g.generateEmails(message, templater, users...)
 	if err != nil {
 		return fmt.Errorf("generating emails: %v", err)
 	}
@@ -236,6 +206,12 @@ func (g *Gomail) Notify(message Message, templater templates.Templater,
 			err = fmt.Errorf("mockSender send: %v", err)
 			break
 		}
+		if g.mode == alertstore.Testing {
+			if err = g.toFile(email.html); err != nil {
+				err = fmt.Errorf("toHtml: %v", err)
+				break
+			}
+		}
 	}
 	if err != nil {
 		return fmt.Errorf("messaging loop: %v", err)
@@ -243,6 +219,13 @@ func (g *Gomail) Notify(message Message, templater templates.Templater,
 	return nil
 }
 
+func (g *Gomail) toFile(html string) error {
+	if html == "" {
+		return nil
+	}
+	return os.WriteFile("example-email.html", []byte(html), 0644)
+}
+
 func (g *Gomail) GetUserInboxes() Schema {
-	return Schema{}
+	return g.inboxes
 }
