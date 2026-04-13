@@ -44,7 +44,7 @@ type App struct {
 func Start(opts Opts) error {
 	var err error
 	app := &App{}
-	app.Notifier, err = notifier.NewGomail(alertstore.Testing, opts.Gomail)
+	app.Notifier, err = notifier.NewGomail(alertstore.Production, opts.Gomail)
 	if err != nil {
 		return fmt.Errorf("init notifier: %v", err)
 	}

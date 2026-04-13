@@ -1,110 +1,140 @@
 {{define "alert-create"}}
 <!doctype html>
-<html lang="en" xmlns="http://www.w3.org/1999/xhtml" xmlns:o="urn:schemas-microsoft-com:office:office">
-{{template "head"}}
+<html
+  lang="en"
+  xmlns="http://www.w3.org/1999/xhtml"
+  xmlns:o="urn:schemas-microsoft-com:office:office"
+>
+  {{template "head"}}
 
-<body style="margin: 0; padding: 0">
-    <table role="presentation" style="
+  <body style="margin: 0; padding: 0">
+    <table
+      role="presentation"
+      style="
         width: 100%;
         border-collapse: collapse;
         border: 0;
         border-spacing: 0;
         background: #ffffff;
-      ">
-        <tr>
-            <td align="center" style="padding: 0">
-                <table role="presentation" style="
+      "
+    >
+      <tr>
+        <td align="center" style="padding: 0">
+          <table
+            role="presentation"
+            style="
               width: 602px;
               border-collapse: collapse;
               border: 1px solid #cccccc;
               border-spacing: 0;
               text-align: left;
-            ">
-                    <tr>
-                        <td align="center">
-                            <img src="cid:email-logo.png" alt="" width="400" style="height: auto; display: block" />
-                        </td>
-                    </tr>
-                    <tr>
-                        <td style="padding: 36px 30px 42px 30px">
-                            <table role="presentation" style="
+            "
+          >
+            <tr>
+              <td style="padding: 36px 30px 0px 30px">
+                <table
+                  role="presentation"
+                  style="
                     width: 100%;
                     border-collapse: collapse;
                     border: 0;
                     border-spacing: 0;
-                  ">
-                                <tr>
-                                    <td style="padding: 0 0 36px 0; color: #153643">
-                                        <h1 style="
+                  "
+                >
+                  <tr>
+                    <td style="padding: 0; color: #153643">
+                      <h1
+                        style="
                           font-size: 24px;
                           margin: 0 0 20px 0;
                           font-family: Arial, sans-serif;
-                        ">
-                                            DataFarm Alert Created
-                                        </h1>
-                                        <p style="
+                        "
+                      >
+                        DataFarm Alert Created
+                      </h1>
+                      <p
+                        style="
                           margin: 0 0 12px 0;
                           font-size: 16px;
                           line-height: 24px;
                           font-family: Arial, sans-serif;
-                        ">
-                                            Hi {{.UserInfo.Username}},
-                                        </p>
-                                        <p style="
+                        "
+                      >
+                        Hi {{.UserInfo.Username}},
+                      </p>
+                      <p
+                        style="
                           margin: 0 0 12px 0;
                           font-size: 16px;
                           line-height: 24px;
                           font-family: Arial, sans-serif;
-                        ">
-                                            This email is to confirm creation of a DataFarm Alert
-                                            which you can now expect to receive email notifications
-                                            for.
-                                        </p>
-                                        <br />
-                                        {{template "alert-details" .Message}}
-                                        <br />
-                                        {{template "delete-alert-link"}}
-                                        <br />
-                                        <p style="
+                        "
+                      >
+                        This email is to confirm creation of a DataFarm Alert
+                        which you can now expect to receive email notifications
+                        for.
+                      </p>
+                      <br />
+                      {{template "alert-details" .Message}}
+                      <br />
+                      {{template "delete-alert-link"}}
+                      <br />
+                      <p
+                        style="
                           margin: 0 0 12px 0;
                           font-size: 16px;
                           line-height: 24px;
                           font-family: Arial, sans-serif;
-                        ">
-                                            Kind regards,<br />
-                                            DataFarm
-                                        </p>
-                                    </td>
-                                </tr>
-                            </table>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td style="padding: 30px">
-                            <table role="presentation" style="
+                        "
+                      >
+                        Kind regards,<br />
+                        DataFarm
+                      </p>
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding: 0" align="center">
+                <img
+                  src="cid:email-logo.png"
+                  alt=""
+                  width="400"
+                  style="height: auto; display: block"
+                />
+              </td>
+            </tr>
+            <tr align="center">
+              <td style="padding: 10px">
+                <table
+                  role="presentation"
+                  style="
                     width: 100%;
                     border-collapse: collapse;
                     border: 0;
                     border-spacing: 0;
                     font-size: 9px;
                     font-family: Arial, sans-serif;
-                  ">
-                                <p style="
+                  "
+                >
+                  <p
+                    style="
                       margin: 0;
                       font-size: 14px;
                       line-height: 16px;
                       font-family: Arial, sans-serif;
-                    ">
-                                    &copy; DataFarm (Pty) Ltd, South Africa 2026
-                                </p>
-                            </table>
-                        </td>
-                    </tr>
+                    "
+                  >
+                    &copy; DataFarm (Pty) Ltd, South Africa 2026
+                  </p>
                 </table>
-            </td>
-        </tr>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
     </table>
-</body>
-
+  </body>
 </html>
 {{end}}
