@@ -41,10 +41,11 @@ const AnotherUserEmail = "another@email.com"
 const RegisteredAlertName = "Temperature Check"
 const NewValue = 20
 const OldValue = 10
+const GreaterThanTen = "10.00 <"
 
 var AlertReceived = time.Date(1994, 6, 24, 6, 0, 0, 0, time.UTC)
-var OnDuration = AlertReceived.Add(24 * time.Hour)
 var AfterDuration = AlertReceived.Add(25 * time.Hour)
+var OnDuration = AlertReceived.Add(24 * time.Hour)
 var WithinDuration = AlertReceived.Add(6 * time.Hour)
 
 func TestShouldNotify(t *testing.T) {
@@ -187,6 +188,8 @@ func TestRespondToAlert(t *testing.T) {
 							Timestamp:   AfterDuration,
 							AlertType:   alertstore.GreaterThan,
 							AlertValues: []float32{OldValue},
+							Duration:    "24h",
+							Condition:   GreaterThanTen,
 						},
 					},
 				},
@@ -227,7 +230,7 @@ func TestRespondToAlert(t *testing.T) {
 				Level:           "crit",
 				Name:            RegisteredAlertName,
 				Value:           NewValue,
-				SourceTimestamp: alertsource.EpochNano(AfterDuration.UnixNano()),
+				SourceTimestamp: alertsource.EpochNano(AfterDuration.Unix()),
 				DeviceId:        RegisteredDeviceId,
 				QueryField:      RegisteredQueryField,
 			},
@@ -297,7 +300,7 @@ func TestRespondToAlert(t *testing.T) {
 				Name:            RegisteredAlertName,
 				Level:           "crit",
 				Value:           NewValue,
-				SourceTimestamp: alertsource.EpochNano(WithinDuration.UnixNano()),
+				SourceTimestamp: alertsource.EpochNano(WithinDuration.Unix()),
 				DeviceId:        RegisteredDeviceId,
 				QueryField:      RegisteredQueryField,
 			},
@@ -361,7 +364,7 @@ func TestRespondToAlert(t *testing.T) {
 				Name:            RegisteredAlertName,
 				Level:           "warn",
 				Value:           NewValue,
-				SourceTimestamp: alertsource.EpochNano(WithinDuration.UnixNano()),
+				SourceTimestamp: alertsource.EpochNano(WithinDuration.Unix()),
 				DeviceId:        RegisteredDeviceId,
 				QueryField:      RegisteredQueryField,
 			},
@@ -383,7 +386,7 @@ func TestRespondToAlert(t *testing.T) {
 				AlertStates: []alertstore.AlertState{
 					{
 						Id:       AlertId,
-						Time:     time.Unix(0, WithinDuration.UnixNano()),
+						Time:     time.Unix(WithinDuration.Unix(), 0),
 						Value:    NewValue,
 						Duration: SomeDuration,
 						Level:    alertstore.Warn,
@@ -425,7 +428,7 @@ func TestRespondToAlert(t *testing.T) {
 				Name:            RegisteredAlertName,
 				Level:           "ok",
 				Value:           NewValue,
-				SourceTimestamp: alertsource.EpochNano(WithinDuration.UnixNano()),
+				SourceTimestamp: alertsource.EpochNano(WithinDuration.Unix()),
 				DeviceId:        RegisteredDeviceId,
 				QueryField:      RegisteredQueryField,
 			},
@@ -447,7 +450,7 @@ func TestRespondToAlert(t *testing.T) {
 				AlertStates: []alertstore.AlertState{
 					{
 						Id:       AlertId,
-						Time:     time.Unix(0, WithinDuration.UnixNano()),
+						Time:     time.Unix(WithinDuration.Unix(), 0),
 						Value:    NewValue,
 						Duration: SomeDuration,
 						Level:    alertstore.Ok,
@@ -472,6 +475,8 @@ func TestRespondToAlert(t *testing.T) {
 							Timestamp:   WithinDuration,
 							AlertType:   alertstore.GreaterThan,
 							AlertValues: []float32{OldValue},
+							Duration:    "24h",
+							Condition:   GreaterThanTen,
 						},
 					},
 				},
@@ -512,7 +517,7 @@ func TestRespondToAlert(t *testing.T) {
 				Level:           "crit",
 				Value:           NewValue,
 				Name:            RegisteredAlertName,
-				SourceTimestamp: alertsource.EpochNano(WithinDuration.UnixNano()),
+				SourceTimestamp: alertsource.EpochNano(WithinDuration.Unix()),
 				DeviceId:        RegisteredDeviceId,
 				QueryField:      RegisteredQueryField,
 			},
@@ -565,6 +570,8 @@ func TestRespondToAlert(t *testing.T) {
 							Timestamp:   WithinDuration,
 							AlertType:   alertstore.GreaterThan,
 							AlertValues: []float32{OldValue},
+							Duration:    "24h",
+							Condition:   GreaterThanTen,
 						},
 					},
 				},
@@ -605,7 +612,7 @@ func TestRespondToAlert(t *testing.T) {
 				Level:           "warn",
 				Value:           NewValue,
 				Name:            RegisteredAlertName,
-				SourceTimestamp: alertsource.EpochNano(WithinDuration.UnixNano()),
+				SourceTimestamp: alertsource.EpochNano(WithinDuration.Unix()),
 				DeviceId:        RegisteredDeviceId,
 				QueryField:      RegisteredQueryField,
 			},
@@ -658,6 +665,8 @@ func TestRespondToAlert(t *testing.T) {
 							Timestamp:   WithinDuration,
 							AlertType:   alertstore.GreaterThan,
 							AlertValues: []float32{OldValue},
+							Duration:    "24h",
+							Condition:   GreaterThanTen,
 						},
 					},
 				},
@@ -698,7 +707,7 @@ func TestRespondToAlert(t *testing.T) {
 				Level:           "crit",
 				Value:           NewValue,
 				Name:            RegisteredAlertName,
-				SourceTimestamp: alertsource.EpochNano(WithinDuration.UnixNano()),
+				SourceTimestamp: alertsource.EpochNano(WithinDuration.Unix()),
 				DeviceId:        RegisteredDeviceId,
 				QueryField:      RegisteredQueryField,
 			},
@@ -873,6 +882,8 @@ func TestRespondToAlert(t *testing.T) {
 							Timestamp:   AfterDuration,
 							AlertType:   alertstore.GreaterThan,
 							AlertValues: []float32{OldValue},
+							Duration:    "24h",
+							Condition:   GreaterThanTen,
 						},
 					},
 				},
@@ -905,7 +916,7 @@ func TestRespondToAlert(t *testing.T) {
 				Level:           "crit",
 				Value:           NewValue,
 				Name:            RegisteredAlertName,
-				SourceTimestamp: alertsource.EpochNano(AfterDuration.UnixNano()),
+				SourceTimestamp: alertsource.EpochNano(AfterDuration.Unix()),
 				DeviceId:        RegisteredDeviceId,
 				QueryField:      RegisteredQueryField,
 			},
@@ -950,7 +961,7 @@ func TestRespondToAlert(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			a.Templater, err = templates.NewMockTemplater()
 			require.Nil(t, err)
-			a.Notifier, err = notifier.NewTestingGomail()
+			a.Notifier, err = notifier.NewGomail(alertstore.Testing, notifier.GomailOpts{})
 			require.Nil(t, err)
 			defer a.Notifier.Close()
 			a.AlertStore, err = alertstore.NewGorm(alertstore.Testing, "testing")
@@ -1822,7 +1833,7 @@ func TestCreateAlertRule(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			a.Templater, err = templates.NewMockTemplater()
 			require.Nil(t, err)
-			a.Notifier, err = notifier.NewTestingGomail()
+			a.Notifier, err = notifier.NewGomail(alertstore.Testing, notifier.GomailOpts{})
 			require.Nil(t, err)
 			defer a.Notifier.Close()
 			a.AlertStore, err = alertstore.NewGorm(alertstore.Testing, "testing")
@@ -3090,7 +3101,7 @@ func TestUpdateAlertRule(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			a.Templater, err = templates.NewMockTemplater()
 			require.Nil(t, err)
-			a.Notifier, err = notifier.NewTestingGomail()
+			a.Notifier, err = notifier.NewGomail(alertstore.Testing, notifier.GomailOpts{})
 			require.Nil(t, err)
 			defer a.Notifier.Close()
 			a.AlertStore, err = alertstore.NewGorm(alertstore.Testing, "testing")
@@ -3515,7 +3526,7 @@ func TestDeleteAlert(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			a.Templater, err = templates.NewMockTemplater()
 			require.Nil(t, err)
-			a.Notifier, err = notifier.NewTestingGomail()
+			a.Notifier, err = notifier.NewGomail(alertstore.Testing, notifier.GomailOpts{})
 			require.Nil(t, err)
 			defer a.Notifier.Close()
 			a.AlertSource, err = alertsource.NewTestingInflux(ConfigPath)
@@ -3848,7 +3859,7 @@ func TestRemoveUsersFromAlertRule(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			a.Templater, err = templates.NewMockTemplater()
 			require.Nil(t, err)
-			a.Notifier, err = notifier.NewTestingGomail()
+			a.Notifier, err = notifier.NewGomail(alertstore.Testing, notifier.GomailOpts{})
 			require.Nil(t, err)
 			defer a.Notifier.Close()
 			a.AlertSource, err = alertsource.NewTestingInflux(ConfigPath)
@@ -4124,7 +4135,7 @@ func TestAddUsersToAlertRule(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			a.Templater, err = templates.NewMockTemplater()
 			require.Nil(t, err)
-			a.Notifier, err = notifier.NewTestingGomail()
+			a.Notifier, err = notifier.NewGomail(alertstore.Testing, notifier.GomailOpts{})
 			require.Nil(t, err)
 			defer a.Notifier.Close()
 			a.AlertSource, err = alertsource.NewTestingInflux(ConfigPath)

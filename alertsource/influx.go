@@ -43,7 +43,7 @@ type EpochNano int64
 
 func (e *EpochNano) UnmarshalJSON(b []byte) error {
 	n := json.Number(strings.Trim(string(b), `"`))
-	if i, err := n.Int64(); err != nil {
+	if i, err := n.Int64(); err == nil {
 		*e = EpochNano(i)
 		return nil
 	}
