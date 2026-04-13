@@ -3,6 +3,7 @@ package notifier
 import (
 	"fmt"
 	"io"
+	"log"
 	"os"
 	"strings"
 
@@ -174,6 +175,9 @@ func (g *Gomail) Notify(message Message, templater templates.Templater,
 	}
 	if len(users) < 1 {
 		return fmt.Errorf("no users to notify")
+	}
+	if g.mode == alertstore.Testing {
+		log.Printf("notifying %T: %v", message, message)
 	}
 	var sender gomail.SendCloser
 	if g.mode == alertstore.Testing {
