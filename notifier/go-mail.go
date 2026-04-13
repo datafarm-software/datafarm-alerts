@@ -142,7 +142,8 @@ func generateEmails(
 		u.Username = cases.Title(language.English).String(emailParts[0])
 		switch t := message.(type) {
 		case AlertNotification:
-			email.subject = t.Name
+			email.subject = fmt.Sprintf("%s, Level: %s",
+				t.Name, alertstore.AlertLevelString[t.AlertLevel])
 			tmplName = templates.AlertNotificationTempl
 			t.Condition, err = formatAlertCondition(t.AlertType, t.AlertValues)
 			if err != nil {
@@ -153,7 +154,7 @@ func generateEmails(
 				UserInfo auth.UserInfo
 			}{Message: t, UserInfo: u}
 		case AlertCreated:
-			email.subject = t.Name
+			email.subject = "DataFarm Alert Created"
 			tmplName = templates.AlertCreatedTempl
 			t.Condition, err = formatAlertCondition(t.AlertType, t.AlertValues)
 			if err != nil {
@@ -164,7 +165,7 @@ func generateEmails(
 				UserInfo auth.UserInfo
 			}{Message: t, UserInfo: u}
 		case AlertUpdated:
-			email.subject = t.Name
+			email.subject = "DataFarm Alert Updated"
 			tmplName = templates.AlertUpdatedTempl
 			t.Condition, err = formatAlertCondition(t.AlertType, t.AlertValues)
 			if err != nil {
@@ -175,7 +176,7 @@ func generateEmails(
 				UserInfo auth.UserInfo
 			}{Message: t, UserInfo: u}
 		case AlertDeleted:
-			email.subject = t.Name
+			email.subject = "DataFarm Alert Deleted"
 			tmplName = templates.AlertDeletedTempl
 			t.Condition, err = formatAlertCondition(t.AlertType, t.AlertValues)
 			if err != nil {
