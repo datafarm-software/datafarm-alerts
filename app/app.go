@@ -121,7 +121,7 @@ func (a *App) RegisterHumaOperations(api huma.API) {
 	operation := huma.Operation{
 		Method:  "POST",
 		Path:    "/alert/notify",
-		Tags:    []string{"Post Alerts"},
+		Tags:    []string{"Post"},
 		Summary: "Post an alert.",
 		Hidden:  false,
 	}
@@ -129,7 +129,7 @@ func (a *App) RegisterHumaOperations(api huma.API) {
 	operation = huma.Operation{
 		Method:      "POST",
 		Path:        "/alert",
-		Tags:        []string{"Create"},
+		Tags:        []string{"Post"},
 		Summary:     "Create an alert rule.",
 		Description: "Clients can use this route to setup a new sensordata check, which will alert them according to the provided AlertRule request body.",
 		RequestBody: &huma.RequestBody{},
@@ -367,7 +367,7 @@ func (a *App) RegisterHumaOperations(api huma.API) {
 	}
 	huma.Register(api, operation, a.AddUsersToAlertRule)
 	operation = huma.Operation{
-		Method: "DELETE",
+		Method: "PATCH",
 		Path:   "/alert/{alertId}/emailaddresses",
 		Parameters: []*huma.Param{
 			{
@@ -382,8 +382,8 @@ func (a *App) RegisterHumaOperations(api huma.API) {
 				},
 			},
 		},
-		Tags:        []string{"Delete"},
-		Summary:     "Delete an Alert Rule's User List.",
+		Tags:        []string{"Patch"},
+		Summary:     "Remove Users from Alert Rule.",
 		Description: "Clients can use this route to remove users from the AlertRule.",
 		RequestBody: &huma.RequestBody{},
 		Responses: map[string]*huma.Response{
