@@ -437,8 +437,6 @@ func (a *App) RegisterHumaOperations(api huma.API) {
 func (a *App) RespondToAlert(
 	ctx context.Context,
 	in *struct{ Body alertsource.InfluxAlert }) (*struct{}, error) {
-	log.Printf("source stamp: %d", in.Body.SourceTimestamp)
-	log.Printf("alert: %v", in.Body)
 	source := alertsource.AlertFromSource(&in.Body)
 	alert := source.AlertState()
 	alertRule, err := a.AlertStore.GetAlertRule(alert.Id)
