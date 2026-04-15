@@ -42,6 +42,11 @@ const RegisteredAlertName = "Temperature Check"
 const NewValue = 20
 const OldValue = 10
 const GreaterThanTen = "10.00 <"
+const LessThanTen = "< 10.00"
+const GreaterThanFive = "5.00 <"
+const LessThanFive = "< 5.00"
+const InactiveSensorCondition = "Inactive Sensor"
+const RangeCondition = "> 10.00, 20.00 <"
 
 var AlertReceived = time.Date(1994, 6, 24, 6, 0, 0, 0, time.UTC)
 var AfterDuration = AlertReceived.Add(25 * time.Hour)
@@ -1036,6 +1041,7 @@ func TestCreateAlertRule(t *testing.T) {
 							AlertLevel:  alertstore.Crit,
 							AlertType:   alertstore.LessThan,
 							AlertValues: []float32{5},
+							Condition:   LessThanFive,
 						},
 					},
 				},
@@ -1097,6 +1103,7 @@ func TestCreateAlertRule(t *testing.T) {
 							Duration:   "24h",
 							AlertLevel: alertstore.Crit,
 							AlertType:  alertstore.InactiveSensor,
+							Condition:  InactiveSensorCondition,
 						},
 					},
 				},
@@ -1160,6 +1167,7 @@ func TestCreateAlertRule(t *testing.T) {
 							AlertLevel:  alertstore.Crit,
 							AlertType:   alertstore.GreaterThan,
 							AlertValues: []float32{5},
+							Condition:   GreaterThanFive,
 						},
 					},
 				},
@@ -1203,7 +1211,7 @@ func TestCreateAlertRule(t *testing.T) {
 				AlertRules: []alertstore.StoredAlertRule{
 					{
 						AlertId:     AlertId,
-						RangeValues: []float32{5, 10},
+						RangeValues: []float32{10, 20},
 						Name:        RegisteredAlertName,
 						Duration:    "24h",
 						AlertType:   alertstore.Range,
@@ -1223,13 +1231,14 @@ func TestCreateAlertRule(t *testing.T) {
 							Duration:    "24h",
 							AlertLevel:  alertstore.Crit,
 							AlertType:   alertstore.Range,
-							AlertValues: []float32{5, 10},
+							AlertValues: []float32{10, 20},
+							Condition:   RangeCondition,
 						},
 					},
 				},
 			},
 			alertRule: alertstore.AlertRule{
-				RangeValues:    []float32{5, 10},
+				RangeValues:    []float32{10, 20},
 				Name:           RegisteredAlertName,
 				Duration:       "24h",
 				EmailAddresses: []string{UserEmail},
@@ -1316,6 +1325,7 @@ func TestCreateAlertRule(t *testing.T) {
 							AlertLevel:  alertstore.Crit,
 							AlertType:   alertstore.LessThan,
 							AlertValues: []float32{5},
+							Condition:   LessThanFive,
 						},
 					},
 					"user3@alert.com": {
@@ -1327,6 +1337,7 @@ func TestCreateAlertRule(t *testing.T) {
 							AlertLevel:  alertstore.Crit,
 							AlertType:   alertstore.LessThan,
 							AlertValues: []float32{5},
+							Condition:   LessThanFive,
 						},
 					},
 				},
@@ -1537,6 +1548,7 @@ func TestCreateAlertRule(t *testing.T) {
 							AlertLevel:  alertstore.Crit,
 							AlertType:   alertstore.LessThan,
 							AlertValues: []float32{5},
+							Condition:   LessThanFive,
 						},
 					},
 				},
@@ -1629,6 +1641,7 @@ func TestCreateAlertRule(t *testing.T) {
 							AlertLevel:  alertstore.Crit,
 							AlertType:   alertstore.Range,
 							AlertValues: []float32{10, 20},
+							Condition:   RangeCondition,
 						},
 					},
 					"user2@alert.com": {
@@ -1640,6 +1653,7 @@ func TestCreateAlertRule(t *testing.T) {
 							AlertLevel:  alertstore.Crit,
 							AlertType:   alertstore.Range,
 							AlertValues: []float32{10, 20},
+							Condition:   RangeCondition,
 						},
 					},
 				},
@@ -1732,6 +1746,7 @@ func TestCreateAlertRule(t *testing.T) {
 							AlertLevel:  alertstore.Crit,
 							AlertType:   alertstore.LessThan,
 							AlertValues: []float32{10},
+							Condition:   LessThanTen,
 						},
 					},
 					"user2@alert.com": {
@@ -1743,6 +1758,7 @@ func TestCreateAlertRule(t *testing.T) {
 							AlertLevel:  alertstore.Crit,
 							AlertType:   alertstore.LessThan,
 							AlertValues: []float32{10},
+							Condition:   LessThanTen,
 						},
 					},
 				},
@@ -1803,6 +1819,7 @@ func TestCreateAlertRule(t *testing.T) {
 							AlertLevel:  alertstore.Warn,
 							AlertType:   alertstore.LessThan,
 							AlertValues: []float32{5},
+							Condition:   LessThanFive,
 						},
 					},
 				},
@@ -3873,7 +3890,7 @@ func TestRemoveUsersFromAlertRule(t *testing.T) {
 			defer a.AlertStore.Close()
 			err = a.AlertStore.PrepareDb(tc.mockAlertStore)
 			require.Nil(t, err)
-			resp := api.Delete(fmt.Sprintf("/alert/%s/emailaddresses", tc.alertId),
+			resp := api.Patch(fmt.Sprintf("/alert/%s/emailaddresses", tc.alertId),
 				tc.emailsToRemove)
 			if tc.wantStatus != resp.Code {
 				t.Fatalf("wantStatus: %d, response Code: %v", tc.wantStatus, resp.Code)
