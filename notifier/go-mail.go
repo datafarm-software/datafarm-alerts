@@ -1,6 +1,7 @@
 package notifier
 
 import (
+	"crypto/tls"
 	"fmt"
 	"io"
 	"log"
@@ -48,7 +49,7 @@ type Gomail struct {
 
 func NewGomail(mode alertstore.Mode, opts GomailOpts) (Notifier, error) {
 	d := gomail.NewDialer(opts.SmtpServer, opts.SmtpPort, opts.Username, opts.Password)
-	d.TLSConfig.ServerName = opts.SmtpServer
+	d.TLSConfig = &tls.Config{ServerName: opts.SmtpServer}
 	g := Gomail{
 		dialer:     d,
 		senderAddr: opts.SenderAddress,
