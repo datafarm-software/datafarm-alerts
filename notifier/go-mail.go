@@ -32,26 +32,27 @@ func newMessage(from, to string, email Email) *gomail.Message {
 }
 
 type GomailOpts struct {
-	SmtpServer string `mapstructure:"smtpServer" validate:"required"`
-	SmtpPort   int    `mapstructure:"smtpPort"`
-	Username   string `mapstructure:"username"`
-	Password   string `mapstructure:"password"`
+	SmtpServer    string `mapstructure:"smtpServer" validate:"required"`
+	SmtpPort      int    `mapstructure:"smtpPort"`
+	Username      string `mapstructure:"username" validate:"required"`
+	Password      string `mapstructure:"password" validate:"required"`
+	SenderAddress string `mapstructure:"senderaddress" validate:"required"`
 }
 
 type Gomail struct {
-	dialer   *gomail.Dialer
-	mode     alertstore.Mode
-	inboxes  Schema
-	username string
+	dialer     *gomail.Dialer
+	mode       alertstore.Mode
+	inboxes    Schema
+	senderAddr string
 }
 
 func NewGomail(mode alertstore.Mode, opts GomailOpts) (Notifier, error) {
 	d := gomail.NewDialer(opts.SmtpServer, opts.SmtpPort, opts.Username, opts.Password)
 	d.TLSConfig.ServerName = opts.SmtpServer
 	g := Gomail{
-		dialer:   d,
-		username: opts.Username,
-		mode:     mode,
+		dialer:     d,
+		senderAddr: opts.SenderAddress,
+		mode:       mode,
 	}
 	if mode == alertstore.Testing {
 		g.inboxes = Schema{
@@ -198,7 +199,7 @@ func (g *Gomail) Notify(message Message, templater templates.Templater,
 	var v AlertNotification
 	var ok bool
 	for recipient, email := range emails {
-		m = newMessage(g.username, recipient, email)
+		m = newMessage(g.senderAddr, recipient, email)
 		if v, ok = message.(AlertNotification); ok {
 			switch v.AlertLevel {
 			case alertstore.Crit:
@@ -207,7 +208,7 @@ func (g *Gomail) Notify(message Message, templater templates.Templater,
 				m.SetHeader("Importance", "high")
 			}
 		}
-		if err = sender.Send(g.username, []string{recipient}, m); err != nil {
+		if err = sender.Send(g.senderAddr, []string{recipient}, m); err != nil {
 			err = fmt.Errorf("mockSender send: %v", err)
 			break
 		}
