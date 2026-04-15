@@ -6,7 +6,7 @@ import (
 	"io/fs"
 	"path/filepath"
 
-	"github.com/geraud22/sensordata-alerts/alertstore"
+	"github.com/geraud22/datafarm-alerts/alertstore"
 )
 
 type TemplateName string

@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/geraud22/sensordata-alerts/alertstore"
-	"github.com/geraud22/sensordata-alerts/auth"
-	"github.com/geraud22/sensordata-alerts/templates"
+	"github.com/geraud22/datafarm-alerts/alertstore"
+	"github.com/geraud22/datafarm-alerts/auth"
+	"github.com/geraud22/datafarm-alerts/templates"
 )
 
 type Schema struct {

@@ -11,11 +11,11 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/danielgtaylor/huma/v2/humatest"
-	"github.com/geraud22/sensordata-alerts/alertsource"
-	"github.com/geraud22/sensordata-alerts/alertstore"
-	"github.com/geraud22/sensordata-alerts/app"
-	"github.com/geraud22/sensordata-alerts/notifier"
-	"github.com/geraud22/sensordata-alerts/templates"
+	"github.com/geraud22/datafarm-alerts/alertsource"
+	"github.com/geraud22/datafarm-alerts/alertstore"
+	"github.com/geraud22/datafarm-alerts/app"
+	"github.com/geraud22/datafarm-alerts/notifier"
+	"github.com/geraud22/datafarm-alerts/templates"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 )

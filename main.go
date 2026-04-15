@@ -6,7 +6,7 @@ import (
 	"os"
 
 	cfy "github.com/geraud22/config-from-yaml"
-	"github.com/geraud22/sensordata-alerts/app"
+	"github.com/geraud22/datafarm-alerts/app"
 )
 
 func main() {

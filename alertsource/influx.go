@@ -15,7 +15,7 @@ import (
 	"time"
 
 	cfy "github.com/geraud22/config-from-yaml"
-	"github.com/geraud22/sensordata-alerts/alertstore"
+	"github.com/geraud22/datafarm-alerts/alertstore"
 	influxdb2 "github.com/influxdata/influxdb-client-go/v2"
 	"github.com/influxdata/influxdb-client-go/v2/domain"
 )

@@ -3,7 +3,7 @@ package alertsource
 import (
 	"fmt"
 
-	"github.com/geraud22/sensordata-alerts/alertstore"
+	"github.com/geraud22/datafarm-alerts/alertstore"
 )
 
 type MockAlertSource struct {

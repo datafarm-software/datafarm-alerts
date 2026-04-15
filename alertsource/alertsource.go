@@ -1,7 +1,7 @@
 package alertsource
 
 import (
-	"github.com/geraud22/sensordata-alerts/alertstore"
+	"github.com/geraud22/datafarm-alerts/alertstore"
 )
 
 type AlertFromSource interface {
