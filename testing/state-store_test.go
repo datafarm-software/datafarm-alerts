@@ -131,11 +131,13 @@ func TestShouldNotify(t *testing.T) {
 		"change from crit to ok, so do nothing": {
 			want: false,
 			alert: alertstore.AlertState{
-				Level: alertstore.Ok,
-				Time:  AfterDuration,
+				Level:    alertstore.Ok,
+				Time:     WithinDuration,
+				Duration: SomeDuration,
 			},
 			previous: alertstore.AlertState{
 				Level: alertstore.Crit,
+				Time:  WithinDuration,
 			},
 		},
 
