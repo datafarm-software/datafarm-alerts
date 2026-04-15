@@ -4018,6 +4018,7 @@ func TestAddUsersToAlertRule(t *testing.T) {
 							AlertLevel:  alertstore.Warn,
 							AlertType:   alertstore.LessThan,
 							AlertValues: []float32{OldValue},
+							Condition:   LessThanTen,
 						},
 					},
 				},
@@ -4105,6 +4106,7 @@ func TestAddUsersToAlertRule(t *testing.T) {
 							AlertLevel:  alertstore.Warn,
 							AlertType:   alertstore.LessThan,
 							AlertValues: []float32{OldValue},
+							Condition:   LessThanTen,
 						},
 					},
 					"user3@alert.com": {
@@ -4116,6 +4118,7 @@ func TestAddUsersToAlertRule(t *testing.T) {
 							AlertLevel:  alertstore.Warn,
 							AlertType:   alertstore.LessThan,
 							AlertValues: []float32{OldValue},
+							Condition:   LessThanTen,
 						},
 					},
 				},
