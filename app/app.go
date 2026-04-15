@@ -949,10 +949,12 @@ func (a *App) RemoveUsersFromAlertRule(ctx context.Context, in *struct {
 	for _, e := range uniqueEmails {
 		users = append(users, auth.UserInfo{EmailAddress: e})
 	}
-	if err = a.Notifier.Notify(message, a.Templater, users...); err != nil {
-		log.Printf("alertDeletedNotify: %v", err)
-		return nil, huma.Error500InternalServerError(
-			"Internal error notifying users unregistered from alert.")
+	if len(users) > 0 {
+		if err = a.Notifier.Notify(message, a.Templater, users...); err != nil {
+			log.Printf("alertDeletedNotify: %v", err)
+			return nil, huma.Error500InternalServerError(
+				"Internal error notifying users unregistered from alert.")
+		}
 	}
 	return &struct {
 		Status int
