@@ -47,6 +47,7 @@ type Gomail struct {
 
 func NewGomail(mode alertstore.Mode, opts GomailOpts) (Notifier, error) {
 	d := gomail.NewDialer(opts.SmtpServer, opts.SmtpPort, opts.Username, opts.Password)
+	d.TLSConfig.ServerName = opts.SmtpServer
 	g := Gomail{
 		dialer:   d,
 		username: opts.Username,
