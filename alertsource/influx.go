@@ -122,12 +122,12 @@ func NewInflux(opts InfluxOpts) (AlertSource, error) {
 	client := influxdb2.NewClientWithOptions(opts.Url, opts.Token, influxdb2.DefaultOptions())
 	if err := client.APIClient().GetPing(ctx); err != nil {
 		cancel()
-		return nil, err
+		return nil, fmt.Errorf("api client: %v", err)
 	}
 	org, err := client.OrganizationsAPI().FindOrganizationByName(ctx, opts.Org)
 	if err != nil {
 		cancel()
-		return nil, err
+		return nil, fmt.Errorf("org api: %v", err)
 	}
 	if org.Id == nil {
 		cancel()
