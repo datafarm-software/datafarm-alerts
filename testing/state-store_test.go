@@ -2044,6 +2044,73 @@ func TestUpdateAlertRule(t *testing.T) {
 			},
 		},
 
+		"incoming alert is identical to what already exists, so send OK": {
+			wantStatus:           http.StatusOK,
+			wantAlertSourceCount: 1,
+			alertId:              AlertId,
+			updatedAlertRule: alertstore.AlertRule{
+				Name:           RegisteredAlertName,
+				AlertId:        AlertId,
+				EmailAddresses: []string{UserEmail},
+				RangeValues:    []float32{12, 24},
+				Duration:       "24h",
+				DeviceId:       RegisteredDeviceId,
+				QueryField:     RegisteredQueryField,
+				AlertType:      alertstore.Range,
+				AlertLevel:     alertstore.Crit,
+			},
+			wantUserInboxes: notifier.Schema{
+				Notifications: map[string][]notifier.AlertNotification{},
+				DeletedAlerts: map[string][]notifier.AlertDeleted{},
+				CreatedAlerts: map[string][]notifier.AlertCreated{},
+			},
+			mockAlertStore: alertstore.Schema{
+				AlertRecipients: []alertstore.AlertRecipient{
+					{AlertId: AlertId, Email: UserEmail},
+				},
+				DeviceAlerts: []alertstore.DeviceAlertRule{
+					{
+						DeviceId:   RegisteredDeviceId,
+						QueryField: RegisteredQueryField,
+						AlertId:    AlertId,
+					},
+				},
+				AlertRules: []alertstore.StoredAlertRule{
+					{
+						AlertId:     AlertId,
+						Name:        RegisteredAlertName,
+						RangeValues: []float32{12, 24},
+						Duration:    "24h",
+						AlertType:   alertstore.Range,
+						AlertLevel:  alertstore.Crit,
+					},
+				},
+			},
+			wantAlertStore: alertstore.Schema{
+				AlertStates: []alertstore.AlertState{},
+				AlertRecipients: []alertstore.AlertRecipient{
+					{AlertId: AlertId, Email: UserEmail},
+				},
+				DeviceAlerts: []alertstore.DeviceAlertRule{
+					{
+						DeviceId:   RegisteredDeviceId,
+						QueryField: RegisteredQueryField,
+						AlertId:    AlertId,
+					},
+				},
+				AlertRules: []alertstore.StoredAlertRule{
+					{
+						AlertId:     AlertId,
+						Name:        RegisteredAlertName,
+						RangeValues: []float32{12, 24},
+						Duration:    "24h",
+						AlertType:   alertstore.Range,
+						AlertLevel:  alertstore.Crit,
+					},
+				},
+			},
+		},
+
 		"update alert to become identical to an existing alert, still keep both alerts": {
 			wantStatus:           http.StatusOK,
 			wantAlertSourceCount: 2,

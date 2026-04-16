@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/danielgtaylor/huma/v2"
+	"github.com/google/go-cmp/cmp"
 	"github.com/gorilla/mux"
 
 	"github.com/danielgtaylor/huma/v2/adapters/humamux"
@@ -653,6 +654,9 @@ func (a *App) UpdateAlertRule(
 			return nil, huma.Error400BadRequest(
 				"Cannot update an existing alert to an Inactive Sensor check type.")
 		}
+	}
+	if diff := cmp.Diff(existingAlert, in.Body); diff == "" {
+		return &struct{ Body alertstore.AlertRule }{existingAlert}, nil
 	}
 	var dbRecord alertstore.Schema
 	uniqueEmails := removeDuplicates(in.Body.EmailAddresses)
