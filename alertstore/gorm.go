@@ -27,7 +27,7 @@ type Gorm struct {
 }
 
 func NewGorm(mode Mode, dbName string) (AlertStore, error) {
-	dbFilename := fmt.Sprintf("%s.db", dbName)
+	dbFilename := fmt.Sprintf("alertstore/%s.db", dbName)
 	db, err := gorm.Open(sqlite.Open(dbFilename), &gorm.Config{})
 	if err != nil {
 		return nil, fmt.Errorf("opening db: %v", err)
