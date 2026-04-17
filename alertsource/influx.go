@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"log"
 	"net/url"
 	"os"
 	"slices"
@@ -69,7 +68,7 @@ type InfluxAlert struct {
 	SourceMeasurement        string    `json:"_source_measurement"`
 	SourceTimestamp          EpochNano `json:"_source_timestamp"`
 	StatusTimestamp          EpochNano `json:"_status_timestamp"`
-	SensorTimestamp          EpochNano `json:"_sensor_timestamp"`
+	SensorTimestamp          time.Time `json:"_sensor_timestamp"`
 	Start                    string    `json:"_start"`
 	Stop                     string    `json:"_stop"`
 	Time                     time.Time `json:"_time" required:"true"`
@@ -97,11 +96,8 @@ func (i *InfluxAlert) AlertLevel() alertstore.AlertLevel {
 }
 
 func (i *InfluxAlert) AlertState() alertstore.AlertState {
-	log.Printf("_time: %v", i.Time)
-	log.Printf("_sensor_timestamp: %v", time.Unix(0, int64(i.SensorTimestamp)))
-	t := time.Unix(0, int64(i.SourceTimestamp))
 	return alertstore.AlertState{
-		Time:  t,
+		Time:  i.SensorTimestamp,
 		Name:  i.Name,
 		Id:    i.Id,
 		Value: i.Value,
