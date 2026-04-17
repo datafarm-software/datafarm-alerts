@@ -159,7 +159,11 @@ type localCheck interface {
 
 type localCheckImpl struct{ check domain.Check }
 
-func (l *localCheckImpl) AlertId() (alertId string, err error) {
+func (l localCheckImpl) Type() string {
+	return l.check.Type()
+}
+
+func (l localCheckImpl) AlertId() (alertId string, err error) {
 	checkType := l.check.Type()
 	switch checkType {
 	case "threshold":
@@ -180,7 +184,7 @@ func (l *localCheckImpl) AlertId() (alertId string, err error) {
 	return alertId, nil
 }
 
-func (l *localCheckImpl) TaskId() (taskId string, err error) {
+func (l localCheckImpl) TaskId() (taskId string, err error) {
 	checkType := l.check.Type()
 	switch checkType {
 	case "threshold":
@@ -213,10 +217,21 @@ func (i *Influx) CreateAlertRule(ar alertstore.AlertRule) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("createCheck: %v", err)
 	}
-	if err = i.addCustomValuesToThreshold(taskId); err != nil {
-		return alertId, fmt.Errorf("addCustomValuesToThreshold: %v", err)
+	lc := localCheck(localCheckImpl{nc})
+	taskId, err := lc.TaskId()
+	if err != nil {
+		return "", fmt.Errorf("taskId: %v", err)
 	}
-	return i.getAlertId(nc)
+	alertId, err := lc.AlertId()
+	if err != nil {
+		return "", fmt.Errorf("alertId: %v", err)
+	}
+	if lc.Type() == "threshold" {
+		if err = i.addCustomValuesToThreshold(taskId, ar); err != nil {
+			return alertId, fmt.Errorf("addCustomValuesToThreshold: %v", err)
+		}
+	}
+	return alertId, nil
 }
 
 func (i *Influx) addCustomValuesToThreshold(taskId string, ar alertstore.AlertRule) error {
@@ -249,8 +264,15 @@ func (i *Influx) UpdateAlertRule(ar alertstore.AlertRule) error {
 	if err != nil {
 		return fmt.Errorf("PutChecks: %v", err)
 	}
-	if _, err = i.getAlertId(check); err != nil {
-		return fmt.Errorf("getAlertId: %v", err)
+	lc := localCheck(localCheckImpl{check})
+	taskId, err := lc.TaskId()
+	if err != nil {
+		return fmt.Errorf("taskId: %v", err)
+	}
+	if lc.Type() == "threshold" {
+		if err = i.addCustomValuesToThreshold(taskId, ar); err != nil {
+			return fmt.Errorf("addCustomValuesToThreshold: %v", err)
+		}
 	}
 	return nil
 }
