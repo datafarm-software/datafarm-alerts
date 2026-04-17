@@ -151,6 +151,56 @@ func (i *Influx) Close() error {
 	return nil
 }
 
+type localCheck interface {
+	domain.Check
+	AlertId() (string, error)
+	TaskId() (string, error)
+}
+
+type localCheckImpl struct{ check domain.Check }
+
+func (l *localCheckImpl) AlertId() (alertId string, err error) {
+	checkType := l.check.Type()
+	switch checkType {
+	case "threshold":
+		tc, ok := l.check.(*domain.ThresholdCheck)
+		if !ok {
+			return alertId, fmt.Errorf("invalid threshold check created")
+		}
+		alertId = *tc.CheckBase.Id
+	case "deadman":
+		dc, ok := l.check.(*domain.DeadmanCheck)
+		if !ok {
+			return "", fmt.Errorf("invalid deadman check created")
+		}
+		alertId = *dc.CheckBase.Id
+	default:
+		return alertId, fmt.Errorf("unknown check type: %s", checkType)
+	}
+	return alertId, nil
+}
+
+func (l *localCheckImpl) TaskId() (taskId string, err error) {
+	checkType := l.check.Type()
+	switch checkType {
+	case "threshold":
+		tc, ok := l.check.(*domain.ThresholdCheck)
+		if !ok {
+			return taskId, fmt.Errorf("invalid threshold check created")
+		}
+		taskId = *tc.CheckBase.TaskID
+	case "deadman":
+		dc, ok := l.check.(*domain.DeadmanCheck)
+		if !ok {
+			return "", fmt.Errorf("invalid deadman check created")
+		}
+		taskId = *dc.CheckBase.TaskID
+	default:
+		return taskId, fmt.Errorf("unknown check type: %s", checkType)
+	}
+	return taskId, nil
+}
+
 func (i *Influx) CreateAlertRule(ar alertstore.AlertRule) (string, error) {
 	check, err := i.domainCheck(ar)
 	if err != nil {
@@ -163,28 +213,10 @@ func (i *Influx) CreateAlertRule(ar alertstore.AlertRule) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("createCheck: %v", err)
 	}
-	return i.getAlertId(nc)
-}
-
-func (i *Influx) getAlertId(check domain.Check) (alertId string, err error) {
-	if check.Type() == "threshold" {
-		tc, ok := check.(*domain.ThresholdCheck)
-		if !ok {
-			return alertId, fmt.Errorf("invalid threshold check created")
-		}
-		taskId := *tc.CheckBase.TaskID
-		if err = i.addCustomValuesToThreshold(taskId); err != nil {
-			return alertId, fmt.Errorf("addCustomValuesToThreshold: %v", err)
-		}
-		alertId = *tc.CheckBase.Id
-	} else {
-		dc, ok := check.(*domain.DeadmanCheck)
-		if !ok {
-			return "", fmt.Errorf("invalid deadman check created")
-		}
-		alertId = *dc.CheckBase.Id
+	if err = i.addCustomValuesToThreshold(taskId); err != nil {
+		return alertId, fmt.Errorf("addCustomValuesToThreshold: %v", err)
 	}
-	return alertId, nil
+	return i.getAlertId(nc)
 }
 
 func (i *Influx) addCustomValuesToThreshold(taskId string, ar alertstore.AlertRule) error {
