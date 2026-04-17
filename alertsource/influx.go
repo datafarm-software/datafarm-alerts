@@ -168,9 +168,15 @@ func (i *Influx) CreateAlertRule(ar alertstore.AlertRule) (string, error) {
 
 func (i *Influx) getAlertId(check domain.Check) (alertId string, err error) {
 	if check.Type() == "threshold" {
-		if err = i.addCustomValuesToThreshold(); err != nil {
+		tc, ok := check.(*domain.ThresholdCheck)
+		if !ok {
+			return alertId, fmt.Errorf("invalid threshold check created")
+		}
+		taskId := *tc.CheckBase.TaskID
+		if err = i.addCustomValuesToThreshold(taskId); err != nil {
 			return alertId, fmt.Errorf("addCustomValuesToThreshold: %v", err)
 		}
+		alertId = *tc.CheckBase.Id
 	} else {
 		dc, ok := check.(*domain.DeadmanCheck)
 		if !ok {
@@ -181,12 +187,7 @@ func (i *Influx) getAlertId(check domain.Check) (alertId string, err error) {
 	return alertId, nil
 }
 
-func (i *Influx) addCustomValuesToThreshold(check domain.Check, ar alertstore.AlertRule) error {
-	tc, ok := check.(*domain.ThresholdCheck)
-	if !ok {
-		return fmt.Errorf("invalid threshold check created")
-	}
-	taskId := *tc.CheckBase.TaskID
+func (i *Influx) addCustomValuesToThreshold(taskId string, ar alertstore.AlertRule) error {
 	task, err := i.getTask(taskId)
 	if err != nil {
 		return fmt.Errorf(
