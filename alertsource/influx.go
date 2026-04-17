@@ -29,7 +29,8 @@ const Flux string = `from(bucket: "%s")
     |> filter(fn: (r) => r["_field"] == "%s")
     |> aggregateWindow(every: %s, fn: last, createEmpty: false)`
 
-const CustomCheckFormat = `|> map(fn: (r) => ({r with %s: r.%s}))`
+const CustomCheckMap = `|> map(fn: (r) => ({r with %s}))`
+const CustomCheckFormat = `%s: r.%s`
 const V1FieldAsCols = `|> v1["fieldsAsCols"]()`
 
 var QueryField = "query_field"
@@ -391,12 +392,18 @@ func (c CustomCheckValue) String() string {
 func (i *Influx) addCustomCheckValue(flux string, customVals ...CustomCheckValue) string {
 	fluxSlice := strings.Split(flux, "\n")
 	slices.Reverse(fluxSlice)
+	cvb := strings.Builder{}
 	newFlux := make([]string, 0, len(fluxSlice)+len(customVals))
+	for i, c := range customVals {
+		if i > 0 {
+			cvb.WriteString(",")
+		}
+		fmt.Fprintf(&cvb, CustomCheckFormat, c.customName, c.fluxValue)
+	}
+	customCheckMap := fmt.Sprintf(CustomCheckMap, cvb.String())
 	for _, stmt := range fluxSlice {
 		if strings.Contains(stmt, V1FieldAsCols) {
-			for _, c := range customVals {
-				newFlux = append(newFlux, c.String())
-			}
+			newFlux = append(newFlux, customCheckMap)
 		}
 		newFlux = append(newFlux, stmt)
 	}
