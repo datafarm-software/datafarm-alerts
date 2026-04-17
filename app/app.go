@@ -439,66 +439,66 @@ func (a *App) RespondToAlert(
 	ctx context.Context,
 	in *struct{ Body alertsource.InfluxAlert }) (*struct{}, error) {
 	source := alertsource.AlertFromSource(&in.Body)
-	alert := source.AlertState()
-	alertRule, err := a.AlertStore.GetAlertRule(alert.Id)
-	if err != nil {
-		if !errors.Is(err, alertstore.NoAlert) {
-			log.Printf("getting alert rule for %s: %v", alert.Id, err)
-			return nil, huma.Error500InternalServerError("Internal error getting the alert rule.")
-		}
-		log.Printf("Alert rule not found. %s", in.Body.Id)
-		return nil, huma.Error404NotFound("Alert rule not found.")
-	}
-	if alertRule.QueryField != in.Body.QueryField || alertRule.DeviceId != in.Body.DeviceId {
-		return nil, huma.Error404NotFound("Received alert with unknown DeviceId and QueryField combination.")
-	}
-	previousAlert, err := a.AlertStore.GetAlertState(alert.Id)
-	if err != nil {
-		if !errors.Is(err, alertstore.NoAlert) {
-			log.Printf("getting previous alert for %s: %v", alert.Id, err)
-			return nil, huma.Error500InternalServerError("Internal error getting previous alert state.")
-		}
-		//NOTE: if no previous state is found, assume first time alert.
-		previousAlert.Level = alertstore.Ok
-	}
-	alert.Duration, err = alertstore.ParseDuration(alertRule.Duration)
-	if err != nil {
-		log.Printf("parsing duration for alert: %s, %s, err: %v", alert.Id, alertRule.Duration, err)
-		return nil, huma.Error500InternalServerError("Internal error parsing the duration of the alert.")
-	}
-	shouldNotify := a.ShouldNotify(alert, previousAlert)
-	if shouldNotify || alert.Level != previousAlert.Level {
-		if err = a.AlertStore.UpdateAlertState(alert); err != nil {
-			log.Printf("updating alert state for id: %s, err: %v", alert.Id, err)
-			return nil, huma.Error500InternalServerError("Internal error updating alert state.")
-		}
-	}
-	if !shouldNotify {
-		return nil, nil
-	}
-	emails, err := a.AlertStore.GetAlertRecipients(alert.Id)
-	if err != nil {
-		return nil, huma.Error500InternalServerError("Internal error getting alert recipients.")
-	}
-	message := notifier.AlertNotification{
-		Name:        alert.Name,
-		Value:       alert.Value,
-		DeviceId:    alertRule.DeviceId,
-		QueryField:  alertRule.QueryField,
-		AlertLevel:  alert.Level,
-		Timestamp:   alert.Time,
-		AlertValues: alertRule.RangeValues,
-		Duration:    alertRule.Duration,
-		AlertType:   alertRule.AlertType,
-	}
-	users := make([]auth.UserInfo, 0, len(emails))
-	for _, e := range emails {
-		users = append(users, auth.UserInfo{EmailAddress: e})
-	}
-	if err = a.Notifier.Notify(message, a.Templater, users...); err != nil {
-		log.Printf("notifying users: %v", err)
-		return nil, huma.Error500InternalServerError("Internal error notifying users.")
-	}
+	_ = source.AlertState()
+	// alertRule, err := a.AlertStore.GetAlertRule(alert.Id)
+	// if err != nil {
+	// 	if !errors.Is(err, alertstore.NoAlert) {
+	// 		log.Printf("getting alert rule for %s: %v", alert.Id, err)
+	// 		return nil, huma.Error500InternalServerError("Internal error getting the alert rule.")
+	// 	}
+	// 	log.Printf("Alert rule not found. %s", in.Body.Id)
+	// 	return nil, huma.Error404NotFound("Alert rule not found.")
+	// }
+	// if alertRule.QueryField != in.Body.QueryField || alertRule.DeviceId != in.Body.DeviceId {
+	// 	return nil, huma.Error404NotFound("Received alert with unknown DeviceId and QueryField combination.")
+	// }
+	// previousAlert, err := a.AlertStore.GetAlertState(alert.Id)
+	// if err != nil {
+	// 	if !errors.Is(err, alertstore.NoAlert) {
+	// 		log.Printf("getting previous alert for %s: %v", alert.Id, err)
+	// 		return nil, huma.Error500InternalServerError("Internal error getting previous alert state.")
+	// 	}
+	// 	//NOTE: if no previous state is found, assume first time alert.
+	// 	previousAlert.Level = alertstore.Ok
+	// }
+	// alert.Duration, err = alertstore.ParseDuration(alertRule.Duration)
+	// if err != nil {
+	// 	log.Printf("parsing duration for alert: %s, %s, err: %v", alert.Id, alertRule.Duration, err)
+	// 	return nil, huma.Error500InternalServerError("Internal error parsing the duration of the alert.")
+	// }
+	// shouldNotify := a.ShouldNotify(alert, previousAlert)
+	// if shouldNotify || alert.Level != previousAlert.Level {
+	// 	if err = a.AlertStore.UpdateAlertState(alert); err != nil {
+	// 		log.Printf("updating alert state for id: %s, err: %v", alert.Id, err)
+	// 		return nil, huma.Error500InternalServerError("Internal error updating alert state.")
+	// 	}
+	// }
+	// if !shouldNotify {
+	// 	return nil, nil
+	// }
+	// emails, err := a.AlertStore.GetAlertRecipients(alert.Id)
+	// if err != nil {
+	// 	return nil, huma.Error500InternalServerError("Internal error getting alert recipients.")
+	// }
+	// message := notifier.AlertNotification{
+	// 	Name:        alert.Name,
+	// 	Value:       alert.Value,
+	// 	DeviceId:    alertRule.DeviceId,
+	// 	QueryField:  alertRule.QueryField,
+	// 	AlertLevel:  alert.Level,
+	// 	Timestamp:   alert.Time,
+	// 	AlertValues: alertRule.RangeValues,
+	// 	Duration:    alertRule.Duration,
+	// 	AlertType:   alertRule.AlertType,
+	// }
+	// users := make([]auth.UserInfo, 0, len(emails))
+	// for _, e := range emails {
+	// 	users = append(users, auth.UserInfo{EmailAddress: e})
+	// }
+	// if err = a.Notifier.Notify(message, a.Templater, users...); err != nil {
+	// 	log.Printf("notifying users: %v", err)
+	// 	return nil, huma.Error500InternalServerError("Internal error notifying users.")
+	// }
 	return nil, nil
 }
 

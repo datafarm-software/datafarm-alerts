@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
 	"net/url"
 	"os"
 	"slices"
@@ -28,7 +29,7 @@ const Flux string = `from(bucket: "%s")
     |> filter(fn: (r) => r["_field"] == "%s")
     |> aggregateWindow(every: %s, fn: last, createEmpty: false)`
 
-const MapQueryField = `|> map(fn: (r) => ({r with _value: r.%s}))`
+const CustomCheckFormat = `|> map(fn: (r) => ({r with %s: r.%s}))`
 const V1FieldAsCols = `|> v1["fieldsAsCols"]()`
 
 var QueryField = "query_field"
@@ -67,6 +68,7 @@ type InfluxAlert struct {
 	SourceMeasurement        string    `json:"_source_measurement"`
 	SourceTimestamp          EpochNano `json:"_source_timestamp"`
 	StatusTimestamp          EpochNano `json:"_status_timestamp"`
+	SensorTimestamp          EpochNano `json:"_sensor_timestamp"`
 	Start                    string    `json:"_start"`
 	Stop                     string    `json:"_stop"`
 	Time                     time.Time `json:"_time" required:"true"`
@@ -94,6 +96,8 @@ func (i *InfluxAlert) AlertLevel() alertstore.AlertLevel {
 }
 
 func (i *InfluxAlert) AlertState() alertstore.AlertState {
+	log.Printf("_time: %v", i.Time)
+	log.Printf("_sensor_timestamp: %v", time.Unix(0, int64(i.SensorTimestamp)))
 	t := time.Unix(0, int64(i.SourceTimestamp))
 	return alertstore.AlertState{
 		Time:  t,
@@ -148,7 +152,7 @@ func (i *Influx) Close() error {
 }
 
 func (i *Influx) CreateAlertRule(ar alertstore.AlertRule) (string, error) {
-	check, err := i.createCheck(ar)
+	check, err := i.domainCheck(ar)
 	if err != nil {
 		return "", err
 	}
@@ -159,36 +163,48 @@ func (i *Influx) CreateAlertRule(ar alertstore.AlertRule) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("createCheck: %v", err)
 	}
+	return i.getAlertId(nc)
+}
 
-	var alertId, taskId string
-	if nc.Type() == "threshold" {
-		tc, ok := nc.(*domain.ThresholdCheck)
-		if !ok {
-			return "", fmt.Errorf("invalid threshold check created")
-		}
-		alertId = *tc.CheckBase.Id
-		taskId = *tc.CheckBase.TaskID
-		task, err := i.getTask(taskId)
-		if err != nil {
-			return "", fmt.Errorf(
-				"getting task for alert %s, task: %s, error: %v", alertId, taskId, err)
-		}
-		task.Flux = i.fluxInjectQueryFieldValue(task.Flux, ar.QueryField)
-		if err = i.updateTask(task); err != nil {
-			return "", fmt.Errorf("updateTask: %v", err)
+func (i *Influx) getAlertId(check domain.Check) (alertId string, err error) {
+	if check.Type() == "threshold" {
+		if err = i.addCustomValuesToThreshold(); err != nil {
+			return alertId, fmt.Errorf("addCustomValuesToThreshold: %v", err)
 		}
 	} else {
-		dc, ok := nc.(*domain.DeadmanCheck)
+		dc, ok := check.(*domain.DeadmanCheck)
 		if !ok {
 			return "", fmt.Errorf("invalid deadman check created")
 		}
 		alertId = *dc.CheckBase.Id
 	}
-	return alertId, err
+	return alertId, nil
+}
+
+func (i *Influx) addCustomValuesToThreshold(check domain.Check, ar alertstore.AlertRule) error {
+	tc, ok := check.(*domain.ThresholdCheck)
+	if !ok {
+		return fmt.Errorf("invalid threshold check created")
+	}
+	taskId := *tc.CheckBase.TaskID
+	task, err := i.getTask(taskId)
+	if err != nil {
+		return fmt.Errorf(
+			"getting task: %s, error: %v", taskId, err)
+	}
+	customVals := []CustomCheckValue{
+		{customName: "_value", fluxValue: ar.QueryField},
+		{customName: "_sensor_timestamp", fluxValue: "_time"},
+	}
+	task.Flux = i.addCustomCheckValue(task.Flux, customVals...)
+	if err = i.updateTask(task); err != nil {
+		return fmt.Errorf("updateTask: %v", err)
+	}
+	return nil
 }
 
 func (i *Influx) UpdateAlertRule(ar alertstore.AlertRule) error {
-	check, err := i.createCheck(ar)
+	check, err := i.domainCheck(ar)
 	if err != nil {
 		return err
 	}
@@ -196,11 +212,17 @@ func (i *Influx) UpdateAlertRule(ar alertstore.AlertRule) error {
 		CheckID: ar.AlertId,
 		Body:    check,
 	}
-	_, err = i.client.APIClient().PutChecksID(ctx, &updateParams)
-	return err
+	check, err = i.client.APIClient().PutChecksID(ctx, &updateParams)
+	if err != nil {
+		return fmt.Errorf("PutChecks: %v", err)
+	}
+	if _, err = i.getAlertId(check); err != nil {
+		return fmt.Errorf("getAlertId: %v", err)
+	}
+	return nil
 }
 
-func (i *Influx) createCheck(ar alertstore.AlertRule) (domain.Check, error) {
+func (i *Influx) domainCheck(ar alertstore.AlertRule) (domain.Check, error) {
 	var check domain.Check
 	var err error
 	if ar.AlertType == alertstore.InactiveSensor {
@@ -302,18 +324,29 @@ func (i *Influx) getTask(taskId string) (*domain.Task, error) {
 	return dt, nil
 }
 
-func (i *Influx) fluxInjectQueryFieldValue(flux, queryField string) string {
-	mqf := fmt.Sprintf(MapQueryField, queryField)
+type CustomCheckValue struct {
+	customName string
+	fluxValue  string
+}
+
+func (c CustomCheckValue) String() string {
+	return fmt.Sprintf(CustomCheckFormat, c.customName, c.fluxValue)
+}
+
+func (i *Influx) addCustomCheckValue(flux string, customVals ...CustomCheckValue) string {
 	fluxSlice := strings.Split(flux, "\n")
 	slices.Reverse(fluxSlice)
-	for i, stmt := range fluxSlice {
-		if !strings.Contains(stmt, V1FieldAsCols) {
-			continue
+	newFlux := make([]string, 0, len(fluxSlice)+len(customVals))
+	for _, stmt := range fluxSlice {
+		if strings.Contains(stmt, V1FieldAsCols) {
+			for _, c := range customVals {
+				newFlux = append(newFlux, c.String())
+			}
 		}
-		fluxSlice = slices.Insert(fluxSlice, i, mqf)
+		newFlux = append(newFlux, stmt)
 	}
-	slices.Reverse(fluxSlice)
-	return strings.Join(fluxSlice, " ")
+	slices.Reverse(newFlux)
+	return strings.Join(newFlux, " ")
 }
 
 func (i *Influx) updateTask(task *domain.Task) error {
