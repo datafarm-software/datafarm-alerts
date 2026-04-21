@@ -39,6 +39,7 @@ var ZeroSeconds = "0s"
 var ctx context.Context
 var DontReportZero = false
 var DeadmanEveryMax = int64(5 * 60)
+var ThresholdEveryMax = int64(15 * 60)
 
 type EpochNano int64
 
@@ -483,7 +484,10 @@ func (i *Influx) createThresholdCheck(ar alertstore.AlertRule) (*domain.Threshol
 	default:
 		return nil, fmt.Errorf("unknown alert type: %d", ar.AlertType)
 	}
-
+	every, err := parseInterval(ar.Duration, ar.AlertType)
+	if err != nil {
+		return nil, fmt.Errorf("parseInterval: %v", err)
+	}
 	hydratedFlux := fmt.Sprintf(Flux, i.org, ar.DeviceId, ar.QueryField, ar.Duration)
 	check = domain.ThresholdCheck{
 		CheckBaseExtend: domain.CheckBaseExtend{
@@ -493,7 +497,7 @@ func (i *Influx) createThresholdCheck(ar alertstore.AlertRule) (*domain.Threshol
 				Query:  domain.DashboardQuery{Text: &hydratedFlux},
 				Status: domain.TaskStatusTypeActive,
 			},
-			Every:                 &ar.Duration,
+			Every:                 &every,
 			Offset:                &ZeroSeconds,
 			StatusMessageTemplate: &ThresholdStatusMessage,
 			Tags: &[]struct {
@@ -513,7 +517,7 @@ func (i *Influx) createDeadmanCheck(ar alertstore.AlertRule) (*domain.DeadmanChe
 	lc := domain.CheckStatusLevelCRIT
 	hydratedFlux := fmt.Sprintf(Flux, i.org, ar.DeviceId, ar.QueryField, ar.Duration)
 	hydratedStatusMessage := fmt.Sprintf(DeadmanStatusMessage, ar.Duration)
-	every, err := parseEveryInterval(ar.Duration)
+	every, err := parseInterval(ar.Duration, ar.AlertType)
 	if err != nil {
 		return nil, err
 	}
@@ -550,7 +554,7 @@ func (i *Influx) createDeadmanCheck(ar alertstore.AlertRule) (*domain.DeadmanChe
 	return &check, nil
 }
 
-func parseEveryInterval(duration string) (string, error) {
+func parseInterval(duration string, t alertstore.AlertType) (string, error) {
 	unit := duration[len(duration)-1]
 	timeDuration := duration[:len(duration)-1]
 	tdInt, err := strconv.Atoi(timeDuration)
@@ -565,16 +569,24 @@ func parseEveryInterval(duration string) (string, error) {
 	case 'm':
 		everySeconds = int64(tdInt * 60)
 	case 'h':
-		everySeconds = int64(tdInt * 3600)
+		everySeconds = int64(tdInt * 60 * 60)
 	case 'd':
-		everySeconds = int64(tdInt * 86400)
+		everySeconds = int64(tdInt * 24 * 60 * 60)
+	case 'w':
+		everySeconds = int64(tdInt * 7 * 24 * 60 * 60)
 	default:
 		return "", fmt.Errorf("unknown relative time unit: %c", unit)
 	}
 	everyInt := max(int64(everySeconds/2), 1)
 	every := fmt.Sprintf("%ds", everyInt)
-	if everyInt >= DeadmanEveryMax {
-		every = "5m"
+	if t == alertstore.InactiveSensor {
+		if everyInt >= DeadmanEveryMax {
+			every = "5m"
+		}
+	} else {
+		if everyInt >= ThresholdEveryMax {
+			every = "15m"
+		}
 	}
 	return every, nil
 }
