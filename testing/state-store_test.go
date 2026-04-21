@@ -237,7 +237,7 @@ func TestRespondToAlert(t *testing.T) {
 				Level:           "crit",
 				Name:            RegisteredAlertName,
 				Value:           NewValue,
-				SourceTimestamp: alertsource.EpochNano(AfterDuration.UnixNano()),
+				SensorTimestamp: AfterDuration,
 				DeviceId:        RegisteredDeviceId,
 				QueryField:      RegisteredQueryField,
 			},
@@ -307,7 +307,7 @@ func TestRespondToAlert(t *testing.T) {
 				Name:            RegisteredAlertName,
 				Level:           "crit",
 				Value:           NewValue,
-				SourceTimestamp: alertsource.EpochNano(WithinDuration.UnixNano()),
+				SensorTimestamp: WithinDuration,
 				DeviceId:        RegisteredDeviceId,
 				QueryField:      RegisteredQueryField,
 			},
@@ -371,7 +371,7 @@ func TestRespondToAlert(t *testing.T) {
 				Name:            RegisteredAlertName,
 				Level:           "warn",
 				Value:           NewValue,
-				SourceTimestamp: alertsource.EpochNano(WithinDuration.UnixNano()),
+				SensorTimestamp: WithinDuration,
 				DeviceId:        RegisteredDeviceId,
 				QueryField:      RegisteredQueryField,
 			},
@@ -435,7 +435,7 @@ func TestRespondToAlert(t *testing.T) {
 				Name:            RegisteredAlertName,
 				Level:           "ok",
 				Value:           NewValue,
-				SourceTimestamp: alertsource.EpochNano(WithinDuration.UnixNano()),
+				SensorTimestamp: WithinDuration,
 				DeviceId:        RegisteredDeviceId,
 				QueryField:      RegisteredQueryField,
 			},
@@ -524,7 +524,7 @@ func TestRespondToAlert(t *testing.T) {
 				Level:           "crit",
 				Value:           NewValue,
 				Name:            RegisteredAlertName,
-				SourceTimestamp: alertsource.EpochNano(WithinDuration.UnixNano()),
+				SensorTimestamp: WithinDuration,
 				DeviceId:        RegisteredDeviceId,
 				QueryField:      RegisteredQueryField,
 			},
@@ -619,7 +619,7 @@ func TestRespondToAlert(t *testing.T) {
 				Level:           "warn",
 				Value:           NewValue,
 				Name:            RegisteredAlertName,
-				SourceTimestamp: alertsource.EpochNano(WithinDuration.UnixNano()),
+				SensorTimestamp: WithinDuration,
 				DeviceId:        RegisteredDeviceId,
 				QueryField:      RegisteredQueryField,
 			},
@@ -714,7 +714,7 @@ func TestRespondToAlert(t *testing.T) {
 				Level:           "crit",
 				Value:           NewValue,
 				Name:            RegisteredAlertName,
-				SourceTimestamp: alertsource.EpochNano(WithinDuration.UnixNano()),
+				SensorTimestamp: WithinDuration,
 				DeviceId:        RegisteredDeviceId,
 				QueryField:      RegisteredQueryField,
 			},
@@ -873,7 +873,7 @@ func TestRespondToAlert(t *testing.T) {
 			},
 		},
 
-		"respond to first alert": {
+		"notification on first alert": {
 			wantStatus: http.StatusNoContent,
 			wantUserInboxes: notifier.Schema{
 				DeletedAlerts: map[string][]notifier.AlertDeleted{},
@@ -923,7 +923,7 @@ func TestRespondToAlert(t *testing.T) {
 				Level:           "crit",
 				Value:           NewValue,
 				Name:            RegisteredAlertName,
-				SourceTimestamp: alertsource.EpochNano(AfterDuration.UnixNano()),
+				SensorTimestamp: AfterDuration,
 				DeviceId:        RegisteredDeviceId,
 				QueryField:      RegisteredQueryField,
 			},
@@ -952,9 +952,76 @@ func TestRespondToAlert(t *testing.T) {
 					{
 						Id:       AlertId,
 						Value:    NewValue,
-						Time:     AlertReceived.Add(SomeDuration).Add(1 * time.Hour),
+						Time:     AfterDuration,
 						Duration: SomeDuration,
 						Level:    alertstore.Crit,
+					},
+				},
+			},
+		},
+		"no notification first alert": {
+			wantStatus:      http.StatusNoContent,
+			wantUserInboxes: EmptyInboxes,
+			mockAlertStore: alertstore.Schema{
+				AlertRecipients: []alertstore.AlertRecipient{
+					{AlertId: AlertId, Email: UserEmail},
+				},
+				DeviceAlerts: []alertstore.DeviceAlertRule{
+					{
+						DeviceId:   RegisteredDeviceId,
+						QueryField: RegisteredQueryField,
+						AlertId:    AlertId,
+					},
+				},
+				AlertRules: []alertstore.StoredAlertRule{
+					{
+						AlertId:     AlertId,
+						Duration:    "24h",
+						RangeValues: []float32{OldValue},
+						Name:        RegisteredAlertName,
+						AlertType:   alertstore.GreaterThan,
+						AlertLevel:  alertstore.Crit,
+					},
+				},
+				AlertStates: []alertstore.AlertState{},
+			},
+			alert: alertsource.InfluxAlert{
+				Id:              AlertId,
+				Level:           "ok",
+				Value:           NewValue,
+				Name:            RegisteredAlertName,
+				SensorTimestamp: AfterDuration,
+				DeviceId:        RegisteredDeviceId,
+				QueryField:      RegisteredQueryField,
+			},
+			wantAlertStore: alertstore.Schema{
+				AlertRecipients: []alertstore.AlertRecipient{
+					{AlertId: AlertId, Email: UserEmail},
+				},
+				DeviceAlerts: []alertstore.DeviceAlertRule{
+					{
+						DeviceId:   RegisteredDeviceId,
+						QueryField: RegisteredQueryField,
+						AlertId:    AlertId,
+					},
+				},
+				AlertRules: []alertstore.StoredAlertRule{
+					{
+						AlertId:     AlertId,
+						Duration:    "24h",
+						RangeValues: []float32{OldValue},
+						Name:        RegisteredAlertName,
+						AlertType:   alertstore.GreaterThan,
+						AlertLevel:  alertstore.Crit,
+					},
+				},
+				AlertStates: []alertstore.AlertState{
+					{
+						Id:       AlertId,
+						Value:    NewValue,
+						Time:     AfterDuration,
+						Duration: SomeDuration,
+						Level:    alertstore.Ok,
 					},
 				},
 			},

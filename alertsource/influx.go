@@ -3,7 +3,6 @@ package alertsource
 import (
 	"bytes"
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"net/url"
@@ -41,22 +40,6 @@ var DontReportZero = false
 var DeadmanEveryMax = int64(5 * 60)
 var ThresholdEveryMax = int64(15 * 60)
 
-type EpochNano int64
-
-func (e *EpochNano) UnmarshalJSON(b []byte) error {
-	n := json.Number(strings.Trim(string(b), `"`))
-	if i, err := n.Int64(); err == nil {
-		*e = EpochNano(i)
-		return nil
-	}
-	f, err := n.Float64()
-	if err != nil {
-		return err
-	}
-	*e = EpochNano(int64(f))
-	return nil
-}
-
 type InfluxAlert struct {
 	Id                       string    `json:"_check_id" required:"true"`
 	Name                     string    `json:"_check_name"`
@@ -67,8 +50,8 @@ type InfluxAlert struct {
 	NotificationRuleId       string    `json:"_notification_rule_id"`
 	NotificationRuleName     string    `json:"_notification_rule_name"`
 	SourceMeasurement        string    `json:"_source_measurement"`
-	SourceTimestamp          EpochNano `json:"_source_timestamp"`
-	StatusTimestamp          EpochNano `json:"_status_timestamp"`
+	SourceTimestamp          int64     `json:"_source_timestamp"`
+	StatusTimestamp          int64     `json:"_status_timestamp"`
 	SensorTimestamp          time.Time `json:"_sensor_timestamp"`
 	Start                    string    `json:"_start"`
 	Stop                     string    `json:"_stop"`

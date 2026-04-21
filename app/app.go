@@ -49,7 +49,7 @@ func Start(opts Opts) error {
 	if err != nil {
 		return fmt.Errorf("init notifier: %v", err)
 	}
-	app.AlertStore, err = alertstore.NewGorm(alertstore.Production, "alerts")
+	app.AlertStore, err = alertstore.NewGorm(alertstore.Production, "alertstore/alerts")
 	if err != nil {
 		return fmt.Errorf("init alertstore: %v", err)
 	}
@@ -468,7 +468,8 @@ func (a *App) RespondToAlert(
 		return nil, huma.Error500InternalServerError("Internal error parsing the duration of the alert.")
 	}
 	shouldNotify := a.ShouldNotify(alert, previousAlert)
-	if shouldNotify || alert.Level != previousAlert.Level {
+	if shouldNotify || alert.Level != previousAlert.Level || alert.Level == alertstore.Ok {
+		//NOTE: not intended to update state with every alert that comes in, for the sake of comparing durations between alerts sent, with some edge cases around that like the first alert coming in etc.
 		if err = a.AlertStore.UpdateAlertState(alert); err != nil {
 			log.Printf("updating alert state for id: %s, err: %v", alert.Id, err)
 			return nil, huma.Error500InternalServerError("Internal error updating alert state.")
@@ -509,6 +510,9 @@ func (a *App) ShouldNotify(alert, previous alertstore.AlertState) bool {
 	}
 	emptyTime := time.Time{}
 	if alert.Time.Equal(emptyTime) {
+		return false
+	}
+	if previous.Time.Equal(emptyTime) {
 		return false
 	}
 	if alert.Time.Sub(previous.Time) >= alert.Duration {
