@@ -87,6 +87,7 @@ func (g *Gomail) generateEmails(
 		u.Username = cases.Title(language.English).String(emailParts[0])
 		switch t := message.(type) {
 		case AlertNotification:
+			t.Timestamp = t.Timestamp.Local()
 			email.subject = fmt.Sprintf("%s, Level: %s",
 				t.Name, alertstore.AlertLevelString[t.AlertLevel])
 			tmplName = templates.AlertNotificationTempl
