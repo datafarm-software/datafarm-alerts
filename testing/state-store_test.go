@@ -3881,7 +3881,6 @@ func TestRemoveUsersFromAlertRule(t *testing.T) {
 		},
 
 		"remove last email from alert, so delete alert": {
-			wantErr: true,
 			mockAlertStore: alertstore.Schema{
 				DeviceAlerts: []alertstore.DeviceAlertRule{
 					{
@@ -3934,7 +3933,6 @@ func TestRemoveUsersFromAlertRule(t *testing.T) {
 		},
 
 		"remove last email from alert among other unknown emails, so delete alert": {
-			wantErr: true,
 			mockAlertStore: alertstore.Schema{
 				DeviceAlerts: []alertstore.DeviceAlertRule{
 					{
@@ -4052,12 +4050,14 @@ func TestRemoveUsersFromAlertRule(t *testing.T) {
 				if diff := cmp.Diff(tc.wantAlertStore, a.AlertStore.GetSnapshot()); diff != "" {
 					t.Fatalf("alertStore mismatch (-want +got):\n%s", diff)
 				}
-				var mu alertstore.MutateAlertUsersResponse
-				body := resp.Body.Bytes()
-				err = json.Unmarshal(body, &mu)
-				require.Nil(t, err)
-				if diff := cmp.Diff(tc.emailsToRemove, mu.EmailAddresses); diff != "" {
-					t.Fatalf("emails mismatch (-want +got):\n%s", diff)
+				if tc.wantStatus != http.StatusNoContent {
+					var mu alertstore.MutateAlertUsersResponse
+					body := resp.Body.Bytes()
+					err = json.Unmarshal(body, &mu)
+					require.Nil(t, err)
+					if diff := cmp.Diff(tc.emailsToRemove, mu.EmailAddresses); diff != "" {
+						t.Fatalf("emails mismatch (-want +got):\n%s", diff)
+					}
 				}
 				alertsCount := a.AlertSource.GetSnapshot()
 				if tc.wantAlertSourceCount != alertsCount {
