@@ -907,37 +907,25 @@ func (a *App) RemoveUsersFromAlertRule(ctx context.Context, in *struct {
 		}
 	}
 	emailsToDelete := make([]string, 0, len(in.Body))
-	//NOTE: what to do with unknown emails?
-	unknownEmails := make([]string, 0, len(in.Body))
 	for _, email := range in.Body {
 		if slices.Contains(ar.EmailAddresses, email) {
 			emailsToDelete = append(emailsToDelete, email)
-		} else {
-			unknownEmails = append(unknownEmails, email)
 		}
 	}
-	slices.Sort(emailsToDelete)
-	slices.Sort(ar.EmailAddresses)
-	shouldDeleteAlertRule := slices.Equal(emailsToDelete, ar.EmailAddresses)
+	emailsToDelete = removeDuplicates(emailsToDelete)
+	shouldDeleteAlertRule := (len(ar.EmailAddresses) == len(emailsToDelete))
 	if shouldDeleteAlertRule {
-		if err = a.AlertSource.DeleteAlertRule(in.AlertId); err != nil {
+		if _, err := a.DeleteAlertRule(ctx, &struct {
+			AlertId string `path:"alertId"`
+		}{in.AlertId}); err != nil {
 			return nil, huma.Error500InternalServerError(
-				"Internal error while deleting empty alert rule from source.")
-		}
-		if err = a.AlertStore.DeleteAlertState(in.AlertId); err != nil {
-			return nil, huma.Error500InternalServerError(
-				"Internal error while deleting empty alert rule state.")
-		}
-		if _, err = a.AlertStore.DeleteAlertRule(in.AlertId); err != nil {
-			return nil, huma.Error500InternalServerError(
-				"Internal error while deleting empty alert rule.")
+				"Internal error deleting alert rule.")
 		}
 		return &struct {
 			Status int
 			Body   alertstore.MutateAlertUsersResponse
 		}{Status: http.StatusNoContent}, nil
 	}
-	uniqueEmails := removeDuplicates(emailsToDelete)
 	ars := a.ConvertToRecipients(in.AlertId, emailsToDelete)
 	err = a.AlertStore.RemoveUsersFromAlertRule(ars)
 	if err != nil {
@@ -953,13 +941,13 @@ func (a *App) RemoveUsersFromAlertRule(ctx context.Context, in *struct {
 		AlertType:   ar.AlertType,
 		AlertValues: ar.RangeValues,
 	}
-	users := make([]auth.UserInfo, 0, len(uniqueEmails))
-	for _, e := range uniqueEmails {
+	users := make([]auth.UserInfo, 0, len(emailsToDelete))
+	for _, e := range emailsToDelete {
 		users = append(users, auth.UserInfo{EmailAddress: e})
 	}
 	if len(users) > 0 {
 		if err = a.Notifier.Notify(message, a.Templater, users...); err != nil {
-			log.Printf("alertDeletedNotify: %v", err)
+			log.Printf("remove users from alert notify: %v", err)
 			return nil, huma.Error500InternalServerError(
 				"Internal error notifying users unregistered from alert.")
 		}

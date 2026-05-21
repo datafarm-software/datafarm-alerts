@@ -3745,7 +3745,6 @@ func TestRemoveUsersFromAlertRule(t *testing.T) {
 	}{
 
 		"remove 1 email from alert rule": {
-			wantErr: false,
 			mockAlertStore: alertstore.Schema{
 				DeviceAlerts: []alertstore.DeviceAlertRule{
 					{
@@ -3826,7 +3825,6 @@ func TestRemoveUsersFromAlertRule(t *testing.T) {
 		},
 
 		"try to remove email that isnt attached to the alert": {
-			wantErr: false,
 			mockAlertStore: alertstore.Schema{
 				DeviceAlerts: []alertstore.DeviceAlertRule{
 					{
