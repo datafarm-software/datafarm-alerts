@@ -778,7 +778,7 @@ func (a *App) GetAlertRule(
 		if !errors.Is(err, alertstore.NoAlert) {
 			log.Printf("GetAlertRule(%s): %v", in.AlertId, err)
 			return nil, huma.Error500InternalServerError(
-				"Unexpected area retrieving alert.")
+				"Internal error retrieving alert.")
 		}
 		return nil, huma.Error404NotFound("No alert rule found.")
 	}

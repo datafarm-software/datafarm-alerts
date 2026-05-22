@@ -157,7 +157,9 @@ func (g *Gorm) GetAlertState(alertId string) (AlertState, error) {
 func (g *Gorm) GetAlertRule(alertId string) (AlertRule, error) {
 	var ar AlertRule
 	ar.AlertId = alertId
-	db := g.db.Table("alert_rule_view").
+	db := g.db.
+		Model(&AlertRule{}).
+		Table("alert_rule_view").
 		Where("alert_id = ?", alertId).
 		Take(&ar)
 	if db.Error != nil {
