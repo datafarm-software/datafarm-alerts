@@ -3440,6 +3440,7 @@ func TestGetAlertRule(t *testing.T) {
 				AlertLevel:     alertstore.Warn,
 			},
 		},
+
 		"successfully get a stored inactive sensor alert": {
 			wantErr:    false,
 			wantStatus: http.StatusOK,
@@ -3476,12 +3477,69 @@ func TestGetAlertRule(t *testing.T) {
 				AlertLevel:     alertstore.Crit,
 			},
 		},
+
 		"alert doesn't exist": {
 			wantErr:        true,
 			want:           alertstore.AlertRule{},
 			wantStatus:     404,
 			alertId:        "alert2",
 			mockAlertStore: alertstore.Schema{},
+		},
+
+		"successfully get a stored threshold alert with a linear calibration": {
+			wantErr:    false,
+			wantStatus: http.StatusOK,
+			alertId:    AlertId,
+			mockAlertStore: alertstore.Schema{
+				AlertRecipients: []alertstore.AlertRecipient{
+					{AlertId: AlertId, Email: UserEmail},
+				},
+				DeviceAlerts: []alertstore.DeviceAlertRule{
+					{
+						DeviceId:   RegisteredDeviceId,
+						QueryField: RegisteredQueryField,
+						AlertId:    AlertId,
+					},
+				},
+				AlertRules: []alertstore.StoredAlertRule{
+					{
+						AlertId:     AlertId,
+						Name:        RegisteredAlertName,
+						Duration:    "24h",
+						RangeValues: []float32{10, 20},
+						AlertType:   alertstore.Range,
+						AlertLevel:  alertstore.Warn,
+					},
+				},
+				LinearCalibrations: []alertstore.StoredLinearCalibration{
+					{
+						AlertId: AlertId,
+						LinearCalibration: alertstore.LinearCalibration{
+							RawMin: 0,
+							RawMax: 1,
+							CalMin: 0,
+							CalMax: 1,
+						},
+					},
+				},
+			},
+			want: alertstore.AlertRule{
+				AlertId:        AlertId,
+				Name:           RegisteredAlertName,
+				EmailAddresses: []string{UserEmail},
+				RangeValues:    []float32{10, 20},
+				Duration:       "24h",
+				DeviceId:       RegisteredDeviceId,
+				QueryField:     RegisteredQueryField,
+				AlertType:      alertstore.Range,
+				AlertLevel:     alertstore.Warn,
+				LinearCalibration: &alertstore.LinearCalibration{
+					RawMin: 0,
+					RawMax: 1,
+					CalMin: 0,
+					CalMax: 1,
+				},
+			},
 		},
 	}
 
