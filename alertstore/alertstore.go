@@ -118,7 +118,7 @@ type AlertRule struct {
 	QueryField        string             `json:"queryField" pattern:"^[a-zA-Z0-9_]+$" doc:"The field on the device, for which data should be checked."`
 	AlertType         AlertType          `json:"alertType" maximum:"3" doc:"Specify type of check to perform. 0 = Less Than, 1 = Greater Than, 2 = Range, 3 = Inactive Sensor Check."`
 	AlertLevel        AlertLevel         `json:"alertLevel" minimum:"1" maximum:"2" doc:"Specify the alert level to notify. 1 = WARN, 2 = CRIT"`
-	LinearCalibration *LinearCalibration `json:"linearCalibration" gorm:"embedded" doc:"If provided, the alert will scale the specified device's data accordingly. It is assumed that the AlertRule RangeValues are  already on the calibrated level."`
+	LinearCalibration *LinearCalibration `json:"linearCalibration" gorm:"embedded" required:"false" doc:"If provided, the alert will scale the specified device's data accordingly. It is assumed that the AlertRule RangeValues are  already on the calibrated level."`
 }
 
 type CreatedRule struct {
@@ -167,10 +167,10 @@ func ParseDuration(d string) (time.Duration, error) {
 
 type LinearCalibration struct {
 	AlertId string  `gorm:"primaryKey;unique;not null;check:length(alert_id)>0" json:"alertId"`
-	RawMin  float32 `gorm:"column:lc_raw_min" json:"raw-min"`
-	RawMax  float32 `gorm:"column:lc_raw_max" json:"raw-max"`
-	CalMin  float32 `gorm:"column:lc_cal_min" json:"cal-min"`
-	CalMax  float32 `gorm:"column:lc_cal_max" json:"cal-max"`
+	RawMin  float32 `gorm:"raw_min,column:lc_raw_min" json:"raw-min"`
+	RawMax  float32 `gorm:"raw_max,column:lc_raw_max" json:"raw-max"`
+	CalMin  float32 `gorm:"cal_min,column:lc_cal_min" json:"cal-min"`
+	CalMax  float32 `gorm:"cal_max,column:lc_cal_max" json:"cal-max"`
 }
 
 func (l LinearCalibration) MarshalBinary() (data []byte, err error) {

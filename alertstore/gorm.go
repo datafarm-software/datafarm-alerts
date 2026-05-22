@@ -82,7 +82,7 @@ func (g *Gorm) PrepareDb(dbRecord Schema) error {
 			lc.cal_max AS lc_cal_max,
 			json_group_array(ar.email) AS email_addresses
 		FROM stored_alert_rules sar
-		LEFT JOIN linear_calbrations lc
+		LEFT JOIN linear_calibrations lc
 		    ON lc.alert_id = sar.alert_id
 		LEFT JOIN device_alert_rules dar
 			ON dar.alert_id = sar.alert_id
