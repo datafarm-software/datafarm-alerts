@@ -1965,7 +1965,7 @@ func TestCreateAlertRule(t *testing.T) {
 							AlertType:   alertstore.LessThan,
 							AlertValues: []float32{5},
 							Condition:   LessThanFive,
-							LinearCalibration: &alertstore.LinearCalibration{
+							LinearCalibration: alertstore.LinearCalibration{
 								RawMin: 0,
 								RawMax: 1,
 								CalMin: 0,
@@ -1984,7 +1984,7 @@ func TestCreateAlertRule(t *testing.T) {
 				QueryField:     "temperature",
 				AlertType:      alertstore.LessThan,
 				AlertLevel:     alertstore.Warn,
-				LinearCalibration: &alertstore.LinearCalibration{
+				LinearCalibration: alertstore.LinearCalibration{
 					RawMin: 0,
 					RawMax: 1,
 					CalMin: 0,
@@ -3533,7 +3533,7 @@ func TestGetAlertRule(t *testing.T) {
 				QueryField:     RegisteredQueryField,
 				AlertType:      alertstore.Range,
 				AlertLevel:     alertstore.Warn,
-				LinearCalibration: &alertstore.LinearCalibration{
+				LinearCalibration: alertstore.LinearCalibration{
 					RawMin: 0,
 					RawMax: 1,
 					CalMin: 0,
