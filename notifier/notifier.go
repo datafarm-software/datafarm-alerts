@@ -52,14 +52,15 @@ func (a AlertNotification) String(username string) (string, error) {
 }
 
 type AlertCreated struct {
-	Name        string
-	DeviceId    string
-	QueryField  string
-	Duration    string
-	AlertLevel  alertstore.AlertLevel
-	AlertType   alertstore.AlertType
-	AlertValues []float32
-	Condition   string
+	Name              string
+	DeviceId          string
+	QueryField        string
+	Duration          string
+	AlertLevel        alertstore.AlertLevel
+	AlertType         alertstore.AlertType
+	AlertValues       []float32
+	Condition         string
+	LinearCalibration *alertstore.LinearCalibration
 }
 
 func (a AlertCreated) String(username string) (string, error) {

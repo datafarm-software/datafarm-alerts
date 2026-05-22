@@ -1,6 +1,7 @@
 package alertstore
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"strconv"
@@ -69,10 +70,11 @@ type AlertStore interface {
 }
 
 type Schema struct {
-	DeviceAlerts    []DeviceAlertRule
-	AlertRecipients []AlertRecipient
-	AlertStates     []AlertState
-	AlertRules      []StoredAlertRule
+	DeviceAlerts       []DeviceAlertRule
+	AlertRecipients    []AlertRecipient
+	AlertStates        []AlertState
+	AlertRules         []StoredAlertRule
+	LinearCalibrations []LinearCalibration
 }
 
 type DeviceAlertRule struct {
@@ -107,15 +109,16 @@ type StoredAlertRule struct {
 
 // NOTE: AlertRule never gets stored in the database. A read-only view is created from the normalized schema, which can return an instance of AlertRule. So the gorm tags are for serializing into memory only.
 type AlertRule struct {
-	AlertId        string     `json:"alertId" doc:"Alert Id."`
-	EmailAddresses []string   `gorm:"serializer:json" json:"emailAddresses" minItems:"1" format:"email" doc:"List of email addresses to notify in the event of the alert. If updated, new list will replace old one as an overwrite."`
-	RangeValues    []float32  `gorm:"serializer:json" json:"rangeValues" maxItems:"2" doc:"One or two values, depending on whether the alertRange is a range or < >"`
-	Name           string     `json:"name" pattern:"^[a-zA-Z0-9:, ]+$" doc:"The name of the alert. For easier recognition."`
-	Duration       string     `json:"duration" pattern:"^[0-9]{1,2}[mhdw]$" doc:"A duration literal, specifying how often a check should occur."`
-	DeviceId       string     `json:"deviceId" pattern:"^[a-zA-Z0-9]+$" doc:"The device for which data should be checked."`
-	QueryField     string     `json:"queryField" pattern:"^[a-zA-Z0-9_]+$" doc:"The field on the device, for which data should be checked."`
-	AlertType      AlertType  `json:"alertType" maximum:"3" doc:"Specify type of check to perform. 0 = Less Than, 1 = Greater Than, 2 = Range, 3 = Inactive Sensor Check."`
-	AlertLevel     AlertLevel `json:"alertLevel" minimum:"1" maximum:"2" doc:"Specify the alert level to notify. 1 = WARN, 2 = CRIT"`
+	AlertId           string             `json:"alertId" doc:"Alert Id."`
+	EmailAddresses    []string           `gorm:"serializer:json" json:"emailAddresses" minItems:"1" format:"email" doc:"List of email addresses to notify in the event of the alert. If updated, new list will replace old one as an overwrite."`
+	RangeValues       []float32          `gorm:"serializer:json" json:"rangeValues" maxItems:"2" doc:"One or two values, depending on whether the alertRange is a range or < >"`
+	Name              string             `json:"name" pattern:"^[a-zA-Z0-9:, ]+$" doc:"The name of the alert. For easier recognition."`
+	Duration          string             `json:"duration" pattern:"^[0-9]{1,2}[mhdw]$" doc:"A duration literal, specifying how often a check should occur."`
+	DeviceId          string             `json:"deviceId" pattern:"^[a-zA-Z0-9]+$" doc:"The device for which data should be checked."`
+	QueryField        string             `json:"queryField" pattern:"^[a-zA-Z0-9_]+$" doc:"The field on the device, for which data should be checked."`
+	AlertType         AlertType          `json:"alertType" maximum:"3" doc:"Specify type of check to perform. 0 = Less Than, 1 = Greater Than, 2 = Range, 3 = Inactive Sensor Check."`
+	AlertLevel        AlertLevel         `json:"alertLevel" minimum:"1" maximum:"2" doc:"Specify the alert level to notify. 1 = WARN, 2 = CRIT"`
+	LinearCalibration *LinearCalibration `json:"linearCalibration" gorm:"embedded" doc:"If provided, the alert will scale the specified device's data accordingly. It is assumed that the AlertRule RangeValues are  already on the calibrated level."`
 }
 
 type CreatedRule struct {
@@ -160,4 +163,36 @@ func ParseDuration(d string) (time.Duration, error) {
 		return InvalidDuration, fmt.Errorf("unknown period selector: %s", string(period))
 	}
 	return duration, nil
+}
+
+type LinearCalibration struct {
+	AlertId string  `gorm:"primaryKey;unique;not null;check:length(alert_id)>0" json:"alertId"`
+	RawMin  float32 `gorm:"column:lc_raw_min" json:"raw-min"`
+	RawMax  float32 `gorm:"column:lc_raw_max" json:"raw-max"`
+	CalMin  float32 `gorm:"column:lc_cal_min" json:"cal-min"`
+	CalMax  float32 `gorm:"column:lc_cal_max" json:"cal-max"`
+}
+
+func (l LinearCalibration) MarshalBinary() (data []byte, err error) {
+	return json.Marshal(l)
+}
+
+func (l *LinearCalibration) UnmarshalBinary(data []byte) error {
+	return json.Unmarshal(data, l)
+}
+
+// Converts a raw sensor value into a calibrated value.
+func (c LinearCalibration) ToCalibrated(raw float32) float32 {
+	return ((raw - c.RawMin) *
+		(c.CalMax - c.CalMin) /
+		(c.RawMax - c.RawMin)) +
+		c.CalMin
+}
+
+// Converts a calibrated value back into the raw sensor value.
+func (c LinearCalibration) ToRaw(cal float32) float32 {
+	return ((cal - c.CalMin) *
+		(c.RawMax - c.RawMin) /
+		(c.CalMax - c.CalMin)) +
+		c.RawMin
 }

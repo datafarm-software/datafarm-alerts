@@ -1907,6 +1907,92 @@ func TestCreateAlertRule(t *testing.T) {
 				AlertId: AlertId,
 			},
 		},
+
+		"create a warning level alert rule with a linear calibration": {
+			wantErr:              false,
+			wantStatus:           http.StatusOK,
+			wantAlertSourceCount: 1,
+			mockAlertStore: alertstore.Schema{
+				DeviceAlerts:       []alertstore.DeviceAlertRule{},
+				AlertRecipients:    []alertstore.AlertRecipient{},
+				AlertStates:        []alertstore.AlertState{},
+				AlertRules:         []alertstore.StoredAlertRule{},
+				LinearCalibrations: []alertstore.LinearCalibration{},
+			},
+			wantAlertStore: alertstore.Schema{
+				AlertRecipients: []alertstore.AlertRecipient{
+					{AlertId: AlertId, Email: UserEmail},
+				},
+				DeviceAlerts: []alertstore.DeviceAlertRule{
+					{
+						DeviceId:   RegisteredDeviceId,
+						QueryField: RegisteredQueryField,
+						AlertId:    AlertId,
+					},
+				},
+				AlertRules: []alertstore.StoredAlertRule{
+					{
+						AlertId:     AlertId,
+						RangeValues: []float32{5},
+						Duration:    "24h",
+						AlertType:   alertstore.LessThan,
+						AlertLevel:  alertstore.Warn,
+					},
+				},
+				LinearCalibrations: []alertstore.LinearCalibration{
+					{
+						AlertId: AlertId,
+						RawMin:  0,
+						RawMax:  1,
+						CalMin:  0,
+						CalMax:  1,
+					},
+				},
+			},
+			wantUserInboxes: notifier.Schema{
+				DeletedAlerts: map[string][]notifier.AlertDeleted{},
+				Notifications: map[string][]notifier.AlertNotification{},
+				CreatedAlerts: map[string][]notifier.AlertCreated{
+					UserEmail: {
+						{
+							Name:        RegisteredAlertName,
+							DeviceId:    RegisteredDeviceId,
+							QueryField:  RegisteredQueryField,
+							Duration:    "24h",
+							AlertLevel:  alertstore.Warn,
+							AlertType:   alertstore.LessThan,
+							AlertValues: []float32{5},
+							Condition:   LessThanFive,
+							LinearCalibration: &alertstore.LinearCalibration{
+								RawMin: 0,
+								RawMax: 1,
+								CalMin: 0,
+								CalMax: 1,
+							},
+						},
+					},
+				},
+			},
+			alertRule: alertstore.AlertRule{
+				RangeValues:    []float32{5},
+				Name:           RegisteredAlertName,
+				Duration:       "24h",
+				EmailAddresses: []string{UserEmail},
+				DeviceId:       "device1",
+				QueryField:     "temperature",
+				AlertType:      alertstore.LessThan,
+				AlertLevel:     alertstore.Warn,
+				LinearCalibration: &alertstore.LinearCalibration{
+					RawMin: 0,
+					RawMax: 1,
+					CalMin: 0,
+					CalMax: 1,
+				},
+			},
+			wantResponse: alertstore.CreatedRule{
+				AlertId: AlertId,
+			},
+		},
 	}
 
 	var got alertstore.CreatedRule

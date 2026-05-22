@@ -61,6 +61,9 @@ func (g *Gorm) PrepareDb(dbRecord Schema) error {
 	if err = g.db.AutoMigrate(&StoredAlertRule{}); err != nil {
 		return err
 	}
+	if err = g.db.AutoMigrate(&LinearCalibration{}); err != nil {
+		return err
+	}
 	stmts := []string{
 		`DROP VIEW IF EXISTS alert_rule_view`,
 		`CREATE VIEW alert_rule_view AS
@@ -73,8 +76,14 @@ func (g *Gorm) PrepareDb(dbRecord Schema) error {
 			sar.duration,
 			sar.alert_type,
 			sar.alert_level,
+		    lc.raw_min AS lc_raw_min,
+			lc.raw_max AS lc_raw_max,
+			lc.cal_min AS lc_cal_min,
+			lc.cal_max AS lc_cal_max,
 			json_group_array(ar.email) AS email_addresses
 		FROM stored_alert_rules sar
+		LEFT JOIN linear_calbrations lc
+		    ON lc.alert_id = sar.alert_id
 		LEFT JOIN device_alert_rules dar
 			ON dar.alert_id = sar.alert_id
 		LEFT JOIN alert_recipients ar
