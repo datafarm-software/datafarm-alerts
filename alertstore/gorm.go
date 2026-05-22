@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log"
 	"os"
 
 	"github.com/glebarez/sqlite"
@@ -168,6 +169,8 @@ func (g *Gorm) GetAlertRule(alertId string) (AlertRule, error) {
 	if db.RowsAffected < 1 {
 		return ar, NoAlert
 	}
+	log.Printf("ar: %v\n", ar)
+	ar.LinearCalibration = ar.StoredLC.LinearCalibration
 	return ar, nil
 }
 
@@ -205,6 +208,10 @@ func (g *Gorm) StoreAlertRule(dbRecord Schema) error {
 		}
 		if err = gorm.G[StoredAlertRule](g.db).CreateInBatches(ctx,
 			&dbRecord.AlertRules, len(dbRecord.AlertRules)); err != nil {
+			return err
+		}
+		if err = gorm.G[StoredLinearCalibration](g.db).CreateInBatches(ctx,
+			&dbRecord.LinearCalibrations, len(dbRecord.LinearCalibrations)); err != nil {
 			return err
 		}
 		return nil
