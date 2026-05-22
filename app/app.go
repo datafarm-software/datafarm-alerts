@@ -585,9 +585,9 @@ func (a *App) CreateAlertRule(
 		},
 	}
 	if in.Body.LinearCalibration != nil {
-		in.Body.LinearCalibration.AlertId = alertId
 		dbRecord.LinearCalibrations = append(dbRecord.LinearCalibrations,
-			*in.Body.LinearCalibration)
+			alertstore.StoredLinearCalibration{
+				AlertId: alertId, LinearCalibration: *in.Body.LinearCalibration})
 	}
 	if err := a.AlertStore.StoreAlertRule(dbRecord); err != nil {
 		log.Printf("storing alert: %v", err)
@@ -601,6 +601,9 @@ func (a *App) CreateAlertRule(
 		AlertLevel:  in.Body.AlertLevel,
 		AlertType:   in.Body.AlertType,
 		AlertValues: in.Body.RangeValues,
+	}
+	if in.Body.LinearCalibration != nil {
+		alertCreated.LinearCalibration = in.Body.LinearCalibration
 	}
 	users := make([]auth.UserInfo, 0, len(uniqueEmails))
 	for _, e := range uniqueEmails {

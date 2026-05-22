@@ -61,7 +61,7 @@ func (g *Gorm) PrepareDb(dbRecord Schema) error {
 	if err = g.db.AutoMigrate(&StoredAlertRule{}); err != nil {
 		return err
 	}
-	if err = g.db.AutoMigrate(&LinearCalibration{}); err != nil {
+	if err = g.db.AutoMigrate(&StoredLinearCalibration{}); err != nil {
 		return err
 	}
 	stmts := []string{
@@ -82,7 +82,7 @@ func (g *Gorm) PrepareDb(dbRecord Schema) error {
 			lc.cal_max AS lc_cal_max,
 			json_group_array(ar.email) AS email_addresses
 		FROM stored_alert_rules sar
-		LEFT JOIN linear_calibrations lc
+		LEFT JOIN stored_linear_calibrations lc
 		    ON lc.alert_id = sar.alert_id
 		LEFT JOIN device_alert_rules dar
 			ON dar.alert_id = sar.alert_id

@@ -1917,7 +1917,7 @@ func TestCreateAlertRule(t *testing.T) {
 				AlertRecipients:    []alertstore.AlertRecipient{},
 				AlertStates:        []alertstore.AlertState{},
 				AlertRules:         []alertstore.StoredAlertRule{},
-				LinearCalibrations: []alertstore.LinearCalibration{},
+				LinearCalibrations: []alertstore.StoredLinearCalibration{},
 			},
 			wantAlertStore: alertstore.Schema{
 				AlertRecipients: []alertstore.AlertRecipient{
@@ -1939,13 +1939,15 @@ func TestCreateAlertRule(t *testing.T) {
 						AlertLevel:  alertstore.Warn,
 					},
 				},
-				LinearCalibrations: []alertstore.LinearCalibration{
+				LinearCalibrations: []alertstore.StoredLinearCalibration{
 					{
 						AlertId: AlertId,
-						RawMin:  0,
-						RawMax:  1,
-						CalMin:  0,
-						CalMax:  1,
+						LinearCalibration: alertstore.LinearCalibration{
+							RawMin: 0,
+							RawMax: 1,
+							CalMin: 0,
+							CalMax: 1,
+						},
 					},
 				},
 			},

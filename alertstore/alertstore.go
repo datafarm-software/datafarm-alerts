@@ -74,7 +74,7 @@ type Schema struct {
 	AlertRecipients    []AlertRecipient
 	AlertStates        []AlertState
 	AlertRules         []StoredAlertRule
-	LinearCalibrations []LinearCalibration
+	LinearCalibrations []StoredLinearCalibration
 }
 
 type DeviceAlertRule struct {
@@ -165,12 +165,16 @@ func ParseDuration(d string) (time.Duration, error) {
 	return duration, nil
 }
 
+type StoredLinearCalibration struct {
+	AlertId string `gorm:"primaryKey;unique;not null;check:length(alert_id)>0" json:"alertId"`
+	LinearCalibration
+}
+
 type LinearCalibration struct {
-	AlertId string  `gorm:"primaryKey;unique;not null;check:length(alert_id)>0" json:"alertId"`
-	RawMin  float32 `gorm:"raw_min,column:lc_raw_min" json:"raw-min"`
-	RawMax  float32 `gorm:"raw_max,column:lc_raw_max" json:"raw-max"`
-	CalMin  float32 `gorm:"cal_min,column:lc_cal_min" json:"cal-min"`
-	CalMax  float32 `gorm:"cal_max,column:lc_cal_max" json:"cal-max"`
+	RawMin float32 `gorm:"raw_min,column:lc_raw_min" json:"raw-min"`
+	RawMax float32 `gorm:"raw_max,column:lc_raw_max" json:"raw-max"`
+	CalMin float32 `gorm:"cal_min,column:lc_cal_min" json:"cal-min"`
+	CalMax float32 `gorm:"cal_max,column:lc_cal_max" json:"cal-max"`
 }
 
 func (l LinearCalibration) MarshalBinary() (data []byte, err error) {
