@@ -166,8 +166,8 @@ func ParseDuration(d string) (time.Duration, error) {
 }
 
 type StoredLinearCalibration struct {
-	AlertId           string `gorm:"primaryKey;unique;not null;check:length(alert_id)>0" json:"alertId"`
-	LinearCalibration `gorm:"embedded;embeddedPrefix:lc_"`
+	AlertId            string `gorm:"primaryKey;unique;not null;check:length(alert_id)>0" json:"alertId"`
+	*LinearCalibration `gorm:"embedded;embeddedPrefix:lc_"`
 }
 
 type LinearCalibration struct {

@@ -2049,7 +2049,7 @@ func TestCreateAlertRule(t *testing.T) {
 				LinearCalibrations: []alertstore.StoredLinearCalibration{
 					{
 						AlertId: AlertId,
-						LinearCalibration: alertstore.LinearCalibration{
+						LinearCalibration: &alertstore.LinearCalibration{
 							RawMin: 0,
 							RawMax: 1,
 							CalMin: 0,
@@ -2278,6 +2278,7 @@ func TestUpdateAlertRule(t *testing.T) {
 				},
 			},
 			wantAlertStore: alertstore.Schema{
+				LinearCalibrations: []alertstore.StoredLinearCalibration{},
 				AlertStates: []alertstore.AlertState{
 					{
 						Duration:    SomeDuration,
@@ -2352,7 +2353,8 @@ func TestUpdateAlertRule(t *testing.T) {
 				},
 			},
 			wantAlertStore: alertstore.Schema{
-				AlertStates: []alertstore.AlertState{},
+				LinearCalibrations: []alertstore.StoredLinearCalibration{},
+				AlertStates:        []alertstore.AlertState{},
 				AlertRecipients: []alertstore.AlertRecipient{
 					{AlertId: AlertId, Email: UserEmail},
 				},
@@ -2453,6 +2455,7 @@ func TestUpdateAlertRule(t *testing.T) {
 				},
 			},
 			wantAlertStore: alertstore.Schema{
+				LinearCalibrations: []alertstore.StoredLinearCalibration{},
 				AlertStates: []alertstore.AlertState{
 					{
 						Duration:    SomeDuration,
@@ -2569,6 +2572,7 @@ func TestUpdateAlertRule(t *testing.T) {
 				},
 			},
 			wantAlertStore: alertstore.Schema{
+				LinearCalibrations: []alertstore.StoredLinearCalibration{},
 				AlertRecipients: []alertstore.AlertRecipient{
 					{AlertId: AlertId, Email: UserEmail},
 				},
@@ -2656,6 +2660,7 @@ func TestUpdateAlertRule(t *testing.T) {
 				},
 			},
 			wantAlertStore: alertstore.Schema{
+				LinearCalibrations: []alertstore.StoredLinearCalibration{},
 				AlertStates: []alertstore.AlertState{
 					{
 						Duration:    SomeDuration,
@@ -2743,6 +2748,7 @@ func TestUpdateAlertRule(t *testing.T) {
 				},
 			},
 			wantAlertStore: alertstore.Schema{
+				LinearCalibrations: []alertstore.StoredLinearCalibration{},
 				AlertStates: []alertstore.AlertState{
 					{
 						Duration:    SomeDuration,
@@ -2769,6 +2775,116 @@ func TestUpdateAlertRule(t *testing.T) {
 						Duration:    "24h",
 						AlertType:   alertstore.LessThan,
 						AlertLevel:  alertstore.Crit,
+					},
+				},
+			},
+		},
+
+		"update alert to include a linear calibration": {
+			wantStatus:           http.StatusOK,
+			wantAlertSourceCount: 1,
+			alertId:              AlertId,
+			updatedAlertRule: alertstore.AlertRule{
+				Name:           RegisteredAlertName,
+				AlertId:        AlertId,
+				EmailAddresses: []string{UserEmail},
+				RangeValues:    []float32{10},
+				Duration:       "24h",
+				DeviceId:       RegisteredDeviceId,
+				QueryField:     RegisteredQueryField,
+				AlertType:      alertstore.LessThan,
+				AlertLevel:     alertstore.Crit,
+				LinearCalibration: &alertstore.LinearCalibration{
+					RawMin: 0,
+					RawMax: 1,
+					CalMin: 0,
+					CalMax: 2,
+				},
+			},
+			wantUserInboxes: notifier.Schema{
+				Notifications: map[string][]notifier.AlertNotification{},
+				DeletedAlerts: map[string][]notifier.AlertDeleted{},
+				CreatedAlerts: map[string][]notifier.AlertCreated{
+					UserEmail: {
+						{
+							Name:        RegisteredAlertName,
+							DeviceId:    RegisteredDeviceId,
+							QueryField:  RegisteredQueryField,
+							Duration:    "24h",
+							AlertLevel:  alertstore.Crit,
+							AlertType:   alertstore.GreaterThan,
+							AlertValues: []float32{10},
+							Condition:   GreaterThanTen,
+							LinearCalibration: &alertstore.LinearCalibration{
+								RawMin: 0,
+								RawMax: 1,
+								CalMin: 0,
+								CalMax: 2,
+							},
+						},
+					},
+				},
+			},
+			mockAlertStore: alertstore.Schema{
+				AlertRecipients: []alertstore.AlertRecipient{
+					{AlertId: AlertId, Email: UserEmail},
+				},
+				DeviceAlerts: []alertstore.DeviceAlertRule{
+					{
+						DeviceId:   RegisteredDeviceId,
+						QueryField: RegisteredQueryField,
+						AlertId:    AlertId,
+					},
+				},
+				AlertRules: []alertstore.StoredAlertRule{
+					{
+						AlertId:     AlertId,
+						Name:        RegisteredAlertName,
+						RangeValues: []float32{10},
+						Duration:    "24h",
+						AlertType:   alertstore.GreaterThan,
+						AlertLevel:  alertstore.Crit,
+					},
+				},
+			},
+			wantAlertStore: alertstore.Schema{
+				AlertStates: []alertstore.AlertState{
+					{
+						Duration:    SomeDuration,
+						RangeValues: []float32{10},
+						Id:          AlertId,
+						Level:       alertstore.Crit,
+					},
+				},
+				AlertRecipients: []alertstore.AlertRecipient{
+					{AlertId: AlertId, Email: UserEmail},
+				},
+				DeviceAlerts: []alertstore.DeviceAlertRule{
+					{
+						DeviceId:   RegisteredDeviceId,
+						QueryField: RegisteredQueryField,
+						AlertId:    AlertId,
+					},
+				},
+				AlertRules: []alertstore.StoredAlertRule{
+					{
+						AlertId:     AlertId,
+						Name:        RegisteredAlertName,
+						RangeValues: []float32{10},
+						Duration:    "24h",
+						AlertType:   alertstore.LessThan,
+						AlertLevel:  alertstore.Crit,
+					},
+				},
+				LinearCalibrations: []alertstore.StoredLinearCalibration{
+					{
+						AlertId: AlertId,
+						LinearCalibration: &alertstore.LinearCalibration{
+							RawMin: 0,
+							RawMax: 1,
+							CalMin: 0,
+							CalMax: 2,
+						},
 					},
 				},
 			},
@@ -2830,6 +2946,7 @@ func TestUpdateAlertRule(t *testing.T) {
 				},
 			},
 			wantAlertStore: alertstore.Schema{
+				LinearCalibrations: []alertstore.StoredLinearCalibration{},
 				AlertStates: []alertstore.AlertState{
 					{
 						Duration:    SomeDuration,
@@ -2900,6 +3017,7 @@ func TestUpdateAlertRule(t *testing.T) {
 				},
 			},
 			wantAlertStore: alertstore.Schema{
+				LinearCalibrations: []alertstore.StoredLinearCalibration{},
 				AlertRecipients: []alertstore.AlertRecipient{
 					{AlertId: AlertId, Email: UserEmail},
 				},
@@ -2962,6 +3080,7 @@ func TestUpdateAlertRule(t *testing.T) {
 				},
 			},
 			wantAlertStore: alertstore.Schema{
+				LinearCalibrations: []alertstore.StoredLinearCalibration{},
 				AlertRecipients: []alertstore.AlertRecipient{
 					{AlertId: AlertId, Email: UserEmail},
 				},
@@ -3099,6 +3218,7 @@ func TestUpdateAlertRule(t *testing.T) {
 				},
 			},
 			wantAlertStore: alertstore.Schema{
+				LinearCalibrations: []alertstore.StoredLinearCalibration{},
 				AlertStates: []alertstore.AlertState{
 					{
 						Duration: 48 * time.Hour,
@@ -3196,6 +3316,7 @@ func TestUpdateAlertRule(t *testing.T) {
 				},
 			},
 			wantAlertStore: alertstore.Schema{
+				LinearCalibrations: []alertstore.StoredLinearCalibration{},
 				AlertStates: []alertstore.AlertState{
 					{
 						Duration:    SomeDuration,
@@ -3284,6 +3405,7 @@ func TestUpdateAlertRule(t *testing.T) {
 				},
 			},
 			wantAlertStore: alertstore.Schema{
+				LinearCalibrations: []alertstore.StoredLinearCalibration{},
 				AlertStates: []alertstore.AlertState{
 					{
 						Duration:    SomeDuration,
@@ -3422,6 +3544,7 @@ func TestUpdateAlertRule(t *testing.T) {
 				},
 			},
 			wantAlertStore: alertstore.Schema{
+				LinearCalibrations: []alertstore.StoredLinearCalibration{},
 				AlertStates: []alertstore.AlertState{
 					{
 						Duration:    SomeDuration,
@@ -3624,7 +3747,7 @@ func TestGetAlertRule(t *testing.T) {
 				LinearCalibrations: []alertstore.StoredLinearCalibration{
 					{
 						AlertId: AlertId,
-						LinearCalibration: alertstore.LinearCalibration{
+						LinearCalibration: &alertstore.LinearCalibration{
 							RawMin: 0,
 							RawMax: 1,
 							CalMin: 0,

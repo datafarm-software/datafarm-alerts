@@ -602,7 +602,7 @@ func (a *App) CreateAlertRule(
 	if in.Body.LinearCalibration != nil {
 		dbRecord.LinearCalibrations = append(dbRecord.LinearCalibrations,
 			alertstore.StoredLinearCalibration{
-				AlertId: alertId, LinearCalibration: *in.Body.LinearCalibration})
+				AlertId: alertId, LinearCalibration: in.Body.LinearCalibration})
 	}
 	if err := a.AlertStore.Store(dbRecord); err != nil {
 		log.Printf("storing alert: %v", err)
