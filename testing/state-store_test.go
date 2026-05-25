@@ -3863,10 +3863,11 @@ func TestDeleteAlert(t *testing.T) {
 				},
 			},
 			wantAlertStore: alertstore.Schema{
-				DeviceAlerts:    []alertstore.DeviceAlertRule{},
-				AlertRecipients: []alertstore.AlertRecipient{},
-				AlertStates:     []alertstore.AlertState{},
-				AlertRules:      []alertstore.StoredAlertRule{},
+				DeviceAlerts:       []alertstore.DeviceAlertRule{},
+				AlertRecipients:    []alertstore.AlertRecipient{},
+				AlertStates:        []alertstore.AlertState{},
+				AlertRules:         []alertstore.StoredAlertRule{},
+				LinearCalibrations: []alertstore.StoredLinearCalibration{},
 			},
 			wantAlertRule: alertstore.AlertRule{
 				AlertId:        AlertId,
@@ -3878,6 +3879,95 @@ func TestDeleteAlert(t *testing.T) {
 				QueryField:     RegisteredQueryField,
 				AlertLevel:     alertstore.Crit,
 				AlertType:      alertstore.Range,
+			},
+		},
+
+		"delete an alert which includes a linear calibration": {
+			wantErr:    false,
+			wantStatus: http.StatusOK,
+			alertId:    AlertId,
+			wantUserInboxes: notifier.Schema{
+				CreatedAlerts: map[string][]notifier.AlertCreated{},
+				Notifications: map[string][]notifier.AlertNotification{},
+				DeletedAlerts: map[string][]notifier.AlertDeleted{
+					UserEmail: {
+						{
+							Name:        RegisteredAlertName,
+							DeviceId:    RegisteredDeviceId,
+							QueryField:  RegisteredQueryField,
+							Duration:    "24h",
+							AlertLevel:  alertstore.Crit,
+							AlertType:   alertstore.Range,
+							AlertValues: []float32{10, 20},
+							Condition:   RangeCondition,
+							LinearCalibration: &alertstore.LinearCalibration{
+								RawMin: 0,
+								RawMax: 1,
+								CalMin: 0,
+								CalMax: 5,
+							},
+						},
+					},
+				},
+			},
+			wantAlertSourceCount: 0,
+			mockAlertStore: alertstore.Schema{
+				AlertRecipients: []alertstore.AlertRecipient{
+					{AlertId: AlertId, Email: UserEmail},
+				},
+				DeviceAlerts: []alertstore.DeviceAlertRule{
+					{
+						DeviceId:   RegisteredDeviceId,
+						QueryField: RegisteredQueryField,
+						AlertId:    AlertId,
+					},
+				},
+				AlertRules: []alertstore.StoredAlertRule{
+					{
+						Name:        RegisteredAlertName,
+						AlertId:     AlertId,
+						Duration:    "24h",
+						RangeValues: []float32{10, 20},
+						AlertLevel:  alertstore.Crit,
+						AlertType:   alertstore.Range,
+					},
+				},
+				LinearCalibrations: []alertstore.StoredLinearCalibration{
+					{
+						AlertId: AlertId,
+						LinearCalibration: &alertstore.LinearCalibration{
+							RawMax: 1,
+							CalMax: 5,
+						},
+					},
+				},
+				AlertStates: []alertstore.AlertState{
+					{
+						Id: AlertId,
+					},
+				},
+			},
+			wantAlertStore: alertstore.Schema{
+				DeviceAlerts:       []alertstore.DeviceAlertRule{},
+				AlertRecipients:    []alertstore.AlertRecipient{},
+				AlertStates:        []alertstore.AlertState{},
+				AlertRules:         []alertstore.StoredAlertRule{},
+				LinearCalibrations: []alertstore.StoredLinearCalibration{},
+			},
+			wantAlertRule: alertstore.AlertRule{
+				AlertId:        AlertId,
+				Name:           RegisteredAlertName,
+				EmailAddresses: []string{UserEmail},
+				RangeValues:    []float32{10, 20},
+				Duration:       "24h",
+				DeviceId:       RegisteredDeviceId,
+				QueryField:     RegisteredQueryField,
+				AlertLevel:     alertstore.Crit,
+				AlertType:      alertstore.Range,
+				LinearCalibration: &alertstore.LinearCalibration{
+					RawMax: 1,
+					CalMax: 5,
+				},
 			},
 		},
 
@@ -3949,6 +4039,7 @@ func TestDeleteAlert(t *testing.T) {
 				},
 			},
 			wantAlertStore: alertstore.Schema{
+				LinearCalibrations: []alertstore.StoredLinearCalibration{},
 				AlertRecipients: []alertstore.AlertRecipient{
 					{AlertId: AlertId, Email: UserEmail},
 				},
@@ -4037,10 +4128,11 @@ func TestDeleteAlert(t *testing.T) {
 				},
 			},
 			wantAlertStore: alertstore.Schema{
-				DeviceAlerts:    []alertstore.DeviceAlertRule{},
-				AlertRecipients: []alertstore.AlertRecipient{},
-				AlertStates:     []alertstore.AlertState{},
-				AlertRules:      []alertstore.StoredAlertRule{},
+				LinearCalibrations: []alertstore.StoredLinearCalibration{},
+				DeviceAlerts:       []alertstore.DeviceAlertRule{},
+				AlertRecipients:    []alertstore.AlertRecipient{},
+				AlertStates:        []alertstore.AlertState{},
+				AlertRules:         []alertstore.StoredAlertRule{},
 			},
 			wantAlertRule: alertstore.AlertRule{
 				AlertId:        AlertId,
