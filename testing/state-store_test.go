@@ -242,6 +242,7 @@ func TestRespondToAlert(t *testing.T) {
 				QueryField:      RegisteredQueryField,
 			},
 			wantAlertStore: alertstore.Schema{
+				LinearCalibrations: []alertstore.StoredLinearCalibration{},
 				AlertRecipients: []alertstore.AlertRecipient{
 					{AlertId: AlertId, Email: UserEmail},
 				},
@@ -269,6 +270,121 @@ func TestRespondToAlert(t *testing.T) {
 						Value:    NewValue,
 						Duration: SomeDuration,
 						Level:    alertstore.Crit,
+					},
+				},
+			},
+		},
+
+		"send alert based on linear calibration": {
+			wantStatus: http.StatusNoContent,
+			wantUserInboxes: notifier.Schema{
+				DeletedAlerts: map[string][]notifier.AlertDeleted{},
+				CreatedAlerts: map[string][]notifier.AlertCreated{},
+				Notifications: map[string][]notifier.AlertNotification{
+					UserEmail: {
+						{
+							Name:        RegisteredAlertName,
+							DeviceId:    RegisteredDeviceId,
+							Value:       59950,
+							QueryField:  "pressure",
+							AlertLevel:  alertstore.Warn,
+							Timestamp:   AfterDuration,
+							AlertType:   alertstore.LessThan,
+							AlertValues: []float32{60000},
+							Duration:    "24h",
+							Condition:   "< 60000.00",
+						},
+					},
+				},
+			},
+			mockAlertStore: alertstore.Schema{
+				AlertRecipients: []alertstore.AlertRecipient{
+					{AlertId: AlertId, Email: UserEmail},
+				},
+				DeviceAlerts: []alertstore.DeviceAlertRule{
+					{
+						DeviceId:   RegisteredDeviceId,
+						QueryField: "pressure",
+						AlertId:    AlertId,
+					},
+				},
+				AlertRules: []alertstore.StoredAlertRule{
+					{
+						AlertId:     AlertId,
+						Duration:    "24h",
+						RangeValues: []float32{60000},
+						Name:        RegisteredAlertName,
+						AlertType:   alertstore.LessThan,
+						AlertLevel:  alertstore.Warn,
+					},
+				},
+				LinearCalibrations: []alertstore.StoredLinearCalibration{
+					{
+						AlertId: AlertId,
+						LinearCalibration: &alertstore.LinearCalibration{
+							RawMin: 4,
+							RawMax: 10.6,
+							CalMax: 97000,
+						},
+					},
+				},
+				AlertStates: []alertstore.AlertState{
+					{
+						Id:       AlertId,
+						Time:     AlertReceived,
+						Duration: SomeDuration,
+						Value:    OldValue,
+						Level:    alertstore.Crit,
+					},
+				},
+			},
+			alert: alertsource.InfluxAlert{
+				Id:              AlertId,
+				Level:           "warn",
+				Name:            RegisteredAlertName,
+				Value:           8,
+				SensorTimestamp: AfterDuration,
+				DeviceId:        RegisteredDeviceId,
+				QueryField:      "pressure",
+			},
+			wantAlertStore: alertstore.Schema{
+				AlertRecipients: []alertstore.AlertRecipient{
+					{AlertId: AlertId, Email: UserEmail},
+				},
+				DeviceAlerts: []alertstore.DeviceAlertRule{
+					{
+						DeviceId:   RegisteredDeviceId,
+						QueryField: RegisteredQueryField,
+						AlertId:    AlertId,
+					},
+				},
+				AlertRules: []alertstore.StoredAlertRule{
+					{
+						AlertId:     AlertId,
+						Duration:    "24h",
+						RangeValues: []float32{60000},
+						Name:        RegisteredAlertName,
+						AlertType:   alertstore.LessThan,
+						AlertLevel:  alertstore.Warn,
+					},
+				},
+				LinearCalibrations: []alertstore.StoredLinearCalibration{
+					{
+						AlertId: AlertId,
+						LinearCalibration: &alertstore.LinearCalibration{
+							RawMin: 4,
+							RawMax: 10.6,
+							CalMax: 97000,
+						},
+					},
+				},
+				AlertStates: []alertstore.AlertState{
+					{
+						Id:       AlertId,
+						Time:     AfterDuration,
+						Value:    8,
+						Duration: SomeDuration,
+						Level:    alertstore.Warn,
 					},
 				},
 			},
@@ -312,7 +428,8 @@ func TestRespondToAlert(t *testing.T) {
 				QueryField:      RegisteredQueryField,
 			},
 			wantAlertStore: alertstore.Schema{
-				AlertRecipients: []alertstore.AlertRecipient{},
+				LinearCalibrations: []alertstore.StoredLinearCalibration{},
+				AlertRecipients:    []alertstore.AlertRecipient{},
 				DeviceAlerts: []alertstore.DeviceAlertRule{
 					{
 						DeviceId:   RegisteredDeviceId,
@@ -376,7 +493,8 @@ func TestRespondToAlert(t *testing.T) {
 				QueryField:      RegisteredQueryField,
 			},
 			wantAlertStore: alertstore.Schema{
-				AlertRecipients: []alertstore.AlertRecipient{},
+				LinearCalibrations: []alertstore.StoredLinearCalibration{},
+				AlertRecipients:    []alertstore.AlertRecipient{},
 				DeviceAlerts: []alertstore.DeviceAlertRule{
 					{
 						DeviceId:   RegisteredDeviceId,
@@ -440,7 +558,8 @@ func TestRespondToAlert(t *testing.T) {
 				QueryField:      RegisteredQueryField,
 			},
 			wantAlertStore: alertstore.Schema{
-				AlertRecipients: []alertstore.AlertRecipient{},
+				LinearCalibrations: []alertstore.StoredLinearCalibration{},
+				AlertRecipients:    []alertstore.AlertRecipient{},
 				DeviceAlerts: []alertstore.DeviceAlertRule{
 					{
 						DeviceId:   RegisteredDeviceId,
@@ -529,6 +648,7 @@ func TestRespondToAlert(t *testing.T) {
 				QueryField:      RegisteredQueryField,
 			},
 			wantAlertStore: alertstore.Schema{
+				LinearCalibrations: []alertstore.StoredLinearCalibration{},
 				AlertRecipients: []alertstore.AlertRecipient{
 					{AlertId: AlertId, Email: UserEmail},
 				},
@@ -624,6 +744,7 @@ func TestRespondToAlert(t *testing.T) {
 				QueryField:      RegisteredQueryField,
 			},
 			wantAlertStore: alertstore.Schema{
+				LinearCalibrations: []alertstore.StoredLinearCalibration{},
 				AlertRecipients: []alertstore.AlertRecipient{
 					{AlertId: AlertId, Email: UserEmail},
 				},
@@ -719,6 +840,7 @@ func TestRespondToAlert(t *testing.T) {
 				QueryField:      RegisteredQueryField,
 			},
 			wantAlertStore: alertstore.Schema{
+				LinearCalibrations: []alertstore.StoredLinearCalibration{},
 				AlertRecipients: []alertstore.AlertRecipient{
 					{AlertId: AlertId, Email: UserEmail},
 				},
@@ -787,6 +909,7 @@ func TestRespondToAlert(t *testing.T) {
 				QueryField: UnregisteredQueryField,
 			},
 			wantAlertStore: alertstore.Schema{
+				LinearCalibrations: []alertstore.StoredLinearCalibration{},
 				DeviceAlerts: []alertstore.DeviceAlertRule{
 					{
 						DeviceId:   RegisteredDeviceId,
@@ -848,6 +971,7 @@ func TestRespondToAlert(t *testing.T) {
 				QueryField: RegisteredQueryField,
 			},
 			wantAlertStore: alertstore.Schema{
+				LinearCalibrations: []alertstore.StoredLinearCalibration{},
 				DeviceAlerts: []alertstore.DeviceAlertRule{
 					{
 						DeviceId:   RegisteredDeviceId,
@@ -928,6 +1052,7 @@ func TestRespondToAlert(t *testing.T) {
 				QueryField:      RegisteredQueryField,
 			},
 			wantAlertStore: alertstore.Schema{
+				LinearCalibrations: []alertstore.StoredLinearCalibration{},
 				AlertRecipients: []alertstore.AlertRecipient{
 					{AlertId: AlertId, Email: UserEmail},
 				},
@@ -995,6 +1120,7 @@ func TestRespondToAlert(t *testing.T) {
 				QueryField:      RegisteredQueryField,
 			},
 			wantAlertStore: alertstore.Schema{
+				LinearCalibrations: []alertstore.StoredLinearCalibration{},
 				AlertRecipients: []alertstore.AlertRecipient{
 					{AlertId: AlertId, Email: UserEmail},
 				},
