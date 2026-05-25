@@ -53,13 +53,13 @@ type AlertStore interface {
 	Close() error
 	PrepareDb(Schema) error
 	GetSnapshot() Schema
+	Store(dbRecord Schema) error
 	//NOTE: could return alertstore.NoAlert
 	GetAlertState(alertId string) (AlertState, error)
 	//NOTE: could return alertstore.NoAlert
 	GetAlertRule(alertId string) (AlertRule, error)
 	GetAlertRecipients(alertId string) ([]string, error)
 	UpdateAlertState(alert AlertState) error
-	StoreAlertRule(dbRecord Schema) error
 	UpdateAlertRule(alertId string, dbRecord Schema) error
 	//NOTE: could return alertstore.AlertExists
 	CheckAlertRuleExists(AlertRule) (string, error)
@@ -84,7 +84,7 @@ type DeviceAlertRule struct {
 }
 
 type AlertRecipient struct {
-	AlertId string `gorm:"check:length(alert_id)>0;index:uniq_alert_email,unique"`
+	AlertId string `gorm:"check:length(alert_id)>0;index:uniq_alert_email"`
 	Email   string `gorm:"check:length(email)>0;index:uniq_alert_email,unique"`
 }
 

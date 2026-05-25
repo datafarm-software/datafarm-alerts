@@ -103,7 +103,7 @@ func (m *MockAlertStore) GetAlertRecipients(alertId string) ([]string, error) {
 	return recipients, nil
 }
 
-func (m *MockAlertStore) StoreAlertRule(dbRecord Schema) error {
+func (m *MockAlertStore) Store(dbRecord Schema) error {
 	//TODO: deal with uniqueness constraints
 	m.Db.DeviceAlerts = append(m.Db.DeviceAlerts, dbRecord.DeviceAlerts...)
 	m.Db.AlertRecipients = append(m.Db.AlertRecipients, dbRecord.AlertRecipients...)

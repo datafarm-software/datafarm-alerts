@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"log"
 	"os"
 
 	"github.com/glebarez/sqlite"
@@ -105,17 +104,7 @@ func (g *Gorm) PrepareDb(dbRecord Schema) error {
 			return err
 		}
 	}
-	if len(dbRecord.AlertStates) > 0 {
-		for _, state := range dbRecord.AlertStates {
-			if err = g.UpdateAlertState(state); err != nil {
-				break
-			}
-		}
-		if err != nil {
-			return err
-		}
-	}
-	return g.StoreAlertRule(dbRecord)
+	return g.Store(dbRecord)
 }
 
 func (g *Gorm) GetSnapshot() Schema {
@@ -135,11 +124,16 @@ func (g *Gorm) GetSnapshot() Schema {
 	if err != nil {
 		return Schema{}
 	}
+	lc, err := gorm.G[StoredLinearCalibration](g.db).Find(ctx)
+	if err != nil {
+		return Schema{}
+	}
 	return Schema{
-		DeviceAlerts:    device_alert_rules,
-		AlertRecipients: alertRecipients,
-		AlertStates:     alertStates,
-		AlertRules:      stored_alert_rules,
+		DeviceAlerts:       device_alert_rules,
+		AlertRecipients:    alertRecipients,
+		AlertStates:        alertStates,
+		AlertRules:         stored_alert_rules,
+		LinearCalibrations: lc,
 	}
 }
 
@@ -169,7 +163,6 @@ func (g *Gorm) GetAlertRule(alertId string) (AlertRule, error) {
 	if db.RowsAffected < 1 {
 		return ar, NoAlert
 	}
-	log.Printf("ar: %v\n", ar)
 	ar.LinearCalibration = ar.StoredLC.LinearCalibration
 	return ar, nil
 }
@@ -195,24 +188,41 @@ func (g *Gorm) UpdateAlertState(alert AlertState) error {
 		Error
 }
 
-func (g *Gorm) StoreAlertRule(dbRecord Schema) error {
+func (g *Gorm) Store(dbRecord Schema) error {
 	var err error
 	return g.db.Transaction(func(tx *gorm.DB) error {
-		if err = gorm.G[DeviceAlertRule](g.db).CreateInBatches(ctx,
-			&dbRecord.DeviceAlerts, len(dbRecord.DeviceAlerts)); err != nil {
-			return err
+		if len(dbRecord.DeviceAlerts) > 0 {
+			if err = gorm.G[DeviceAlertRule](g.db).CreateInBatches(ctx,
+				&dbRecord.DeviceAlerts, len(dbRecord.DeviceAlerts)); err != nil {
+				return err
+			}
 		}
-		if err = gorm.G[AlertRecipient](g.db).CreateInBatches(ctx,
-			&dbRecord.AlertRecipients, len(dbRecord.AlertRecipients)); err != nil {
-			return err
+		if len(dbRecord.AlertRecipients) > 0 {
+			if err = gorm.G[AlertRecipient](g.db).CreateInBatches(ctx,
+				&dbRecord.AlertRecipients, len(dbRecord.AlertRecipients)); err != nil {
+				return err
+			}
 		}
-		if err = gorm.G[StoredAlertRule](g.db).CreateInBatches(ctx,
-			&dbRecord.AlertRules, len(dbRecord.AlertRules)); err != nil {
-			return err
+		if len(dbRecord.AlertRules) > 0 {
+			if err = gorm.G[StoredAlertRule](g.db).CreateInBatches(ctx,
+				&dbRecord.AlertRules, len(dbRecord.AlertRules)); err != nil {
+				return err
+			}
 		}
-		if err = gorm.G[StoredLinearCalibration](g.db).CreateInBatches(ctx,
-			&dbRecord.LinearCalibrations, len(dbRecord.LinearCalibrations)); err != nil {
-			return err
+		if len(dbRecord.LinearCalibrations) > 0 {
+			if err = gorm.G[StoredLinearCalibration](g.db).CreateInBatches(ctx,
+				&dbRecord.LinearCalibrations, len(dbRecord.LinearCalibrations)); err != nil {
+				return err
+			}
+		}
+		if len(dbRecord.AlertStates) > 0 {
+			err = gorm.G[AlertState](g.db, clause.OnConflict{
+				Columns:   []clause.Column{{Name: "id"}},
+				UpdateAll: true,
+			}).CreateInBatches(ctx, &dbRecord.AlertStates, len(dbRecord.AlertStates))
+			if err != nil {
+				return err
+			}
 		}
 		return nil
 	})

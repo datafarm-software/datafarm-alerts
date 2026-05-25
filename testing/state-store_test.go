@@ -1077,7 +1077,14 @@ func TestCreateAlertRule(t *testing.T) {
 			wantAlertSourceCount: 1,
 			mockAlertStore:       alertstore.Schema{},
 			wantAlertStore: alertstore.Schema{
-				AlertStates: []alertstore.AlertState{},
+				AlertStates: []alertstore.AlertState{
+					{
+						Id:          AlertId,
+						Duration:    SomeDuration,
+						RangeValues: []float32{5},
+						Level:       alertstore.Crit,
+					},
+				},
 				AlertRecipients: []alertstore.AlertRecipient{
 					{AlertId: AlertId, Email: UserEmail},
 				},
@@ -1143,7 +1150,13 @@ func TestCreateAlertRule(t *testing.T) {
 				AlertRules:      []alertstore.StoredAlertRule{},
 			},
 			wantAlertStore: alertstore.Schema{
-				AlertStates: []alertstore.AlertState{},
+				AlertStates: []alertstore.AlertState{
+					{
+						Id:       AlertId,
+						Duration: SomeDuration,
+						Level:    alertstore.Crit,
+					},
+				},
 				AlertRecipients: []alertstore.AlertRecipient{
 					{AlertId: AlertId, Email: UserEmail},
 				},
@@ -1206,7 +1219,14 @@ func TestCreateAlertRule(t *testing.T) {
 				AlertRules:      []alertstore.StoredAlertRule{},
 			},
 			wantAlertStore: alertstore.Schema{
-				AlertStates: []alertstore.AlertState{},
+				AlertStates: []alertstore.AlertState{
+					{
+						Id:          AlertId,
+						Duration:    SomeDuration,
+						RangeValues: []float32{5},
+						Level:       alertstore.Crit,
+					},
+				},
 				AlertRecipients: []alertstore.AlertRecipient{
 					{AlertId: AlertId, Email: UserEmail},
 				},
@@ -1272,7 +1292,14 @@ func TestCreateAlertRule(t *testing.T) {
 				AlertRules:      []alertstore.StoredAlertRule{},
 			},
 			wantAlertStore: alertstore.Schema{
-				AlertStates: []alertstore.AlertState{},
+				AlertStates: []alertstore.AlertState{
+					{
+						Id:          AlertId,
+						Duration:    SomeDuration,
+						RangeValues: []float32{10, 20},
+						Level:       alertstore.Crit,
+					},
+				},
 				AlertRecipients: []alertstore.AlertRecipient{
 					{AlertId: AlertId, Email: UserEmail},
 				},
@@ -1555,6 +1582,14 @@ func TestCreateAlertRule(t *testing.T) {
 				AlertId: "alert2",
 			},
 			wantAlertStore: alertstore.Schema{
+				AlertStates: []alertstore.AlertState{
+					{
+						Id:          AlertId,
+						Duration:    SomeDuration,
+						RangeValues: []float32{5},
+						Level:       alertstore.Crit,
+					},
+				},
 				AlertRecipients: []alertstore.AlertRecipient{
 					{AlertId: AlertId, Email: UserEmail},
 					{AlertId: "alert2", Email: UserEmail},
@@ -1648,7 +1683,14 @@ func TestCreateAlertRule(t *testing.T) {
 				AlertId: "alert2",
 			},
 			wantAlertStore: alertstore.Schema{
-				AlertStates: []alertstore.AlertState{},
+				AlertStates: []alertstore.AlertState{
+					{
+						Id:          "alert2",
+						Duration:    SomeDuration,
+						RangeValues: []float32{10, 20},
+						Level:       alertstore.Crit,
+					},
+				},
 				AlertRecipients: []alertstore.AlertRecipient{
 					{AlertId: AlertId, Email: UserEmail},
 					{AlertId: "alert2", Email: UserEmail},
@@ -1757,7 +1799,14 @@ func TestCreateAlertRule(t *testing.T) {
 				AlertId: "alert2",
 			},
 			wantAlertStore: alertstore.Schema{
-				AlertStates: []alertstore.AlertState{},
+				AlertStates: []alertstore.AlertState{
+					{
+						Id:          "alert2",
+						Duration:    SomeDuration,
+						RangeValues: []float32{10},
+						Level:       alertstore.Crit,
+					},
+				},
 				AlertRecipients: []alertstore.AlertRecipient{
 					{AlertId: AlertId, Email: UserEmail},
 					{AlertId: "alert2", Email: UserEmail},
@@ -1870,7 +1919,14 @@ func TestCreateAlertRule(t *testing.T) {
 				AlertRules:      []alertstore.StoredAlertRule{},
 			},
 			wantAlertStore: alertstore.Schema{
-				AlertStates: []alertstore.AlertState{},
+				AlertStates: []alertstore.AlertState{
+					{
+						Id:          AlertId,
+						Duration:    SomeDuration,
+						RangeValues: []float32{5},
+						Level:       alertstore.Warn,
+					},
+				},
 				AlertRecipients: []alertstore.AlertRecipient{
 					{AlertId: AlertId, Email: UserEmail},
 				},
@@ -1937,7 +1993,14 @@ func TestCreateAlertRule(t *testing.T) {
 				LinearCalibrations: []alertstore.StoredLinearCalibration{},
 			},
 			wantAlertStore: alertstore.Schema{
-				AlertStates: []alertstore.AlertState{},
+				AlertStates: []alertstore.AlertState{
+					{
+						Id:          AlertId,
+						Duration:    SomeDuration,
+						RangeValues: []float32{5},
+						Level:       alertstore.Warn,
+					},
+				},
 				AlertRecipients: []alertstore.AlertRecipient{
 					{AlertId: AlertId, Email: UserEmail},
 				},

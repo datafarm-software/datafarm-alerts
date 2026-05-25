@@ -564,7 +564,22 @@ func (a *App) CreateAlertRule(
 	}
 	uniqueEmails := removeDuplicates(in.Body.EmailAddresses)
 	recipients := a.ConvertToRecipients(alertId, uniqueEmails)
+	stateDuration, err := alertstore.ParseDuration(in.Body.Duration)
+	if err != nil {
+		log.Printf("parseDuration: %s, error: %v", in.Body.Duration, err)
+		return nil, huma.Error400BadRequest(
+			"Could not parse the provided rule duration.")
+	}
 	dbRecord := alertstore.Schema{
+		AlertStates: []alertstore.AlertState{
+			{
+				Id:          alertId,
+				Duration:    stateDuration,
+				RangeValues: in.Body.RangeValues,
+				Name:        in.Body.Name,
+				Level:       in.Body.AlertLevel,
+			},
+		},
 		DeviceAlerts: []alertstore.DeviceAlertRule{
 			{
 				AlertId:    alertId,
@@ -587,7 +602,7 @@ func (a *App) CreateAlertRule(
 	dbRecord.LinearCalibrations = append(dbRecord.LinearCalibrations,
 		alertstore.StoredLinearCalibration{
 			AlertId: alertId, LinearCalibration: in.Body.LinearCalibration})
-	if err := a.AlertStore.StoreAlertRule(dbRecord); err != nil {
+	if err := a.AlertStore.Store(dbRecord); err != nil {
 		log.Printf("storing alert: %v", err)
 		return nil, huma.Error500InternalServerError("internal error storing the alert rule")
 	}
