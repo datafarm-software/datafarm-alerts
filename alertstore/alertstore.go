@@ -118,7 +118,7 @@ type AlertRule struct {
 	QueryField        string                  `json:"queryField" pattern:"^[a-zA-Z0-9_]+$" doc:"The field on the device, for which data should be checked."`
 	AlertType         AlertType               `json:"alertType" maximum:"3" doc:"Specify type of check to perform. 0 = Less Than, 1 = Greater Than, 2 = Range, 3 = Inactive Sensor Check."`
 	AlertLevel        AlertLevel              `json:"alertLevel" minimum:"1" maximum:"2" doc:"Specify the alert level to notify. 1 = WARN, 2 = CRIT"`
-	LinearCalibration LinearCalibration       `json:"linearCalibration" gorm:"-" required:"false" doc:"If provided, the alert will scale the specified device's data accordingly. It is assumed that the AlertRule RangeValues are  already on the calibrated level."`
+	LinearCalibration *LinearCalibration      `json:"linearCalibration" gorm:"-" required:"false" doc:"If provided, the alert will scale the specified device's data accordingly. It is assumed that the AlertRule RangeValues are  already on the calibrated level."`
 	StoredLC          StoredLinearCalibration `json:"-" gorm:"embedded" hidden:"true"`
 }
 

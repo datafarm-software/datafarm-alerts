@@ -1077,6 +1077,7 @@ func TestCreateAlertRule(t *testing.T) {
 			wantAlertSourceCount: 1,
 			mockAlertStore:       alertstore.Schema{},
 			wantAlertStore: alertstore.Schema{
+				LinearCalibrations: []alertstore.StoredLinearCalibration{},
 				AlertStates: []alertstore.AlertState{
 					{
 						Id:          AlertId,
@@ -1150,6 +1151,7 @@ func TestCreateAlertRule(t *testing.T) {
 				AlertRules:      []alertstore.StoredAlertRule{},
 			},
 			wantAlertStore: alertstore.Schema{
+				LinearCalibrations: []alertstore.StoredLinearCalibration{},
 				AlertStates: []alertstore.AlertState{
 					{
 						Id:       AlertId,
@@ -1219,6 +1221,7 @@ func TestCreateAlertRule(t *testing.T) {
 				AlertRules:      []alertstore.StoredAlertRule{},
 			},
 			wantAlertStore: alertstore.Schema{
+				LinearCalibrations: []alertstore.StoredLinearCalibration{},
 				AlertStates: []alertstore.AlertState{
 					{
 						Id:          AlertId,
@@ -1292,6 +1295,7 @@ func TestCreateAlertRule(t *testing.T) {
 				AlertRules:      []alertstore.StoredAlertRule{},
 			},
 			wantAlertStore: alertstore.Schema{
+				LinearCalibrations: []alertstore.StoredLinearCalibration{},
 				AlertStates: []alertstore.AlertState{
 					{
 						Id:          AlertId,
@@ -1485,6 +1489,7 @@ func TestCreateAlertRule(t *testing.T) {
 				},
 			},
 			wantAlertStore: alertstore.Schema{
+				LinearCalibrations: []alertstore.StoredLinearCalibration{},
 				AlertRecipients: []alertstore.AlertRecipient{
 					{AlertId: AlertId, Email: UserEmail},
 					{AlertId: "alert2", Email: AnotherUserEmail},
@@ -1575,16 +1580,23 @@ func TestCreateAlertRule(t *testing.T) {
 			},
 		},
 
-		"similar alert rule exists, but new one on different deviceId queryField combination": {
+		"similar alert rule exists, but new one on different queryField": {
 			wantErr:    false,
 			wantStatus: http.StatusOK,
 			wantResponse: alertstore.CreatedRule{
 				AlertId: "alert2",
 			},
 			wantAlertStore: alertstore.Schema{
+				LinearCalibrations: []alertstore.StoredLinearCalibration{},
 				AlertStates: []alertstore.AlertState{
 					{
 						Id:          AlertId,
+						Duration:    SomeDuration,
+						RangeValues: []float32{5},
+						Level:       alertstore.Crit,
+					},
+					{
+						Id:          "alert2",
 						Duration:    SomeDuration,
 						RangeValues: []float32{5},
 						Level:       alertstore.Crit,
@@ -1611,20 +1623,30 @@ func TestCreateAlertRule(t *testing.T) {
 						AlertId:     AlertId,
 						RangeValues: []float32{5},
 						Duration:    "24h",
-						AlertType:   alertstore.LessThan,
+						AlertType:   alertstore.GreaterThan,
 						AlertLevel:  alertstore.Crit,
+						Name:        "Similar Alert",
 					},
 					{
 						AlertId:     "alert2",
 						RangeValues: []float32{5},
 						Duration:    "24h",
-						AlertType:   alertstore.LessThan,
+						AlertType:   alertstore.GreaterThan,
 						AlertLevel:  alertstore.Crit,
+						Name:        "Similar Alert 2",
 					},
 				},
 			},
 			wantAlertSourceCount: 2,
 			mockAlertStore: alertstore.Schema{
+				AlertStates: []alertstore.AlertState{
+					{
+						Id:          AlertId,
+						Duration:    SomeDuration,
+						RangeValues: []float32{5},
+						Level:       alertstore.Crit,
+					},
+				},
 				AlertRecipients: []alertstore.AlertRecipient{
 					{AlertId: AlertId, Email: UserEmail},
 				},
@@ -1639,9 +1661,9 @@ func TestCreateAlertRule(t *testing.T) {
 					{
 						AlertId:     AlertId,
 						RangeValues: []float32{5},
-						Name:        RegisteredAlertName,
+						Name:        "Similar Alert",
 						Duration:    "24h",
-						AlertType:   alertstore.LessThan,
+						AlertType:   alertstore.GreaterThan,
 						AlertLevel:  alertstore.Crit,
 					},
 				},
@@ -1652,26 +1674,26 @@ func TestCreateAlertRule(t *testing.T) {
 				CreatedAlerts: map[string][]notifier.AlertCreated{
 					UserEmail: {
 						{
-							Name:        RegisteredAlertName,
+							Name:        "Similar Alert 2",
 							DeviceId:    RegisteredDeviceId,
 							QueryField:  "humidity",
 							Duration:    "24h",
 							AlertLevel:  alertstore.Crit,
-							AlertType:   alertstore.LessThan,
+							AlertType:   alertstore.GreaterThan,
 							AlertValues: []float32{5},
-							Condition:   LessThanFive,
+							Condition:   GreaterThanFive,
 						},
 					},
 				},
 			},
 			alertRule: alertstore.AlertRule{
-				Name:           RegisteredAlertName,
+				Name:           "Similar Alert 2",
 				RangeValues:    []float32{5},
 				EmailAddresses: []string{UserEmail},
 				Duration:       "24h",
 				DeviceId:       RegisteredDeviceId,
 				QueryField:     "humidity",
-				AlertType:      alertstore.LessThan,
+				AlertType:      alertstore.GreaterThan,
 				AlertLevel:     alertstore.Crit,
 			},
 		},
@@ -1683,6 +1705,7 @@ func TestCreateAlertRule(t *testing.T) {
 				AlertId: "alert2",
 			},
 			wantAlertStore: alertstore.Schema{
+				LinearCalibrations: []alertstore.StoredLinearCalibration{},
 				AlertStates: []alertstore.AlertState{
 					{
 						Id:          "alert2",
@@ -1799,6 +1822,7 @@ func TestCreateAlertRule(t *testing.T) {
 				AlertId: "alert2",
 			},
 			wantAlertStore: alertstore.Schema{
+				LinearCalibrations: []alertstore.StoredLinearCalibration{},
 				AlertStates: []alertstore.AlertState{
 					{
 						Id:          "alert2",
@@ -1831,11 +1855,11 @@ func TestCreateAlertRule(t *testing.T) {
 						RangeValues: []float32{5},
 						Duration:    "24h",
 						AlertType:   alertstore.LessThan,
-						AlertLevel:  alertstore.Crit,
+						AlertLevel:  alertstore.Warn,
 					},
 					{
 						AlertId:     "alert2",
-						Name:        RegisteredAlertName,
+						Name:        "Some alert name",
 						RangeValues: []float32{10},
 						Duration:    "24h",
 						AlertType:   alertstore.LessThan,
@@ -1861,7 +1885,7 @@ func TestCreateAlertRule(t *testing.T) {
 						RangeValues: []float32{5},
 						Duration:    "24h",
 						AlertType:   alertstore.LessThan,
-						AlertLevel:  alertstore.Crit,
+						AlertLevel:  alertstore.Warn,
 					},
 				},
 			},
@@ -1872,7 +1896,7 @@ func TestCreateAlertRule(t *testing.T) {
 				CreatedAlerts: map[string][]notifier.AlertCreated{
 					UserEmail: {
 						{
-							Name:        RegisteredAlertName,
+							Name:        "Some alert name",
 							DeviceId:    RegisteredDeviceId,
 							QueryField:  RegisteredQueryField,
 							Duration:    "24h",
@@ -1884,7 +1908,7 @@ func TestCreateAlertRule(t *testing.T) {
 					},
 					"user2@alert.com": {
 						{
-							Name:        RegisteredAlertName,
+							Name:        "Some alert name",
 							DeviceId:    RegisteredDeviceId,
 							QueryField:  RegisteredQueryField,
 							Duration:    "24h",
@@ -1897,7 +1921,7 @@ func TestCreateAlertRule(t *testing.T) {
 				},
 			},
 			alertRule: alertstore.AlertRule{
-				Name:           RegisteredAlertName,
+				Name:           "Some alert name",
 				EmailAddresses: []string{UserEmail, "user2@alert.com"},
 				RangeValues:    []float32{10},
 				Duration:       "24h",
@@ -1919,6 +1943,7 @@ func TestCreateAlertRule(t *testing.T) {
 				AlertRules:      []alertstore.StoredAlertRule{},
 			},
 			wantAlertStore: alertstore.Schema{
+				LinearCalibrations: []alertstore.StoredLinearCalibration{},
 				AlertStates: []alertstore.AlertState{
 					{
 						Id:          AlertId,
@@ -2026,7 +2051,7 @@ func TestCreateAlertRule(t *testing.T) {
 						AlertId: AlertId,
 						LinearCalibration: alertstore.LinearCalibration{
 							RawMin: 0,
-							RawMax: 5,
+							RawMax: 1,
 							CalMin: 0,
 							CalMax: 1,
 						},
@@ -2047,7 +2072,7 @@ func TestCreateAlertRule(t *testing.T) {
 							AlertType:   alertstore.LessThan,
 							AlertValues: []float32{5},
 							Condition:   LessThanFive,
-							LinearCalibration: alertstore.LinearCalibration{
+							LinearCalibration: &alertstore.LinearCalibration{
 								RawMin: 0,
 								RawMax: 1,
 								CalMin: 0,
@@ -2066,7 +2091,7 @@ func TestCreateAlertRule(t *testing.T) {
 				QueryField:     "temperature",
 				AlertType:      alertstore.LessThan,
 				AlertLevel:     alertstore.Warn,
-				LinearCalibration: alertstore.LinearCalibration{
+				LinearCalibration: &alertstore.LinearCalibration{
 					RawMin: 0,
 					RawMax: 1,
 					CalMin: 0,
@@ -3618,7 +3643,7 @@ func TestGetAlertRule(t *testing.T) {
 				QueryField:     RegisteredQueryField,
 				AlertType:      alertstore.Range,
 				AlertLevel:     alertstore.Warn,
-				LinearCalibration: alertstore.LinearCalibration{
+				LinearCalibration: &alertstore.LinearCalibration{
 					RawMin: 0,
 					RawMax: 1,
 					CalMin: 0,

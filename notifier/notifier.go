@@ -60,7 +60,7 @@ type AlertCreated struct {
 	AlertType         alertstore.AlertType
 	AlertValues       []float32
 	Condition         string
-	LinearCalibration alertstore.LinearCalibration
+	LinearCalibration *alertstore.LinearCalibration
 }
 
 func (a AlertCreated) String(username string) (string, error) {

@@ -599,9 +599,11 @@ func (a *App) CreateAlertRule(
 			},
 		},
 	}
-	dbRecord.LinearCalibrations = append(dbRecord.LinearCalibrations,
-		alertstore.StoredLinearCalibration{
-			AlertId: alertId, LinearCalibration: in.Body.LinearCalibration})
+	if in.Body.LinearCalibration != nil {
+		dbRecord.LinearCalibrations = append(dbRecord.LinearCalibrations,
+			alertstore.StoredLinearCalibration{
+				AlertId: alertId, LinearCalibration: *in.Body.LinearCalibration})
+	}
 	if err := a.AlertStore.Store(dbRecord); err != nil {
 		log.Printf("storing alert: %v", err)
 		return nil, huma.Error500InternalServerError("internal error storing the alert rule")

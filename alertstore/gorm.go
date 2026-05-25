@@ -163,7 +163,7 @@ func (g *Gorm) GetAlertRule(alertId string) (AlertRule, error) {
 	if db.RowsAffected < 1 {
 		return ar, NoAlert
 	}
-	ar.LinearCalibration = ar.StoredLC.LinearCalibration
+	ar.LinearCalibration = &ar.StoredLC.LinearCalibration
 	return ar, nil
 }
 
