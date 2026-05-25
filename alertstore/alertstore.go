@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"math"
 	"strconv"
 	"time"
 )
@@ -171,10 +172,10 @@ type StoredLinearCalibration struct {
 }
 
 type LinearCalibration struct {
-	RawMin float32 `json:"raw-min"`
-	RawMax float32 `json:"raw-max"`
-	CalMin float32 `json:"cal-min"`
-	CalMax float32 `json:"cal-max"`
+	RawMin float64 `json:"raw-min"`
+	RawMax float64 `json:"raw-max"`
+	CalMin float64 `json:"cal-min"`
+	CalMax float64 `json:"cal-max"`
 }
 
 func (l LinearCalibration) MarshalBinary() (data []byte, err error) {
@@ -186,15 +187,17 @@ func (l *LinearCalibration) UnmarshalBinary(data []byte) error {
 }
 
 // Converts a raw sensor value into a calibrated value.
-func (c LinearCalibration) ToCalibrated(raw float32) float32 {
-	return ((raw - c.RawMin) *
+func (c *LinearCalibration) ToCalibrated(raw float64) float64 {
+	cal := ((raw - c.RawMin) *
 		(c.CalMax - c.CalMin) /
 		(c.RawMax - c.RawMin)) +
 		c.CalMin
+	ratio := math.Pow(10, float64(2))
+	return math.Round(cal*ratio) / ratio
 }
 
 // Converts a calibrated value back into the raw sensor value.
-func (c LinearCalibration) ToRaw(cal float32) float32 {
+func (c *LinearCalibration) ToRaw(cal float64) float64 {
 	return ((cal - c.CalMin) *
 		(c.RawMax - c.RawMin) /
 		(c.CalMax - c.CalMin)) +

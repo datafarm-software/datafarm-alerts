@@ -342,7 +342,7 @@ func TestRespondToAlert(t *testing.T) {
 				Id:              AlertId,
 				Level:           "warn",
 				Name:            RegisteredAlertName,
-				Value:           8,
+				Value:           8.079,
 				SensorTimestamp: AfterDuration,
 				DeviceId:        RegisteredDeviceId,
 				QueryField:      "pressure",
@@ -382,7 +382,7 @@ func TestRespondToAlert(t *testing.T) {
 					{
 						Id:       AlertId,
 						Time:     AfterDuration,
-						Value:    8,
+						Value:    8.079,
 						Duration: SomeDuration,
 						Level:    alertstore.Warn,
 					},
