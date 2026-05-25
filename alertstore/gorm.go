@@ -339,6 +339,11 @@ func (g *Gorm) DeleteAlertRule(alertId string) (AlertRule, error) {
 			Delete("*").Error; err != nil {
 			return err
 		}
+		if err = tx.Table("stored_linear_calibrations").
+			Where("alert_id = ?", alertId).
+			Delete("*").Error; err != nil {
+			return err
+		}
 		return nil
 	}); err != nil {
 		return ar, err

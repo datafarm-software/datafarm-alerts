@@ -843,6 +843,9 @@ func (a *App) DeleteAlertRule(ctx context.Context,
 		AlertType:   alertRule.AlertType,
 		AlertValues: alertRule.RangeValues,
 	}
+	if alertRule.LinearCalibration != nil {
+		message.LinearCalibration = alertRule.LinearCalibration
+	}
 	users := make([]auth.UserInfo, 0, len(alertRule.EmailAddresses))
 	for _, e := range alertRule.EmailAddresses {
 		users = append(users, auth.UserInfo{EmailAddress: e})
