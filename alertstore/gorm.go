@@ -265,6 +265,16 @@ func (g *Gorm) UpdateAlertRule(alertId string, dbRecord Schema) error {
 		if err != nil {
 			return err
 		}
+		for _, lc := range dbRecord.LinearCalibrations {
+			if err = tx.Table("stored_linear_calibrations").
+				Where("alert_id", lc.AlertId).
+				Save(&lc).Error; err != nil {
+				break
+			}
+		}
+		if err != nil {
+			return err
+		}
 		return nil
 	})
 }

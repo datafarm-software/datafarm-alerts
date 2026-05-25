@@ -2792,7 +2792,7 @@ func TestUpdateAlertRule(t *testing.T) {
 				Duration:       "24h",
 				DeviceId:       RegisteredDeviceId,
 				QueryField:     RegisteredQueryField,
-				AlertType:      alertstore.LessThan,
+				AlertType:      alertstore.GreaterThan,
 				AlertLevel:     alertstore.Crit,
 				LinearCalibration: &alertstore.LinearCalibration{
 					RawMin: 0,
@@ -2872,7 +2872,7 @@ func TestUpdateAlertRule(t *testing.T) {
 						Name:        RegisteredAlertName,
 						RangeValues: []float32{10},
 						Duration:    "24h",
-						AlertType:   alertstore.LessThan,
+						AlertType:   alertstore.GreaterThan,
 						AlertLevel:  alertstore.Crit,
 					},
 				},

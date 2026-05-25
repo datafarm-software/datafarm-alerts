@@ -703,6 +703,13 @@ func (a *App) UpdateAlertRule(
 			AlertLevel:  in.Body.AlertLevel,
 		},
 	}
+	if in.Body.LinearCalibration != nil {
+		dbRecord.LinearCalibrations = append(dbRecord.LinearCalibrations,
+			alertstore.StoredLinearCalibration{
+				AlertId:           in.Body.AlertId,
+				LinearCalibration: in.Body.LinearCalibration,
+			})
+	}
 	if err := a.AlertStore.UpdateAlertRule(in.Body.AlertId, dbRecord); err != nil {
 		log.Printf("alertstore update alert rule for id: %s, error: %v", in.AlertId, err)
 		return nil, huma.Error500InternalServerError(
@@ -742,6 +749,9 @@ func (a *App) UpdateAlertRule(
 		AlertLevel:  in.Body.AlertLevel,
 		AlertType:   in.Body.AlertType,
 		AlertValues: in.Body.RangeValues,
+	}
+	if in.Body.LinearCalibration != nil {
+		message.LinearCalibration = in.Body.LinearCalibration
 	}
 	users := make([]auth.UserInfo, 0, len(uniqueEmails))
 	for _, e := range uniqueEmails {
