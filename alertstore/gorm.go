@@ -76,10 +76,10 @@ func (g *Gorm) PrepareDb(dbRecord Schema) error {
 			sar.duration,
 			sar.alert_type,
 			sar.alert_level,
-		    lc.raw_min AS lc_raw_min,
-			lc.raw_max AS lc_raw_max,
-			lc.cal_min AS lc_cal_min,
-			lc.cal_max AS lc_cal_max,
+		    lc.lc_raw_min,
+			lc.lc_raw_max,
+			lc.lc_cal_min,
+			lc.lc_cal_max,
 			json_group_array(ar.email) AS email_addresses
 		FROM stored_alert_rules sar
 		LEFT JOIN stored_linear_calibrations lc
@@ -163,7 +163,6 @@ func (g *Gorm) GetAlertRule(alertId string) (AlertRule, error) {
 	if db.RowsAffected < 1 {
 		return ar, NoAlert
 	}
-	ar.LinearCalibration = &ar.StoredLC.LinearCalibration
 	return ar, nil
 }
 
