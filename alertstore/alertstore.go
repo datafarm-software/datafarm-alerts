@@ -171,6 +171,35 @@ type StoredLinearCalibration struct {
 	*LinearCalibration `gorm:"embedded;embeddedPrefix:lc_"`
 }
 
+type ValueRounder interface {
+	F32() float32
+	Round32(precision uint8) float32
+	F64() float64
+	Round64(precision uint8) float64
+}
+
+type CalibratedValue struct {
+	val float64
+}
+
+func (c CalibratedValue) F32() float32 {
+	return float32(c.val)
+}
+
+func (c CalibratedValue) Round32(precision uint8) float32 {
+	ratio := math.Pow(10, float64(precision))
+	return float32(math.Round(c.val*ratio) / ratio)
+}
+
+func (c CalibratedValue) F64() float64 {
+	return c.val
+}
+
+func (c CalibratedValue) Round64(precision uint8) float64 {
+	ratio := math.Pow(10, float64(precision))
+	return math.Round(c.val*ratio) / ratio
+}
+
 type LinearCalibration struct {
 	RawMin float64 `json:"raw-min"`
 	RawMax float64 `json:"raw-max"`
@@ -187,19 +216,17 @@ func (l *LinearCalibration) UnmarshalBinary(data []byte) error {
 }
 
 // Converts a raw sensor value into a calibrated value.
-func (c *LinearCalibration) ToCalibrated(raw float64) float64 {
-	cal := ((raw - c.RawMin) *
+func (c *LinearCalibration) ToCalibrated(raw float64) ValueRounder {
+	return CalibratedValue{((raw - c.RawMin) *
 		(c.CalMax - c.CalMin) /
 		(c.RawMax - c.RawMin)) +
-		c.CalMin
-	ratio := math.Pow(10, float64(2))
-	return math.Round(cal*ratio) / ratio
+		c.CalMin}
 }
 
 // Converts a calibrated value back into the raw sensor value.
-func (c *LinearCalibration) ToRaw(cal float64) float64 {
-	return ((cal - c.CalMin) *
+func (c *LinearCalibration) ToRaw(cal float64) ValueRounder {
+	return CalibratedValue{((cal - c.CalMin) *
 		(c.RawMax - c.RawMin) /
 		(c.CalMax - c.CalMin)) +
-		c.RawMin
+		c.RawMin}
 }

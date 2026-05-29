@@ -285,7 +285,7 @@ func TestRespondToAlert(t *testing.T) {
 						{
 							Name:        RegisteredAlertName,
 							DeviceId:    RegisteredDeviceId,
-							Value:       59948.94,
+							Value:       58787.879,
 							QueryField:  "pressure",
 							AlertLevel:  alertstore.Warn,
 							Timestamp:   AfterDuration,
@@ -342,7 +342,7 @@ func TestRespondToAlert(t *testing.T) {
 				Id:              AlertId,
 				Level:           "warn",
 				Name:            RegisteredAlertName,
-				Value:           8.079,
+				Value:           8,
 				SensorTimestamp: AfterDuration,
 				DeviceId:        RegisteredDeviceId,
 				QueryField:      "pressure",
@@ -382,7 +382,7 @@ func TestRespondToAlert(t *testing.T) {
 					{
 						Id:       AlertId,
 						Time:     AfterDuration,
-						Value:    8.079,
+						Value:    8,
 						Duration: SomeDuration,
 						Level:    alertstore.Warn,
 					},
@@ -2149,7 +2149,7 @@ func TestCreateAlertRule(t *testing.T) {
 						Id:       AlertId,
 						Duration: SomeDuration,
 						//NOTE: the raw value according to the calibration gets stored
-						RangeValues: []float32{8.079},
+						RangeValues: []float32{8.082},
 						Level:       alertstore.Warn,
 					},
 				},
@@ -2167,7 +2167,7 @@ func TestCreateAlertRule(t *testing.T) {
 					{
 						AlertId: AlertId,
 						//NOTE: the raw value according to the calibration gets stored
-						RangeValues: []float32{8.079},
+						RangeValues: []float32{8.082},
 						Name:        RegisteredAlertName,
 						Duration:    "24h",
 						AlertType:   alertstore.LessThan,

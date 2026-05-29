@@ -478,7 +478,8 @@ func (a *App) RespondToAlert(
 		return nil, nil
 	}
 	if alertRule.LinearCalibration != nil {
-		alert.Value = alertRule.LinearCalibration.ToCalibrated(alert.Value)
+		val := alertRule.LinearCalibration.ToCalibrated(alert.Value)
+		alert.Value = val.F64()
 	}
 	emails, err := a.AlertStore.GetAlertRecipients(alert.Id)
 	if err != nil {
@@ -537,11 +538,13 @@ func (a *App) CreateAlertRule(
 		log.Printf("Need 2 range values for range alert.")
 		return nil, huma.Error400BadRequest("Need 2 range values for range alert.")
 	}
+	alertCreatedMessageValues := in.Body.RangeValues
 	if in.Body.LinearCalibration != nil {
 		newRange := make([]float32, 0, len(in.Body.RangeValues))
+		var v alertstore.ValueRounder
 		for _, val := range in.Body.RangeValues {
-			val = float32(in.Body.LinearCalibration.ToRaw(float64(val)))
-			newRange = append(newRange, val)
+			v = in.Body.LinearCalibration.ToRaw(float64(val))
+			newRange = append(newRange, v.F32())
 		}
 		in.Body.RangeValues = newRange
 	}
@@ -626,7 +629,7 @@ func (a *App) CreateAlertRule(
 		Duration:    in.Body.Duration,
 		AlertLevel:  in.Body.AlertLevel,
 		AlertType:   in.Body.AlertType,
-		AlertValues: in.Body.RangeValues,
+		AlertValues: alertCreatedMessageValues,
 	}
 	alertCreated.LinearCalibration = in.Body.LinearCalibration
 	users := make([]auth.UserInfo, 0, len(uniqueEmails))
