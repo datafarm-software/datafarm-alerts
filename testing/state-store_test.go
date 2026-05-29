@@ -2159,7 +2159,7 @@ func TestCreateAlertRule(t *testing.T) {
 				DeviceAlerts: []alertstore.DeviceAlertRule{
 					{
 						DeviceId:   RegisteredDeviceId,
-						QueryField: RegisteredQueryField,
+						QueryField: "pressure",
 						AlertId:    AlertId,
 					},
 				},
@@ -2193,7 +2193,7 @@ func TestCreateAlertRule(t *testing.T) {
 						{
 							Name:        RegisteredAlertName,
 							DeviceId:    RegisteredDeviceId,
-							QueryField:  RegisteredQueryField,
+							QueryField:  "pressure",
 							Duration:    "24h",
 							AlertLevel:  alertstore.Warn,
 							AlertType:   alertstore.LessThan,

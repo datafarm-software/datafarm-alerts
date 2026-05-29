@@ -537,6 +537,14 @@ func (a *App) CreateAlertRule(
 		log.Printf("Need 2 range values for range alert.")
 		return nil, huma.Error400BadRequest("Need 2 range values for range alert.")
 	}
+	if in.Body.LinearCalibration != nil {
+		newRange := make([]float32, 0, len(in.Body.RangeValues))
+		for _, val := range in.Body.RangeValues {
+			val = float32(in.Body.LinearCalibration.ToRaw(float64(val)))
+			newRange = append(newRange, val)
+		}
+		in.Body.RangeValues = newRange
+	}
 	existingAlertId, err := a.AlertStore.CheckAlertRuleExists(in.Body)
 	if err != nil {
 		if !errors.Is(err, alertstore.AlertExists) {
