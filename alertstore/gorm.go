@@ -291,7 +291,8 @@ func (g *Gorm) CheckAlertRuleExists(ar AlertRule) (string, error) {
 		Where("device_alert_rules.device_id = ?", ar.DeviceId).
 		Where("device_alert_rules.query_field = ?", ar.QueryField).
 		Where("stored_alert_rules.duration = ?", ar.Duration).
-		Where("stored_alert_rules.alert_type = ?", ar.AlertType)
+		Where("stored_alert_rules.alert_type = ?", ar.AlertType).
+		Where("stored_alert_rules.name = ?", ar.Name)
 	if ar.RangeValues != nil {
 		jsonRangeValues, err := json.Marshal(ar.RangeValues)
 		if err != nil {

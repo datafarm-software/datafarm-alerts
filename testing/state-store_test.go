@@ -1537,12 +1537,12 @@ func TestCreateAlertRule(t *testing.T) {
 			},
 		},
 
-		"identical alert except user emails, so create anyway": {
+		"identical alert except name and emails, so return existing alert id": {
 			wantErr:              false,
 			wantStatus:           http.StatusOK,
-			wantAlertSourceCount: 2,
+			wantAlertSourceCount: 1,
 			wantResponse: alertstore.CreatedRule{
-				AlertId: "alert2",
+				AlertId: AlertId,
 			},
 			wantUserInboxes: notifier.Schema{
 				DeletedAlerts: map[string][]notifier.AlertDeleted{},
@@ -1550,7 +1550,7 @@ func TestCreateAlertRule(t *testing.T) {
 				CreatedAlerts: map[string][]notifier.AlertCreated{
 					AnotherUserEmail: {
 						{
-							Name:        "Some other alert name",
+							Name:        RegisteredAlertName,
 							DeviceId:    RegisteredDeviceId,
 							QueryField:  RegisteredQueryField,
 							Duration:    "24h",
@@ -1562,7 +1562,7 @@ func TestCreateAlertRule(t *testing.T) {
 					},
 					"user3@alert.com": {
 						{
-							Name:        "Some other alert name",
+							Name:        RegisteredAlertName,
 							DeviceId:    RegisteredDeviceId,
 							QueryField:  RegisteredQueryField,
 							Duration:    "24h",
@@ -1575,7 +1575,7 @@ func TestCreateAlertRule(t *testing.T) {
 				},
 			},
 			alertRule: alertstore.AlertRule{
-				Name:           "Some other alert name",
+				Name:           RegisteredAlertName,
 				RangeValues:    []float32{5},
 				Duration:       "24h",
 				EmailAddresses: []string{AnotherUserEmail, "user3@alert.com"},
@@ -1618,19 +1618,14 @@ func TestCreateAlertRule(t *testing.T) {
 				LinearCalibrations: []alertstore.StoredLinearCalibration{},
 				AlertRecipients: []alertstore.AlertRecipient{
 					{AlertId: AlertId, Email: UserEmail},
-					{AlertId: "alert2", Email: AnotherUserEmail},
-					{AlertId: "alert2", Email: "user3@alert.com"},
+					{AlertId: AlertId, Email: AnotherUserEmail},
+					{AlertId: AlertId, Email: "user3@alert.com"},
 				},
 				DeviceAlerts: []alertstore.DeviceAlertRule{
 					{
 						DeviceId:   RegisteredDeviceId,
 						QueryField: RegisteredQueryField,
 						AlertId:    AlertId,
-					},
-					{
-						DeviceId:   RegisteredDeviceId,
-						QueryField: RegisteredQueryField,
-						AlertId:    "alert2",
 					},
 				},
 				AlertRules: []alertstore.StoredAlertRule{
@@ -1642,26 +1637,12 @@ func TestCreateAlertRule(t *testing.T) {
 						AlertType:   alertstore.LessThan,
 						AlertLevel:  alertstore.Crit,
 					},
-					{
-						AlertId:     "alert2",
-						Name:        "Some other alert name",
-						RangeValues: []float32{5},
-						Duration:    "24h",
-						AlertType:   alertstore.LessThan,
-						AlertLevel:  alertstore.Crit,
-					},
 				},
 				AlertStates: []alertstore.AlertState{
 					{
 						Duration:    SomeDuration,
 						RangeValues: []float32{5},
 						Id:          AlertId,
-						Level:       alertstore.Crit,
-					},
-					{
-						Duration:    SomeDuration,
-						RangeValues: []float32{5},
-						Id:          "alert2",
 						Level:       alertstore.Crit,
 					},
 				},
@@ -1695,7 +1676,7 @@ func TestCreateAlertRule(t *testing.T) {
 			},
 			wantUserInboxes: EmptyInboxes,
 			alertRule: alertstore.AlertRule{
-				Name:           "Some other alert name",
+				Name:           RegisteredAlertName,
 				RangeValues:    []float32{5},
 				Duration:       "24h",
 				EmailAddresses: []string{UserEmail},

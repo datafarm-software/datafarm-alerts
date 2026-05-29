@@ -570,6 +570,20 @@ func (a *App) CreateAlertRule(
 				AlertId: existingAlertId,
 			}
 		}
+		if _, err = a.AddUsersToAlertRule(ctx, &struct {
+			AlertId string   `path:"alertId"`
+			Body    []string `doc:"List of user email addresses." format:"email"`
+		}{
+			existingAlertId, in.Body.EmailAddresses,
+		}); err != nil {
+			return nil, huma.Error500InternalServerError(
+				"Internal error adding users to alert.")
+		}
+		return &struct{ Body alertstore.CreatedRule }{
+			Body: alertstore.CreatedRule{
+				AlertId: existingAlertId,
+			},
+		}, nil
 	}
 	alertId, err := a.AlertSource.CreateAlertRule(in.Body)
 	if err != nil {
