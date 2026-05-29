@@ -285,7 +285,7 @@ func TestRespondToAlert(t *testing.T) {
 						{
 							Name:        RegisteredAlertName,
 							DeviceId:    RegisteredDeviceId,
-							Value:       59950,
+							Value:       59948.94,
 							QueryField:  "pressure",
 							AlertLevel:  alertstore.Warn,
 							Timestamp:   AfterDuration,
@@ -354,7 +354,7 @@ func TestRespondToAlert(t *testing.T) {
 				DeviceAlerts: []alertstore.DeviceAlertRule{
 					{
 						DeviceId:   RegisteredDeviceId,
-						QueryField: RegisteredQueryField,
+						QueryField: "pressure",
 						AlertId:    AlertId,
 					},
 				},
@@ -2146,9 +2146,10 @@ func TestCreateAlertRule(t *testing.T) {
 			wantAlertStore: alertstore.Schema{
 				AlertStates: []alertstore.AlertState{
 					{
-						Id:          AlertId,
-						Duration:    SomeDuration,
-						RangeValues: []float32{5},
+						Id:       AlertId,
+						Duration: SomeDuration,
+						//NOTE: the raw value according to the calibration gets stored
+						RangeValues: []float32{8.079},
 						Level:       alertstore.Warn,
 					},
 				},
@@ -2164,8 +2165,9 @@ func TestCreateAlertRule(t *testing.T) {
 				},
 				AlertRules: []alertstore.StoredAlertRule{
 					{
-						AlertId:     AlertId,
-						RangeValues: []float32{5},
+						AlertId: AlertId,
+						//NOTE: the raw value according to the calibration gets stored
+						RangeValues: []float32{8.079},
 						Name:        RegisteredAlertName,
 						Duration:    "24h",
 						AlertType:   alertstore.LessThan,
@@ -2176,10 +2178,9 @@ func TestCreateAlertRule(t *testing.T) {
 					{
 						AlertId: AlertId,
 						LinearCalibration: &alertstore.LinearCalibration{
-							RawMin: 0,
-							RawMax: 1,
-							CalMin: 0,
-							CalMax: 1,
+							RawMin: 4,
+							RawMax: 10.6,
+							CalMax: 97000,
 						},
 					},
 				},
@@ -2196,32 +2197,30 @@ func TestCreateAlertRule(t *testing.T) {
 							Duration:    "24h",
 							AlertLevel:  alertstore.Warn,
 							AlertType:   alertstore.LessThan,
-							AlertValues: []float32{5},
-							Condition:   LessThanFive,
+							AlertValues: []float32{60000},
+							Condition:   "< 60000.00",
 							LinearCalibration: &alertstore.LinearCalibration{
-								RawMin: 0,
-								RawMax: 1,
-								CalMin: 0,
-								CalMax: 1,
+								RawMin: 4,
+								RawMax: 10.6,
+								CalMax: 97000,
 							},
 						},
 					},
 				},
 			},
 			alertRule: alertstore.AlertRule{
-				RangeValues:    []float32{5},
+				RangeValues:    []float32{60000},
 				Name:           RegisteredAlertName,
 				Duration:       "24h",
 				EmailAddresses: []string{UserEmail},
 				DeviceId:       "device1",
-				QueryField:     "temperature",
+				QueryField:     "pressure",
 				AlertType:      alertstore.LessThan,
 				AlertLevel:     alertstore.Warn,
 				LinearCalibration: &alertstore.LinearCalibration{
-					RawMin: 0,
-					RawMax: 1,
-					CalMin: 0,
-					CalMax: 1,
+					RawMin: 4,
+					RawMax: 10.6,
+					CalMax: 97000,
 				},
 			},
 			wantResponse: alertstore.CreatedRule{

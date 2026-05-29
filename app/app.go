@@ -466,9 +466,6 @@ func (a *App) RespondToAlert(
 		log.Printf("parsing duration for alert: %s, %s, err: %v", alert.Id, alertRule.Duration, err)
 		return nil, huma.Error500InternalServerError("Internal error parsing the duration of the alert.")
 	}
-	if alertRule.LinearCalibration != nil {
-		alert.Value = alertRule.LinearCalibration.ToCalibrated(alert.Value)
-	}
 	shouldNotify := a.ShouldNotify(alert, previousAlert)
 	if shouldNotify || alert.Level != previousAlert.Level || alert.Level == alertstore.Ok {
 		//NOTE: not intended to update state with every alert that comes in, for the sake of comparing durations between alerts sent, with some edge cases around that like the first alert coming in etc.
@@ -479,6 +476,9 @@ func (a *App) RespondToAlert(
 	}
 	if !shouldNotify {
 		return nil, nil
+	}
+	if alertRule.LinearCalibration != nil {
+		alert.Value = alertRule.LinearCalibration.ToCalibrated(alert.Value)
 	}
 	emails, err := a.AlertStore.GetAlertRecipients(alert.Id)
 	if err != nil {
