@@ -479,7 +479,7 @@ func (a *App) RespondToAlert(
 	}
 	if alertRule.LinearCalibration != nil {
 		val := alertRule.LinearCalibration.ToCalibrated(alert.Value)
-		alert.Value = val.F64()
+		alert.Value = val.Round64(2)
 	}
 	emails, err := a.AlertStore.GetAlertRecipients(alert.Id)
 	if err != nil {
