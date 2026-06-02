@@ -311,7 +311,7 @@ func TestRespondToAlert(t *testing.T) {
 					{
 						AlertId:     AlertId,
 						Duration:    "24h",
-						RangeValues: []float32{60000},
+						RangeValues: []float32{8.082474},
 						Name:        RegisteredAlertName,
 						AlertType:   alertstore.LessThan,
 						AlertLevel:  alertstore.Warn,
@@ -360,7 +360,7 @@ func TestRespondToAlert(t *testing.T) {
 					{
 						AlertId:     AlertId,
 						Duration:    "24h",
-						RangeValues: []float32{60000},
+						RangeValues: []float32{8.082474},
 						Name:        RegisteredAlertName,
 						AlertType:   alertstore.LessThan,
 						AlertLevel:  alertstore.Warn,
