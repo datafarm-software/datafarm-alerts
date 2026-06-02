@@ -170,11 +170,17 @@ type StoredLinearCalibration struct {
 	*LinearCalibration `gorm:"embedded;embeddedPrefix:lc_"`
 }
 
+type Resolution float64
+
+const OneDecimalPlace Resolution = 0.1
+const TwoDecimalPlaces Resolution = 0.01
+const ThreeDecimalPlaces Resolution = 0.001
+
 type ValueRounder interface {
 	F32() float32
-	Round32(resolution float64) float32
+	Round32(resolution Resolution) float32
 	F64() float64
-	Round64(resolution float64) float64
+	Round64(resolution Resolution) float64
 }
 
 type CalibratedValue struct {
@@ -185,16 +191,18 @@ func (c CalibratedValue) F32() float32 {
 	return float32(c.val)
 }
 
-func (c CalibratedValue) Round32(resolution float64) float32 {
-	return float32(math.Round(c.val*resolution) / resolution)
+func (c CalibratedValue) Round32(resolution Resolution) float32 {
+	res := float64(resolution)
+	return float32(math.Round(c.val*res) / res)
 }
 
 func (c CalibratedValue) F64() float64 {
 	return c.val
 }
 
-func (c CalibratedValue) Round64(resolution float64) float64 {
-	return math.Round(c.val*resolution) / resolution
+func (c CalibratedValue) Round64(resolution Resolution) float64 {
+	res := float64(resolution)
+	return math.Round(c.val*res) / res
 }
 
 type LinearCalibration struct {
