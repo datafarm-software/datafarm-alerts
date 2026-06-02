@@ -486,7 +486,7 @@ func (a *App) RespondToAlert(
 		return nil, huma.Error500InternalServerError("Internal error getting alert recipients.")
 	}
 	message := notifier.AlertNotification{
-		Name:        alert.Name,
+		Name:        alertRule.Name,
 		Value:       alert.Value,
 		DeviceId:    alertRule.DeviceId,
 		QueryField:  alertRule.QueryField,

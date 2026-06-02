@@ -235,7 +235,6 @@ func TestRespondToAlert(t *testing.T) {
 			alert: alertsource.InfluxAlert{
 				Id:              AlertId,
 				Level:           "crit",
-				Name:            RegisteredAlertName,
 				Value:           NewValue,
 				SensorTimestamp: AfterDuration,
 				DeviceId:        RegisteredDeviceId,
@@ -341,7 +340,6 @@ func TestRespondToAlert(t *testing.T) {
 			alert: alertsource.InfluxAlert{
 				Id:              AlertId,
 				Level:           "warn",
-				Name:            RegisteredAlertName,
 				Value:           8,
 				SensorTimestamp: AfterDuration,
 				DeviceId:        RegisteredDeviceId,
@@ -420,7 +418,6 @@ func TestRespondToAlert(t *testing.T) {
 			},
 			alert: alertsource.InfluxAlert{
 				Id:              AlertId,
-				Name:            RegisteredAlertName,
 				Level:           "crit",
 				Value:           NewValue,
 				SensorTimestamp: WithinDuration,
@@ -485,7 +482,6 @@ func TestRespondToAlert(t *testing.T) {
 			},
 			alert: alertsource.InfluxAlert{
 				Id:              AlertId,
-				Name:            RegisteredAlertName,
 				Level:           "warn",
 				Value:           NewValue,
 				SensorTimestamp: WithinDuration,
@@ -550,7 +546,6 @@ func TestRespondToAlert(t *testing.T) {
 			},
 			alert: alertsource.InfluxAlert{
 				Id:              AlertId,
-				Name:            RegisteredAlertName,
 				Level:           "ok",
 				Value:           NewValue,
 				SensorTimestamp: WithinDuration,
@@ -642,7 +637,6 @@ func TestRespondToAlert(t *testing.T) {
 				Id:              AlertId,
 				Level:           "crit",
 				Value:           NewValue,
-				Name:            RegisteredAlertName,
 				SensorTimestamp: WithinDuration,
 				DeviceId:        RegisteredDeviceId,
 				QueryField:      RegisteredQueryField,
@@ -738,7 +732,6 @@ func TestRespondToAlert(t *testing.T) {
 				Id:              AlertId,
 				Level:           "warn",
 				Value:           NewValue,
-				Name:            RegisteredAlertName,
 				SensorTimestamp: WithinDuration,
 				DeviceId:        RegisteredDeviceId,
 				QueryField:      RegisteredQueryField,
@@ -834,7 +827,6 @@ func TestRespondToAlert(t *testing.T) {
 				Id:              AlertId,
 				Level:           "crit",
 				Value:           NewValue,
-				Name:            RegisteredAlertName,
 				SensorTimestamp: WithinDuration,
 				DeviceId:        RegisteredDeviceId,
 				QueryField:      RegisteredQueryField,
@@ -902,7 +894,6 @@ func TestRespondToAlert(t *testing.T) {
 			},
 			alert: alertsource.InfluxAlert{
 				Id:         AlertId,
-				Name:       RegisteredAlertName,
 				Level:      "crit",
 				Value:      NewValue,
 				DeviceId:   RegisteredDeviceId,
@@ -964,7 +955,6 @@ func TestRespondToAlert(t *testing.T) {
 			},
 			alert: alertsource.InfluxAlert{
 				Id:         AlertId,
-				Name:       RegisteredAlertName,
 				Value:      NewValue,
 				Level:      "crit",
 				DeviceId:   UnregisteredDeviceId,
@@ -1046,7 +1036,6 @@ func TestRespondToAlert(t *testing.T) {
 				Id:              AlertId,
 				Level:           "crit",
 				Value:           NewValue,
-				Name:            RegisteredAlertName,
 				SensorTimestamp: AfterDuration,
 				DeviceId:        RegisteredDeviceId,
 				QueryField:      RegisteredQueryField,
@@ -1114,7 +1103,6 @@ func TestRespondToAlert(t *testing.T) {
 				Id:              AlertId,
 				Level:           "ok",
 				Value:           NewValue,
-				Name:            RegisteredAlertName,
 				SensorTimestamp: AfterDuration,
 				DeviceId:        RegisteredDeviceId,
 				QueryField:      RegisteredQueryField,

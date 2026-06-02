@@ -41,27 +41,14 @@ var DeadmanEveryMax = int64(5 * 60)
 var ThresholdEveryMax = int64(15 * 60)
 
 type InfluxAlert struct {
-	Id                       string    `json:"_check_id" required:"true"`
-	Name                     string    `json:"_check_name"`
-	Level                    string    `json:"_level" required:"true"`
-	Measurement              string    `json:"_measurement"`
-	NotificationEndpointId   string    `json:"_notification_endpoint_id"`
-	NotificationEndpointName string    `json:"_notification_endpoint_name"`
-	NotificationRuleId       string    `json:"_notification_rule_id"`
-	NotificationRuleName     string    `json:"_notification_rule_name"`
-	SourceMeasurement        string    `json:"_source_measurement"`
-	SourceTimestamp          int64     `json:"_source_timestamp"`
-	StatusTimestamp          int64     `json:"_status_timestamp"`
-	SensorTimestamp          time.Time `json:"_sensor_timestamp"`
-	Start                    string    `json:"_start"`
-	Stop                     string    `json:"_stop"`
-	Time                     time.Time `json:"_time" required:"true"`
-	Type                     string    `json:"_type"`
-	Value                    float64   `json:"_value" required:"false"`
-	Version                  int       `json:"_version"`
-	DeviceId                 string    `json:"deviceID"`
-	QueryField               string    `json:"query_field"`
-	_                        struct{}  `json:"-" additionalProperties:"true"`
+	Id              string    `json:"_check_id" required:"true"`
+	Level           string    `json:"_level" required:"true"`
+	SensorTimestamp time.Time `json:"_sensor_timestamp"`
+	Time            time.Time `json:"_time" required:"true"`
+	Value           float64   `json:"_value" required:"false"`
+	DeviceId        string    `json:"deviceID"`
+	QueryField      string    `json:"query_field"`
+	_               struct{}  `json:"-" additionalProperties:"true"`
 }
 
 func (i *InfluxAlert) AlertLevel() alertstore.AlertLevel {
@@ -82,7 +69,6 @@ func (i *InfluxAlert) AlertLevel() alertstore.AlertLevel {
 func (i *InfluxAlert) AlertState() alertstore.AlertState {
 	return alertstore.AlertState{
 		Time:  i.SensorTimestamp,
-		Name:  i.Name,
 		Id:    i.Id,
 		Value: i.Value,
 		Level: i.AlertLevel(),

@@ -93,7 +93,6 @@ type AlertState struct {
 	Time        time.Time
 	Duration    time.Duration
 	RangeValues []float32 `gorm:"serializer:json"`
-	Name        string    `gorm:"-"`
 	Value       float64
 	Id          string `gorm:"primaryKey;unique;not null;check:length(id)>0"`
 	Level       AlertLevel
@@ -201,10 +200,10 @@ func (c CalibratedValue) Round64(precision uint8) float64 {
 }
 
 type LinearCalibration struct {
-	RawMin float64 `json:"raw-min"`
-	RawMax float64 `json:"raw-max"`
-	CalMin float64 `json:"cal-min"`
-	CalMax float64 `json:"cal-max"`
+	RawMin float64 `json:"raw-min" required:"false"`
+	RawMax float64 `json:"raw-max" required:"false"`
+	CalMin float64 `json:"cal-min" required:"false"`
+	CalMax float64 `json:"cal-max" required:"false"`
 }
 
 func (l LinearCalibration) MarshalBinary() (data []byte, err error) {
