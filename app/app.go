@@ -604,7 +604,6 @@ func (a *App) CreateAlertRule(
 				Id:          alertId,
 				Duration:    stateDuration,
 				RangeValues: in.Body.RangeValues,
-				Name:        in.Body.Name,
 				Level:       in.Body.AlertLevel,
 			},
 		},
@@ -761,7 +760,6 @@ func (a *App) UpdateAlertRule(
 	alertState := alertstore.AlertState{
 		Duration:    stateDuration,
 		RangeValues: in.Body.RangeValues,
-		Name:        in.Body.Name,
 		Id:          in.Body.AlertId,
 		Level:       in.Body.AlertLevel,
 	}

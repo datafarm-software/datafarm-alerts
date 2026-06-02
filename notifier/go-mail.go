@@ -184,10 +184,11 @@ func (g *Gomail) Notify(message Message, templater templates.Templater,
 	if g.mode == alertstore.Testing {
 		sender = &mockSender{}
 		log.Printf("notifying %T: %v", message, message)
-	}
-	sender, err = g.dialer.Dial()
-	if err != nil {
-		return err
+	} else {
+		sender, err = g.dialer.Dial()
+		if err != nil {
+			return err
+		}
 	}
 	defer sender.Close()
 	emails, err := g.generateEmails(message, templater, users...)
