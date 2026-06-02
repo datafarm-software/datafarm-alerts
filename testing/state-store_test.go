@@ -290,7 +290,7 @@ func TestRespondToAlert(t *testing.T) {
 						{
 							Name:        RegisteredAlertName,
 							DeviceId:    RegisteredDeviceId,
-							Value:       58787.88,
+							Value:       58800,
 							QueryField:  "pressure",
 							AlertLevel:  alertstore.Warn,
 							Timestamp:   AfterDuration,

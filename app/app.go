@@ -479,11 +479,11 @@ func (a *App) RespondToAlert(
 	}
 	if alertRule.LinearCalibration != nil {
 		val := alertRule.LinearCalibration.ToCalibrated(alert.Value)
-		alert.Value = val.Round64(2)
+		alert.Value = val.Round64(0.01)
 		calRange := make([]float32, 0, len(alertRule.RangeValues))
 		for _, r := range alertRule.RangeValues {
 			calRange = append(calRange, alertRule.LinearCalibration.
-				ToCalibrated(float64(r)).Round32(2))
+				ToCalibrated(float64(r)).Round32(0.01))
 		}
 		alertRule.RangeValues = calRange
 	}

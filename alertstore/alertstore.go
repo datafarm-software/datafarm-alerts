@@ -172,9 +172,9 @@ type StoredLinearCalibration struct {
 
 type ValueRounder interface {
 	F32() float32
-	Round32(precision uint8) float32
+	Round32(resolution float64) float32
 	F64() float64
-	Round64(precision uint8) float64
+	Round64(resolution float64) float64
 }
 
 type CalibratedValue struct {
@@ -185,18 +185,16 @@ func (c CalibratedValue) F32() float32 {
 	return float32(c.val)
 }
 
-func (c CalibratedValue) Round32(precision uint8) float32 {
-	ratio := math.Pow(10, float64(precision))
-	return float32(math.Round(c.val*ratio) / ratio)
+func (c CalibratedValue) Round32(resolution float64) float32 {
+	return float32(math.Round(c.val*resolution) / resolution)
 }
 
 func (c CalibratedValue) F64() float64 {
 	return c.val
 }
 
-func (c CalibratedValue) Round64(precision uint8) float64 {
-	ratio := math.Pow(10, float64(precision))
-	return math.Round(c.val*ratio) / ratio
+func (c CalibratedValue) Round64(resolution float64) float64 {
+	return math.Round(c.val*resolution) / resolution
 }
 
 type LinearCalibration struct {
