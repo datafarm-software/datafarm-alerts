@@ -52,6 +52,12 @@ var AlertReceived = time.Date(1994, 6, 24, 6, 0, 0, 0, time.UTC)
 var AfterDuration = AlertReceived.Add(25 * time.Hour)
 var OnDuration = AlertReceived.Add(24 * time.Hour)
 var WithinDuration = AlertReceived.Add(6 * time.Hour)
+var SixtyThousandLitres = alertstore.LinearCalibration{
+	RawMin: 4,
+	RawMax: 10.6,
+	CalMin: 0,
+	CalMax: 97000,
+}
 
 func TestShouldNotify(t *testing.T) {
 	var got bool
@@ -309,12 +315,14 @@ func TestRespondToAlert(t *testing.T) {
 				},
 				AlertRules: []alertstore.StoredAlertRule{
 					{
-						AlertId:     AlertId,
-						Duration:    "24h",
-						RangeValues: []float32{8.082474},
-						Name:        RegisteredAlertName,
-						AlertType:   alertstore.LessThan,
-						AlertLevel:  alertstore.Warn,
+						AlertId:  AlertId,
+						Duration: "24h",
+						RangeValues: []float32{
+							SixtyThousandLitres.ToRaw(60000).F32(),
+						},
+						Name:       RegisteredAlertName,
+						AlertType:  alertstore.LessThan,
+						AlertLevel: alertstore.Warn,
 					},
 				},
 				LinearCalibrations: []alertstore.StoredLinearCalibration{
@@ -358,12 +366,14 @@ func TestRespondToAlert(t *testing.T) {
 				},
 				AlertRules: []alertstore.StoredAlertRule{
 					{
-						AlertId:     AlertId,
-						Duration:    "24h",
-						RangeValues: []float32{8.082474},
-						Name:        RegisteredAlertName,
-						AlertType:   alertstore.LessThan,
-						AlertLevel:  alertstore.Warn,
+						AlertId:  AlertId,
+						Duration: "24h",
+						RangeValues: []float32{
+							SixtyThousandLitres.ToRaw(60000).F32(),
+						},
+						Name:       RegisteredAlertName,
+						AlertType:  alertstore.LessThan,
+						AlertLevel: alertstore.Warn,
 					},
 				},
 				LinearCalibrations: []alertstore.StoredLinearCalibration{
