@@ -2889,21 +2889,16 @@ func TestUpdateAlertRule(t *testing.T) {
 			wantAlertSourceCount: 1,
 			alertId:              AlertId,
 			updatedAlertRule: alertstore.AlertRule{
-				Name:           RegisteredAlertName,
-				AlertId:        AlertId,
-				EmailAddresses: []string{UserEmail},
-				RangeValues:    []float32{10},
-				Duration:       "24h",
-				DeviceId:       RegisteredDeviceId,
-				QueryField:     RegisteredQueryField,
-				AlertType:      alertstore.GreaterThan,
-				AlertLevel:     alertstore.Crit,
-				LinearCalibration: &alertstore.LinearCalibration{
-					RawMin: 0,
-					RawMax: 1,
-					CalMin: 0,
-					CalMax: 2,
-				},
+				Name:              RegisteredAlertName,
+				AlertId:           AlertId,
+				EmailAddresses:    []string{UserEmail},
+				RangeValues:       []float32{60000},
+				Duration:          "24h",
+				DeviceId:          RegisteredDeviceId,
+				QueryField:        RegisteredQueryField,
+				AlertType:         alertstore.GreaterThan,
+				AlertLevel:        alertstore.Crit,
+				LinearCalibration: &SixtyThousandLitres,
 			},
 			wantUserInboxes: notifier.Schema{
 				Notifications: map[string][]notifier.AlertNotification{},
@@ -2911,20 +2906,15 @@ func TestUpdateAlertRule(t *testing.T) {
 				CreatedAlerts: map[string][]notifier.AlertCreated{
 					UserEmail: {
 						{
-							Name:        RegisteredAlertName,
-							DeviceId:    RegisteredDeviceId,
-							QueryField:  RegisteredQueryField,
-							Duration:    "24h",
-							AlertLevel:  alertstore.Crit,
-							AlertType:   alertstore.GreaterThan,
-							AlertValues: []float32{10},
-							Condition:   GreaterThanTen,
-							LinearCalibration: &alertstore.LinearCalibration{
-								RawMin: 0,
-								RawMax: 1,
-								CalMin: 0,
-								CalMax: 2,
-							},
+							Name:              RegisteredAlertName,
+							DeviceId:          RegisteredDeviceId,
+							QueryField:        RegisteredQueryField,
+							Duration:          "24h",
+							AlertLevel:        alertstore.Crit,
+							AlertType:         alertstore.GreaterThan,
+							AlertValues:       []float32{60000},
+							Condition:         GreaterThanTen,
+							LinearCalibration: &SixtyThousandLitres,
 						},
 					},
 				},
@@ -2954,10 +2944,12 @@ func TestUpdateAlertRule(t *testing.T) {
 			wantAlertStore: alertstore.Schema{
 				AlertStates: []alertstore.AlertState{
 					{
-						Duration:    SomeDuration,
-						RangeValues: []float32{10},
-						Id:          AlertId,
-						Level:       alertstore.Crit,
+						Duration: SomeDuration,
+						RangeValues: []float32{
+							SixtyThousandLitres.ToRaw(60000).F32(),
+						},
+						Id:    AlertId,
+						Level: alertstore.Crit,
 					},
 				},
 				AlertRecipients: []alertstore.AlertRecipient{
@@ -2972,23 +2964,20 @@ func TestUpdateAlertRule(t *testing.T) {
 				},
 				AlertRules: []alertstore.StoredAlertRule{
 					{
-						AlertId:     AlertId,
-						Name:        RegisteredAlertName,
-						RangeValues: []float32{10},
-						Duration:    "24h",
-						AlertType:   alertstore.GreaterThan,
-						AlertLevel:  alertstore.Crit,
+						AlertId: AlertId,
+						Name:    RegisteredAlertName,
+						RangeValues: []float32{
+							SixtyThousandLitres.ToRaw(60000).F32(),
+						},
+						Duration:   "24h",
+						AlertType:  alertstore.GreaterThan,
+						AlertLevel: alertstore.Crit,
 					},
 				},
 				LinearCalibrations: []alertstore.StoredLinearCalibration{
 					{
-						AlertId: AlertId,
-						LinearCalibration: &alertstore.LinearCalibration{
-							RawMin: 0,
-							RawMax: 1,
-							CalMin: 0,
-							CalMax: 2,
-						},
+						AlertId:           AlertId,
+						LinearCalibration: &SixtyThousandLitres,
 					},
 				},
 			},
