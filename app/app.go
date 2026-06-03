@@ -546,13 +546,15 @@ func (a *App) CreateAlertRule(
 	}
 	alertCreatedMessageValues := in.Body.RangeValues
 	if in.Body.LinearCalibration != nil {
-		newRange := make([]float32, 0, len(in.Body.RangeValues))
-		var v alertstore.ValueRounder
-		for _, val := range in.Body.RangeValues {
-			v = in.Body.LinearCalibration.ToRaw(float64(val))
-			newRange = append(newRange, v.F32())
+		if !in.Body.LinearCalibration.IsEmpty() {
+			newRange := make([]float32, 0, len(in.Body.RangeValues))
+			var v alertstore.ValueRounder
+			for _, val := range in.Body.RangeValues {
+				v = in.Body.LinearCalibration.ToRaw(float64(val))
+				newRange = append(newRange, v.F32())
+			}
+			in.Body.RangeValues = newRange
 		}
-		in.Body.RangeValues = newRange
 	}
 	existingAlertId, err := a.AlertStore.CheckAlertRuleExists(in.Body)
 	if err != nil {
@@ -633,9 +635,11 @@ func (a *App) CreateAlertRule(
 		},
 	}
 	if in.Body.LinearCalibration != nil {
-		dbRecord.LinearCalibrations = append(dbRecord.LinearCalibrations,
-			alertstore.StoredLinearCalibration{
-				AlertId: alertId, LinearCalibration: in.Body.LinearCalibration})
+		if !in.Body.LinearCalibration.IsEmpty() {
+			dbRecord.LinearCalibrations = append(dbRecord.LinearCalibrations,
+				alertstore.StoredLinearCalibration{
+					AlertId: alertId, LinearCalibration: in.Body.LinearCalibration})
+		}
 	}
 	if err := a.AlertStore.Store(dbRecord); err != nil {
 		log.Printf("storing alert: %v", err)
@@ -686,13 +690,15 @@ func (a *App) UpdateAlertRule(
 	in.Body.AlertId = in.AlertId
 	alertCreatedMessageValues := in.Body.RangeValues
 	if in.Body.LinearCalibration != nil {
-		newRange := make([]float32, 0, len(in.Body.RangeValues))
-		var v alertstore.ValueRounder
-		for _, val := range in.Body.RangeValues {
-			v = in.Body.LinearCalibration.ToRaw(float64(val))
-			newRange = append(newRange, v.F32())
+		if !in.Body.LinearCalibration.IsEmpty() {
+			newRange := make([]float32, 0, len(in.Body.RangeValues))
+			var v alertstore.ValueRounder
+			for _, val := range in.Body.RangeValues {
+				v = in.Body.LinearCalibration.ToRaw(float64(val))
+				newRange = append(newRange, v.F32())
+			}
+			in.Body.RangeValues = newRange
 		}
-		in.Body.RangeValues = newRange
 	}
 	existingAlert, err := a.AlertStore.GetAlertRule(in.AlertId)
 	if err != nil {
@@ -747,11 +753,13 @@ func (a *App) UpdateAlertRule(
 		},
 	}
 	if in.Body.LinearCalibration != nil {
-		dbRecord.LinearCalibrations = append(dbRecord.LinearCalibrations,
-			alertstore.StoredLinearCalibration{
-				AlertId:           in.Body.AlertId,
-				LinearCalibration: in.Body.LinearCalibration,
-			})
+		if !in.Body.LinearCalibration.IsEmpty() {
+			dbRecord.LinearCalibrations = append(dbRecord.LinearCalibrations,
+				alertstore.StoredLinearCalibration{
+					AlertId:           in.Body.AlertId,
+					LinearCalibration: in.Body.LinearCalibration,
+				})
+		}
 	}
 	if err := a.AlertStore.UpdateAlertRule(in.Body.AlertId, dbRecord); err != nil {
 		log.Printf("alertstore update alert rule for id: %s, error: %v", in.AlertId, err)
@@ -793,7 +801,9 @@ func (a *App) UpdateAlertRule(
 		AlertValues: alertCreatedMessageValues,
 	}
 	if in.Body.LinearCalibration != nil {
-		message.LinearCalibration = in.Body.LinearCalibration
+		if !in.Body.LinearCalibration.IsEmpty() {
+			message.LinearCalibration = in.Body.LinearCalibration
+		}
 	}
 	users := make([]auth.UserInfo, 0, len(uniqueEmails))
 	for _, e := range uniqueEmails {

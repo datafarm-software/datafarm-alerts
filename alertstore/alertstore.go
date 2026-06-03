@@ -235,3 +235,19 @@ func (c *LinearCalibration) ToRaw(cal float64) ValueRounder {
 		(c.CalMax - c.CalMin)) +
 		c.RawMin}
 }
+
+func (c *LinearCalibration) IsEmpty() bool {
+	if c.RawMin != 0 {
+		return false
+	}
+	if c.RawMax != 0 {
+		return false
+	}
+	if c.CalMin != 0 {
+		return false
+	}
+	if c.CalMax != 0 {
+		return false
+	}
+	return true
+}
