@@ -24,5 +24,16 @@
   <li>AlertLevel: {{alertLevelToString .AlertLevel}}</li>
   <li>AlertType: {{alertTypeToString .AlertType}}</li>
   <li>Condition: {{.Condition}}</li>
+  {{if .LinearCalibration}}
+  <li>
+    LinearCalibration:
+    <ul>
+      <li>Raw Value Minimum: {{.LinearCalibration.RawMin}}</li>
+      <li>Raw Value Maximum: {{.LinearCalibration.RawMax}}</li>
+      <li>Calibrated Value Minimum: {{.LinearCalibration.CalMin}}</li>
+      <li>Calibrated Value Maximum: {{.LinearCalibration.CalMax}}</li>
+    </ul>
+  </li>
+  {{end}}
 </ul>
 {{end}}
