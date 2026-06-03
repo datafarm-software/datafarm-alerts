@@ -730,6 +730,7 @@ func (a *App) UpdateAlertRule(
 		}
 	}
 	if diff := cmp.Diff(existingAlert, in.Body); diff == "" {
+		existingAlert.RangeValues = alertCreatedMessageValues
 		return &struct{ Body alertstore.AlertRule }{existingAlert}, nil
 	}
 	var dbRecord alertstore.Schema
