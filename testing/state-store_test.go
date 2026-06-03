@@ -2983,6 +2983,90 @@ func TestUpdateAlertRule(t *testing.T) {
 			},
 		},
 
+		"change range values back to calibrated if existing": {
+			wantStatus:           http.StatusOK,
+			wantAlertSourceCount: 1,
+			alertId:              AlertId,
+			updatedAlertRule: alertstore.AlertRule{
+				Name:              RegisteredAlertName,
+				AlertId:           AlertId,
+				EmailAddresses:    []string{UserEmail},
+				RangeValues:       []float32{60000},
+				Duration:          "24h",
+				DeviceId:          RegisteredDeviceId,
+				QueryField:        RegisteredQueryField,
+				AlertType:         alertstore.GreaterThan,
+				AlertLevel:        alertstore.Crit,
+				LinearCalibration: &SixtyThousandLitres,
+			},
+			wantUserInboxes: notifier.Schema{
+				Notifications: map[string][]notifier.AlertNotification{},
+				DeletedAlerts: map[string][]notifier.AlertDeleted{},
+				CreatedAlerts: map[string][]notifier.AlertCreated{},
+			},
+			mockAlertStore: alertstore.Schema{
+				AlertRecipients: []alertstore.AlertRecipient{
+					{AlertId: AlertId, Email: UserEmail},
+				},
+				DeviceAlerts: []alertstore.DeviceAlertRule{
+					{
+						DeviceId:   RegisteredDeviceId,
+						QueryField: RegisteredQueryField,
+						AlertId:    AlertId,
+					},
+				},
+				AlertRules: []alertstore.StoredAlertRule{
+					{
+						AlertId: AlertId,
+						Name:    RegisteredAlertName,
+						RangeValues: []float32{
+							SixtyThousandLitres.ToRaw(60000).F32(),
+						},
+						Duration:   "24h",
+						AlertType:  alertstore.GreaterThan,
+						AlertLevel: alertstore.Crit,
+					},
+				},
+				LinearCalibrations: []alertstore.StoredLinearCalibration{
+					{
+						AlertId:           AlertId,
+						LinearCalibration: &SixtyThousandLitres,
+					},
+				},
+			},
+			wantAlertStore: alertstore.Schema{
+				AlertStates: []alertstore.AlertState{},
+				AlertRecipients: []alertstore.AlertRecipient{
+					{AlertId: AlertId, Email: UserEmail},
+				},
+				DeviceAlerts: []alertstore.DeviceAlertRule{
+					{
+						DeviceId:   RegisteredDeviceId,
+						QueryField: RegisteredQueryField,
+						AlertId:    AlertId,
+					},
+				},
+				AlertRules: []alertstore.StoredAlertRule{
+					{
+						AlertId: AlertId,
+						Name:    RegisteredAlertName,
+						RangeValues: []float32{
+							SixtyThousandLitres.ToRaw(60000).F32(),
+						},
+						Duration:   "24h",
+						AlertType:  alertstore.GreaterThan,
+						AlertLevel: alertstore.Crit,
+					},
+				},
+				LinearCalibrations: []alertstore.StoredLinearCalibration{
+					{
+						AlertId:           AlertId,
+						LinearCalibration: &SixtyThousandLitres,
+					},
+				},
+			},
+		},
+
 		"update alert type from less than to range": {
 			wantStatus:           http.StatusOK,
 			wantAlertSourceCount: 1,
