@@ -684,6 +684,16 @@ func (a *App) UpdateAlertRule(
 		return nil, huma.Error400BadRequest("Need 2 range values for range alert.")
 	}
 	in.Body.AlertId = in.AlertId
+	alertCreatedMessageValues := in.Body.RangeValues
+	if in.Body.LinearCalibration != nil {
+		newRange := make([]float32, 0, len(in.Body.RangeValues))
+		var v alertstore.ValueRounder
+		for _, val := range in.Body.RangeValues {
+			v = in.Body.LinearCalibration.ToRaw(float64(val))
+			newRange = append(newRange, v.F32())
+		}
+		in.Body.RangeValues = newRange
+	}
 	existingAlert, err := a.AlertStore.GetAlertRule(in.AlertId)
 	if err != nil {
 		if errors.Is(err, alertstore.NoAlert) {
@@ -780,7 +790,7 @@ func (a *App) UpdateAlertRule(
 		Duration:    in.Body.Duration,
 		AlertLevel:  in.Body.AlertLevel,
 		AlertType:   in.Body.AlertType,
-		AlertValues: in.Body.RangeValues,
+		AlertValues: alertCreatedMessageValues,
 	}
 	if in.Body.LinearCalibration != nil {
 		message.LinearCalibration = in.Body.LinearCalibration
@@ -794,6 +804,7 @@ func (a *App) UpdateAlertRule(
 		return nil, huma.Error500InternalServerError(
 			"Internal error while notifying users of updated alert rule.")
 	}
+	in.Body.RangeValues = alertCreatedMessageValues
 	return &struct{ Body alertstore.AlertRule }{in.Body}, nil
 }
 

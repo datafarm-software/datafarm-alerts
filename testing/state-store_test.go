@@ -2913,7 +2913,7 @@ func TestUpdateAlertRule(t *testing.T) {
 							AlertLevel:        alertstore.Crit,
 							AlertType:         alertstore.GreaterThan,
 							AlertValues:       []float32{60000},
-							Condition:         GreaterThanTen,
+							Condition:         "60000.00 <",
 							LinearCalibration: &SixtyThousandLitres,
 						},
 					},
