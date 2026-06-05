@@ -483,7 +483,7 @@ func (a *App) RespondToAlert(
 		calRange := make([]float32, 0, len(alertRule.RangeValues))
 		for _, r := range alertRule.RangeValues {
 			calRange = append(calRange, alertRule.LinearCalibration.
-				ToCalibrated(float64(r)).Round32(alertstore.TwoDecimalPlaces))
+				ToCalibrated(float64(r)).Round32(alertstore.NearestOne))
 		}
 		alertRule.RangeValues = calRange
 	}

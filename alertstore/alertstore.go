@@ -172,9 +172,10 @@ type StoredLinearCalibration struct {
 
 type Resolution float64
 
-const OneDecimalPlace Resolution = 0.1
-const TwoDecimalPlaces Resolution = 0.01
-const ThreeDecimalPlaces Resolution = 0.001
+const NearestOne Resolution = 1
+const OneDecimalPlace Resolution = 10
+const TwoDecimalPlaces Resolution = 100
+const ThreeDecimalPlaces Resolution = 1000
 
 type ValueRounder interface {
 	F32() float32

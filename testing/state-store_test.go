@@ -290,7 +290,7 @@ func TestRespondToAlert(t *testing.T) {
 						{
 							Name:        RegisteredAlertName,
 							DeviceId:    RegisteredDeviceId,
-							Value:       58800,
+							Value:       59831.36,
 							QueryField:  "pressure",
 							AlertLevel:  alertstore.Warn,
 							Timestamp:   AfterDuration,
@@ -348,7 +348,7 @@ func TestRespondToAlert(t *testing.T) {
 			alert: alertsource.InfluxAlert{
 				Id:              AlertId,
 				Level:           "warn",
-				Value:           8,
+				Value:           8.071,
 				SensorTimestamp: AfterDuration,
 				DeviceId:        RegisteredDeviceId,
 				QueryField:      "pressure",
@@ -390,7 +390,7 @@ func TestRespondToAlert(t *testing.T) {
 					{
 						Id:       AlertId,
 						Time:     AfterDuration,
-						Value:    8,
+						Value:    8.071,
 						Duration: SomeDuration,
 						Level:    alertstore.Warn,
 					},
