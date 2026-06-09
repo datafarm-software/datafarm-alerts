@@ -49,6 +49,7 @@ const InactiveSensorCondition = "Inactive Sensor"
 const RangeCondition = "> 10.00, 20.00 <"
 
 var AlertReceived = time.Date(1994, 6, 24, 6, 0, 0, 0, time.UTC)
+var BeforeDuration = AlertReceived.Add(-1 * time.Hour)
 var AfterDuration = AlertReceived.Add(25 * time.Hour)
 var OnDuration = AlertReceived.Add(24 * time.Hour)
 var WithinDuration = AlertReceived.Add(6 * time.Hour)
@@ -1083,6 +1084,7 @@ func TestRespondToAlert(t *testing.T) {
 				},
 			},
 		},
+
 		"no notification first alert": {
 			wantStatus:      http.StatusNoContent,
 			wantUserInboxes: EmptyInboxes,
@@ -1145,6 +1147,71 @@ func TestRespondToAlert(t *testing.T) {
 						Value:    NewValue,
 						Time:     AfterDuration,
 						Duration: SomeDuration,
+						Level:    alertstore.Ok,
+					},
+				},
+			},
+		},
+
+		"no notification because alert status ok": {
+			wantStatus:      http.StatusNoContent,
+			wantUserInboxes: EmptyInboxes,
+			mockAlertStore: alertstore.Schema{
+				DeviceAlerts: []alertstore.DeviceAlertRule{
+					{
+						DeviceId:   RegisteredDeviceId,
+						QueryField: RegisteredQueryField,
+						AlertId:    AlertId,
+					},
+				},
+				AlertRules: []alertstore.StoredAlertRule{
+					{
+						AlertId:     AlertId,
+						Duration:    "24h",
+						AlertType:   alertstore.LessThan,
+						RangeValues: []float32{10},
+					},
+				},
+				AlertStates: []alertstore.AlertState{
+					{
+						Time:     AlertReceived,
+						Duration: SomeDuration,
+						Value:    11,
+						Id:       AlertId,
+						Level:    alertstore.Crit,
+					},
+				},
+			},
+			alert: alertsource.InfluxAlert{
+				Id:         AlertId,
+				Level:      "ok",
+				Value:      9,
+				DeviceId:   RegisteredDeviceId,
+				QueryField: RegisteredQueryField,
+			},
+			wantAlertStore: alertstore.Schema{
+				LinearCalibrations: []alertstore.StoredLinearCalibration{},
+				DeviceAlerts: []alertstore.DeviceAlertRule{
+					{
+						DeviceId:   RegisteredDeviceId,
+						QueryField: RegisteredQueryField,
+						AlertId:    AlertId,
+					},
+				},
+				AlertRecipients: []alertstore.AlertRecipient{},
+				AlertRules: []alertstore.StoredAlertRule{
+					{
+						AlertId:     AlertId,
+						Duration:    "24h",
+						AlertType:   alertstore.LessThan,
+						RangeValues: []float32{10},
+					},
+				},
+				AlertStates: []alertstore.AlertState{
+					{
+						Duration: SomeDuration,
+						Id:       AlertId,
+						Value:    9,
 						Level:    alertstore.Ok,
 					},
 				},

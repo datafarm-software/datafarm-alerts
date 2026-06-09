@@ -9,6 +9,7 @@ import (
 	"os"
 	"reflect"
 	"slices"
+	"strings"
 	"time"
 
 	"github.com/danielgtaylor/huma/v2"
@@ -448,6 +449,10 @@ func (a *App) RespondToAlert(
 		}
 		log.Printf("Alert rule not found. %s", in.Body.Id)
 		return nil, huma.Error404NotFound("Alert rule not found.")
+	}
+	if strings.Contains(strings.ToLower(alertRule.Name), "summer") {
+		log.Printf("InfluxAlert: %v\n", in.Body)
+		log.Printf("AlertRule: %v\n", alertRule)
 	}
 	if alertRule.QueryField != in.Body.QueryField || alertRule.DeviceId != in.Body.DeviceId {
 		return nil, huma.Error404NotFound("Received alert with unknown DeviceId and QueryField combination.")
