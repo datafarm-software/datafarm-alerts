@@ -3,5 +3,6 @@
 *.flux
 *.db
 *.sh
+*.txt
 example-email.html
 config.yml
