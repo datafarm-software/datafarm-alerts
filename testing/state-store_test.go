@@ -1331,6 +1331,125 @@ func TestCreateAlertRule(t *testing.T) {
 			},
 		},
 
+		"deal with conflict on alert rule name": {
+			wantErr:              false,
+			wantStatus:           http.StatusOK,
+			wantAlertSourceCount: 2,
+			mockAlertStore: alertstore.Schema{
+				LinearCalibrations: []alertstore.StoredLinearCalibration{},
+				AlertStates: []alertstore.AlertState{
+					{
+						Id:          AlertId,
+						Duration:    SomeDuration,
+						RangeValues: []float32{5},
+						Level:       alertstore.Crit,
+					},
+				},
+				AlertRecipients: []alertstore.AlertRecipient{
+					{AlertId: AlertId, Email: UserEmail},
+				},
+				DeviceAlerts: []alertstore.DeviceAlertRule{
+					{
+						DeviceId:   RegisteredDeviceId,
+						QueryField: RegisteredQueryField,
+						AlertId:    AlertId,
+					},
+				},
+				AlertRules: []alertstore.StoredAlertRule{
+					{
+						AlertId:     AlertId,
+						Name:        RegisteredAlertName,
+						RangeValues: []float32{5},
+						Duration:    "24h",
+						AlertType:   alertstore.LessThan,
+						AlertLevel:  alertstore.Crit,
+					},
+				},
+			},
+			wantAlertStore: alertstore.Schema{
+				LinearCalibrations: []alertstore.StoredLinearCalibration{},
+				AlertStates: []alertstore.AlertState{
+					{
+						Id:          AlertId,
+						Duration:    SomeDuration,
+						RangeValues: []float32{5},
+						Level:       alertstore.Crit,
+					},
+					{
+						Id:          "alert2",
+						Duration:    SomeDuration,
+						RangeValues: []float32{10},
+						Level:       alertstore.Crit,
+					},
+				},
+				AlertRecipients: []alertstore.AlertRecipient{
+					{AlertId: AlertId, Email: UserEmail},
+					{AlertId: "alert2", Email: AnotherUserEmail},
+				},
+				DeviceAlerts: []alertstore.DeviceAlertRule{
+					{
+						DeviceId:   RegisteredDeviceId,
+						QueryField: RegisteredQueryField,
+						AlertId:    AlertId,
+					},
+					{
+						DeviceId:   RegisteredDeviceId,
+						QueryField: RegisteredQueryField,
+						AlertId:    "alert2",
+					},
+				},
+				AlertRules: []alertstore.StoredAlertRule{
+					{
+						AlertId:     AlertId,
+						Name:        RegisteredAlertName,
+						RangeValues: []float32{5},
+						Duration:    "24h",
+						AlertType:   alertstore.LessThan,
+						AlertLevel:  alertstore.Crit,
+					},
+					{
+						AlertId:     "alert2",
+						Name:        RegisteredAlertName,
+						RangeValues: []float32{10},
+						Duration:    "24h",
+						AlertType:   alertstore.GreaterThan,
+						AlertLevel:  alertstore.Crit,
+					},
+				},
+			},
+			wantUserInboxes: notifier.Schema{
+				DeletedAlerts: map[string][]notifier.AlertDeleted{},
+				Notifications: map[string][]notifier.AlertNotification{},
+				CreatedAlerts: map[string][]notifier.AlertCreated{
+					AnotherUserEmail: {
+						{
+							Name:        RegisteredAlertName,
+							DeviceId:    RegisteredDeviceId,
+							QueryField:  RegisteredQueryField,
+							Duration:    "24h",
+							AlertLevel:  alertstore.Crit,
+							AlertType:   alertstore.GreaterThan,
+							AlertValues: []float32{10},
+							Condition:   GreaterThanTen,
+						},
+					},
+				},
+			},
+			alertRule: alertstore.AlertRule{
+				RangeValues:    []float32{10},
+				Name:           RegisteredAlertName,
+				Duration:       "24h",
+				EmailAddresses: []string{AnotherUserEmail},
+				DeviceId:       "device1",
+				QueryField:     "temperature",
+				AlertType:      alertstore.GreaterThan,
+				AlertLevel:     alertstore.Crit,
+			},
+			wantResponse: alertstore.CreatedRule{
+				AlertId: AlertId,
+			},
+		},
+
 		"successfully create an inactive sensor alert rule": {
 			wantErr:              false,
 			wantStatus:           http.StatusOK,
