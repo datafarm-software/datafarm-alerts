@@ -182,7 +182,12 @@ func (i *Influx) CreateAlertRule(ar alertstore.AlertRule) (string, error) {
 	}
 	nc, err := i.client.APIClient().CreateCheck(ctx, &params)
 	if err != nil {
-		return "", fmt.Errorf("createCheck: %v", err)
+		errStr := strings.ToLower(err.Error())
+		if !strings.Contains(errStr, "conflict") {
+			return "", fmt.Errorf("createCheck: %v", err)
+		}
+		ar.Name += fmt.Sprintf(":%d", time.Now().Unix())
+		return i.CreateAlertRule(ar)
 	}
 	lc := localCheck(localCheckImpl{nc})
 	taskId, err := lc.TaskId()

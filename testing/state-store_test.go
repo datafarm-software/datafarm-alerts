@@ -1446,7 +1446,7 @@ func TestCreateAlertRule(t *testing.T) {
 				AlertLevel:     alertstore.Crit,
 			},
 			wantResponse: alertstore.CreatedRule{
-				AlertId: AlertId,
+				AlertId: "alert2",
 			},
 		},
 
