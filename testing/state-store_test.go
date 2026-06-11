@@ -4609,6 +4609,7 @@ func TestRemoveUsersFromAlertRule(t *testing.T) {
 				},
 			},
 			wantAlertStore: alertstore.Schema{
+				LinearCalibrations: []alertstore.StoredLinearCalibration{},
 				DeviceAlerts: []alertstore.DeviceAlertRule{
 					{
 						DeviceId:   RegisteredDeviceId,
@@ -4683,6 +4684,7 @@ func TestRemoveUsersFromAlertRule(t *testing.T) {
 				AlertStates: []alertstore.AlertState{},
 			},
 			wantAlertStore: alertstore.Schema{
+				LinearCalibrations: []alertstore.StoredLinearCalibration{},
 				DeviceAlerts: []alertstore.DeviceAlertRule{
 					{
 						DeviceId:   RegisteredDeviceId,
@@ -4736,10 +4738,11 @@ func TestRemoveUsersFromAlertRule(t *testing.T) {
 				},
 			},
 			wantAlertStore: alertstore.Schema{
-				DeviceAlerts:    []alertstore.DeviceAlertRule{},
-				AlertRecipients: []alertstore.AlertRecipient{},
-				AlertRules:      []alertstore.StoredAlertRule{},
-				AlertStates:     []alertstore.AlertState{},
+				LinearCalibrations: []alertstore.StoredLinearCalibration{},
+				DeviceAlerts:       []alertstore.DeviceAlertRule{},
+				AlertRecipients:    []alertstore.AlertRecipient{},
+				AlertRules:         []alertstore.StoredAlertRule{},
+				AlertStates:        []alertstore.AlertState{},
 			},
 			wantUserInboxes: notifier.Schema{
 				Notifications: map[string][]notifier.AlertNotification{},
@@ -4788,10 +4791,11 @@ func TestRemoveUsersFromAlertRule(t *testing.T) {
 				},
 			},
 			wantAlertStore: alertstore.Schema{
-				DeviceAlerts:    []alertstore.DeviceAlertRule{},
-				AlertRecipients: []alertstore.AlertRecipient{},
-				AlertRules:      []alertstore.StoredAlertRule{},
-				AlertStates:     []alertstore.AlertState{},
+				LinearCalibrations: []alertstore.StoredLinearCalibration{},
+				DeviceAlerts:       []alertstore.DeviceAlertRule{},
+				AlertRecipients:    []alertstore.AlertRecipient{},
+				AlertRules:         []alertstore.StoredAlertRule{},
+				AlertStates:        []alertstore.AlertState{},
 			},
 			wantUserInboxes: notifier.Schema{
 				Notifications: map[string][]notifier.AlertNotification{},
@@ -4943,6 +4947,7 @@ func TestAddUsersToAlertRule(t *testing.T) {
 				},
 			},
 			wantAlertStore: alertstore.Schema{
+				LinearCalibrations: []alertstore.StoredLinearCalibration{},
 				DeviceAlerts: []alertstore.DeviceAlertRule{
 					{
 						DeviceId:   RegisteredDeviceId,
@@ -5028,6 +5033,7 @@ func TestAddUsersToAlertRule(t *testing.T) {
 				},
 			},
 			wantAlertStore: alertstore.Schema{
+				LinearCalibrations: []alertstore.StoredLinearCalibration{},
 				DeviceAlerts: []alertstore.DeviceAlertRule{
 					{
 						DeviceId:   RegisteredDeviceId,
