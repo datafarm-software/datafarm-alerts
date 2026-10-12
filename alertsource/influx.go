@@ -234,7 +234,11 @@ func (i *Influx) UpdateAlertRule(ar alertstore.AlertRule) error {
 	}
 	check, err = i.client.APIClient().PutChecksID(ctx, &updateParams)
 	if err != nil {
-		return fmt.Errorf("PutChecks: %v", err)
+		if !strings.Contains(err.Error(), "conflict") {
+			return fmt.Errorf("putChecks: %v", err)
+		}
+		ar.Name += fmt.Sprintf(":%d", time.Now().Unix())
+		return i.UpdateAlertRule(ar)
 	}
 	lc := localCheck(localCheckImpl{check})
 	taskId, err := lc.TaskId()
