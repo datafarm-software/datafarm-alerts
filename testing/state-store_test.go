@@ -3854,6 +3854,13 @@ func TestUpdateAlertRule(t *testing.T) {
 			wantStatus: http.StatusNotFound,
 			wantErr:    true,
 			alertId:    AlertId,
+			mockAlertStore: &alertstore.Schema{
+				DeviceAlerts:       []alertstore.DeviceAlertRule{},
+				AlertRecipients:    []alertstore.AlertRecipient{},
+				AlertStates:        []alertstore.AlertState{},
+				AlertRules:         []alertstore.StoredAlertRule{},
+				LinearCalibrations: []alertstore.StoredLinearCalibration{},
+			},
 			updatedAlertRule: alertstore.AlertRule{
 				Name:           RegisteredAlertName,
 				EmailAddresses: []string{UserEmail},
@@ -3870,6 +3877,13 @@ func TestUpdateAlertRule(t *testing.T) {
 			wantStatus: http.StatusBadRequest,
 			wantErr:    true,
 			alertId:    AlertId,
+			mockAlertStore: &alertstore.Schema{
+				DeviceAlerts:       []alertstore.DeviceAlertRule{},
+				AlertRecipients:    []alertstore.AlertRecipient{},
+				AlertStates:        []alertstore.AlertState{},
+				AlertRules:         []alertstore.StoredAlertRule{},
+				LinearCalibrations: []alertstore.StoredLinearCalibration{},
+			},
 			updatedAlertRule: alertstore.AlertRule{
 				Name:           RegisteredAlertName,
 				EmailAddresses: []string{UserEmail},
@@ -3886,6 +3900,13 @@ func TestUpdateAlertRule(t *testing.T) {
 			wantStatus: http.StatusBadRequest,
 			wantErr:    true,
 			alertId:    AlertId,
+			mockAlertStore: &alertstore.Schema{
+				DeviceAlerts:       []alertstore.DeviceAlertRule{},
+				AlertRecipients:    []alertstore.AlertRecipient{},
+				AlertStates:        []alertstore.AlertState{},
+				AlertRules:         []alertstore.StoredAlertRule{},
+				LinearCalibrations: []alertstore.StoredLinearCalibration{},
+			},
 			updatedAlertRule: alertstore.AlertRule{
 				EmailAddresses: []string{UserEmail},
 				Name:           RegisteredAlertName,

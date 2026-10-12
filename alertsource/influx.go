@@ -618,14 +618,8 @@ func NewTestingInflux(configPath string) (AlertSource, error) {
 }
 
 func (i *TestingInflux) Close() error {
-	var err error
 	for _, id := range i.testingAlertIdsMap {
-		if err = i.influx.DeleteAlertRule(id); err != nil {
-			break
-		}
-	}
-	if err != nil {
-		return err
+		i.influx.DeleteAlertRule(id)
 	}
 	return i.influx.Close()
 }
