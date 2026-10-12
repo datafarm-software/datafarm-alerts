@@ -413,8 +413,9 @@ func TestRespondToAlert(t *testing.T) {
 				},
 				AlertRules: []alertstore.StoredAlertRule{
 					{
-						AlertId:  AlertId,
-						Duration: "24h",
+						AlertId:    AlertId,
+						Duration:   "24h",
+						AlertLevel: alertstore.Warn,
 					},
 				},
 				AlertStates: []alertstore.AlertState{
@@ -447,8 +448,9 @@ func TestRespondToAlert(t *testing.T) {
 				},
 				AlertRules: []alertstore.StoredAlertRule{
 					{
-						AlertId:  AlertId,
-						Duration: "24h",
+						AlertId:    AlertId,
+						Duration:   "24h",
+						AlertLevel: alertstore.Warn,
 					},
 				},
 				AlertStates: []alertstore.AlertState{
@@ -477,8 +479,9 @@ func TestRespondToAlert(t *testing.T) {
 				},
 				AlertRules: []alertstore.StoredAlertRule{
 					{
-						AlertId:  AlertId,
-						Duration: "24h",
+						AlertId:    AlertId,
+						Duration:   "24h",
+						AlertLevel: alertstore.Warn,
 					},
 				},
 				AlertStates: []alertstore.AlertState{
@@ -511,8 +514,9 @@ func TestRespondToAlert(t *testing.T) {
 				},
 				AlertRules: []alertstore.StoredAlertRule{
 					{
-						AlertId:  AlertId,
-						Duration: "24h",
+						AlertId:    AlertId,
+						Duration:   "24h",
+						AlertLevel: alertstore.Warn,
 					},
 				},
 				AlertStates: []alertstore.AlertState{
@@ -541,8 +545,9 @@ func TestRespondToAlert(t *testing.T) {
 				},
 				AlertRules: []alertstore.StoredAlertRule{
 					{
-						AlertId:  AlertId,
-						Duration: "24h",
+						AlertId:    AlertId,
+						Duration:   "24h",
+						AlertLevel: alertstore.Warn,
 					},
 				},
 				AlertStates: []alertstore.AlertState{
@@ -575,8 +580,9 @@ func TestRespondToAlert(t *testing.T) {
 				},
 				AlertRules: []alertstore.StoredAlertRule{
 					{
-						AlertId:  AlertId,
-						Duration: "24h",
+						AlertId:    AlertId,
+						Duration:   "24h",
+						AlertLevel: alertstore.Warn,
 					},
 				},
 				AlertStates: []alertstore.AlertState{
@@ -889,8 +895,9 @@ func TestRespondToAlert(t *testing.T) {
 				},
 				AlertRules: []alertstore.StoredAlertRule{
 					{
-						AlertId:  AlertId,
-						Duration: "24h",
+						AlertId:    AlertId,
+						Duration:   "24h",
+						AlertLevel: alertstore.Warn,
 					},
 				},
 				AlertStates: []alertstore.AlertState{
@@ -921,8 +928,9 @@ func TestRespondToAlert(t *testing.T) {
 				},
 				AlertRules: []alertstore.StoredAlertRule{
 					{
-						AlertId:  AlertId,
-						Duration: "24h",
+						AlertId:    AlertId,
+						Duration:   "24h",
+						AlertLevel: alertstore.Warn,
 					},
 				},
 				AlertStates: []alertstore.AlertState{
@@ -950,8 +958,9 @@ func TestRespondToAlert(t *testing.T) {
 				},
 				AlertRules: []alertstore.StoredAlertRule{
 					{
-						AlertId:  AlertId,
-						Duration: "24h",
+						AlertId:    AlertId,
+						Duration:   "24h",
+						AlertLevel: alertstore.Warn,
 					},
 				},
 				AlertStates: []alertstore.AlertState{
@@ -982,8 +991,9 @@ func TestRespondToAlert(t *testing.T) {
 				},
 				AlertRules: []alertstore.StoredAlertRule{
 					{
-						AlertId:  AlertId,
-						Duration: "24h",
+						AlertId:    AlertId,
+						AlertLevel: alertstore.Warn,
+						Duration:   "24h",
 					},
 				},
 				AlertStates: []alertstore.AlertState{
@@ -1169,6 +1179,7 @@ func TestRespondToAlert(t *testing.T) {
 						AlertId:     AlertId,
 						Duration:    "24h",
 						AlertType:   alertstore.LessThan,
+						AlertLevel:  alertstore.Warn,
 						RangeValues: []float32{10},
 					},
 				},
@@ -1204,6 +1215,7 @@ func TestRespondToAlert(t *testing.T) {
 						AlertId:     AlertId,
 						Duration:    "24h",
 						AlertType:   alertstore.LessThan,
+						AlertLevel:  alertstore.Warn,
 						RangeValues: []float32{10},
 					},
 				},
@@ -1248,14 +1260,27 @@ func setupApp(t *testing.T,
 	a := &app.App{}
 	_, api := humatest.New(t)
 	a.RegisterHumaOperations(api)
+
+	var closers []func() error
+	defer func() {
+		if err != nil {
+			for _, c := range closers {
+				c()
+			}
+		}
+	}()
+
 	a.Templater, err = templates.NewMockTemplater()
 	require.Nilf(t, err, "templater: %v", err)
 	a.Notifier, err = notifier.NewGomail(alertstore.Testing, notifier.GomailOpts{})
 	require.Nilf(t, err, "notifier: %v", err)
+	closers = append(closers, a.Notifier.Close)
 	a.AlertStore, err = alertstore.NewGorm(alertstore.Testing, dbName)
 	require.Nilf(t, err, "alertstore: %v", err)
+	closers = append(closers, a.AlertStore.Close)
 	a.AlertSource, err = alertsource.NewTestingInflux(ConfigPath)
 	require.Nilf(t, err, "alertsource: %v", err)
+	closers = append(closers, a.AlertSource.Close)
 	if mockAlertStore != nil {
 		err = a.AlertStore.PrepareDb(*mockAlertStore)
 		require.Nilf(t, err, "alertstore prepare: %v", err)
@@ -1694,52 +1719,37 @@ func TestCreateAlertRule(t *testing.T) {
 		},
 
 		"invalid range on less than alert": {
-			wantErr:    true,
-			wantStatus: http.StatusUnprocessableEntity,
-			mockAlertStore: &alertstore.Schema{
-				DeviceAlerts:    []alertstore.DeviceAlertRule{},
-				AlertRecipients: []alertstore.AlertRecipient{},
-				AlertStates:     []alertstore.AlertState{},
-				AlertRules:      []alertstore.StoredAlertRule{},
-			},
+			wantErr:         true,
+			wantStatus:      http.StatusUnprocessableEntity,
 			wantUserInboxes: EmptyInboxes,
 			alertRule: alertstore.AlertRule{
 				Name:        RegisteredAlertName,
 				RangeValues: []float32{5, 10},
 				AlertType:   alertstore.LessThan,
+				AlertLevel:  alertstore.Warn,
 			},
 		},
 
 		"invalid range on range alert": {
-			wantErr:    true,
-			wantStatus: http.StatusUnprocessableEntity,
-			mockAlertStore: &alertstore.Schema{
-				DeviceAlerts:    []alertstore.DeviceAlertRule{},
-				AlertRecipients: []alertstore.AlertRecipient{},
-				AlertStates:     []alertstore.AlertState{},
-				AlertRules:      []alertstore.StoredAlertRule{},
-			},
+			wantErr:         true,
+			wantStatus:      http.StatusUnprocessableEntity,
 			wantUserInboxes: EmptyInboxes,
 			alertRule: alertstore.AlertRule{
 				Name:        RegisteredAlertName,
 				RangeValues: []float32{5},
 				AlertType:   alertstore.Range,
+				AlertLevel:  alertstore.Warn,
 			},
 		},
 		"invalid alert rule": {
 			wantErr:    true,
 			wantStatus: http.StatusUnprocessableEntity,
-			mockAlertStore: &alertstore.Schema{
-				DeviceAlerts:    []alertstore.DeviceAlertRule{},
-				AlertRecipients: []alertstore.AlertRecipient{},
-				AlertStates:     []alertstore.AlertState{},
-				AlertRules:      []alertstore.StoredAlertRule{},
-			},
 			alertRule: alertstore.AlertRule{
 				Name:           RegisteredAlertName,
 				EmailAddresses: []string{},
 				Duration:       "",
 				AlertType:      alertstore.Range,
+				AlertLevel:     alertstore.Warn,
 			},
 		},
 
@@ -2249,12 +2259,6 @@ func TestCreateAlertRule(t *testing.T) {
 			wantErr:              false,
 			wantStatus:           http.StatusOK,
 			wantAlertSourceCount: 1,
-			mockAlertStore: &alertstore.Schema{
-				DeviceAlerts:    []alertstore.DeviceAlertRule{},
-				AlertRecipients: []alertstore.AlertRecipient{},
-				AlertStates:     []alertstore.AlertState{},
-				AlertRules:      []alertstore.StoredAlertRule{},
-			},
 			wantAlertStore: &alertstore.Schema{
 				LinearCalibrations: []alertstore.StoredLinearCalibration{},
 				AlertStates: []alertstore.AlertState{
@@ -2323,13 +2327,6 @@ func TestCreateAlertRule(t *testing.T) {
 			wantErr:              false,
 			wantStatus:           http.StatusOK,
 			wantAlertSourceCount: 1,
-			mockAlertStore: &alertstore.Schema{
-				DeviceAlerts:       []alertstore.DeviceAlertRule{},
-				AlertRecipients:    []alertstore.AlertRecipient{},
-				AlertStates:        []alertstore.AlertState{},
-				AlertRules:         []alertstore.StoredAlertRule{},
-				LinearCalibrations: []alertstore.StoredLinearCalibration{},
-			},
 			wantAlertStore: &alertstore.Schema{
 				AlertStates: []alertstore.AlertState{
 					{
@@ -4208,13 +4205,6 @@ func TestDeleteAlert(t *testing.T) {
 					},
 				},
 			},
-			wantAlertStore: &alertstore.Schema{
-				DeviceAlerts:       []alertstore.DeviceAlertRule{},
-				AlertRecipients:    []alertstore.AlertRecipient{},
-				AlertStates:        []alertstore.AlertState{},
-				AlertRules:         []alertstore.StoredAlertRule{},
-				LinearCalibrations: []alertstore.StoredLinearCalibration{},
-			},
 			wantAlertRule: alertstore.AlertRule{
 				AlertId:        AlertId,
 				Name:           RegisteredAlertName,
@@ -4292,13 +4282,6 @@ func TestDeleteAlert(t *testing.T) {
 						Id: AlertId,
 					},
 				},
-			},
-			wantAlertStore: &alertstore.Schema{
-				DeviceAlerts:       []alertstore.DeviceAlertRule{},
-				AlertRecipients:    []alertstore.AlertRecipient{},
-				AlertStates:        []alertstore.AlertState{},
-				AlertRules:         []alertstore.StoredAlertRule{},
-				LinearCalibrations: []alertstore.StoredLinearCalibration{},
 			},
 			wantAlertRule: alertstore.AlertRule{
 				AlertId:        AlertId,
@@ -4472,13 +4455,6 @@ func TestDeleteAlert(t *testing.T) {
 						Id: AlertId,
 					},
 				},
-			},
-			wantAlertStore: &alertstore.Schema{
-				LinearCalibrations: []alertstore.StoredLinearCalibration{},
-				DeviceAlerts:       []alertstore.DeviceAlertRule{},
-				AlertRecipients:    []alertstore.AlertRecipient{},
-				AlertStates:        []alertstore.AlertState{},
-				AlertRules:         []alertstore.StoredAlertRule{},
 			},
 			wantAlertRule: alertstore.AlertRule{
 				AlertId:        AlertId,
@@ -4704,13 +4680,6 @@ func TestRemoveUsersFromAlertRule(t *testing.T) {
 					},
 				},
 			},
-			wantAlertStore: &alertstore.Schema{
-				LinearCalibrations: []alertstore.StoredLinearCalibration{},
-				DeviceAlerts:       []alertstore.DeviceAlertRule{},
-				AlertRecipients:    []alertstore.AlertRecipient{},
-				AlertRules:         []alertstore.StoredAlertRule{},
-				AlertStates:        []alertstore.AlertState{},
-			},
 			wantUserInboxes: notifier.Schema{
 				Notifications: map[string][]notifier.AlertNotification{},
 				CreatedAlerts: map[string][]notifier.AlertCreated{},
@@ -4756,13 +4725,6 @@ func TestRemoveUsersFromAlertRule(t *testing.T) {
 						AlertLevel:  alertstore.Warn,
 					},
 				},
-			},
-			wantAlertStore: &alertstore.Schema{
-				LinearCalibrations: []alertstore.StoredLinearCalibration{},
-				DeviceAlerts:       []alertstore.DeviceAlertRule{},
-				AlertRecipients:    []alertstore.AlertRecipient{},
-				AlertRules:         []alertstore.StoredAlertRule{},
-				AlertStates:        []alertstore.AlertState{},
 			},
 			wantUserInboxes: notifier.Schema{
 				Notifications: map[string][]notifier.AlertNotification{},
