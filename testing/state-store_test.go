@@ -20,7 +20,6 @@ import (
 	"github.com/google/go-cmp/cmp/cmpopts"
 )
 
-var a = &app.App{}
 var EmptyInboxes = notifier.Schema{
 	Notifications: map[string][]notifier.AlertNotification{},
 	CreatedAlerts: map[string][]notifier.AlertCreated{},
@@ -170,6 +169,8 @@ func TestShouldNotify(t *testing.T) {
 	}
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
+			a, _, closeFunc := setupApp(t, alertstore.Schema{})
+			defer closeFunc()
 			got = a.ShouldNotify(tc.alert, tc.previous)
 			if got != tc.want {
 				t.Fatalf("tc.want = %v, got = %v", tc.want, got)
@@ -1219,21 +1220,10 @@ func TestRespondToAlert(t *testing.T) {
 		},
 	}
 
-	var err error
-	_, api := humatest.New(t)
-	a.RegisterHumaOperations(api)
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
-			a.Templater, err = templates.NewMockTemplater()
-			require.Nil(t, err)
-			a.Notifier, err = notifier.NewGomail(alertstore.Testing, notifier.GomailOpts{})
-			require.Nil(t, err)
-			defer a.Notifier.Close()
-			a.AlertStore, err = alertstore.NewGorm(alertstore.Testing, "testing")
-			require.Nil(t, err)
-			defer a.AlertStore.Close()
-			err = a.AlertStore.PrepareDb(tc.mockAlertStore)
-			require.Nil(t, err)
+			a, api, closeFunc := setupApp(t, tc.mockAlertStore)
+			defer closeFunc()
 			resp := api.Post("/alert/notify", tc.alert)
 			if resp.Code != tc.wantStatus {
 				t.Fatalf("wantStatus: %d, response status: %d", tc.wantStatus, resp.Code)
@@ -1248,6 +1238,39 @@ func TestRespondToAlert(t *testing.T) {
 				}
 			}
 		})
+	}
+}
+
+func setupApp(t *testing.T,
+	mockAlertStore alertstore.Schema) (*app.App, humatest.TestAPI, func() error) {
+	var err error
+	a := &app.App{}
+	_, api := humatest.New(t)
+	a.RegisterHumaOperations(api)
+	a.Templater, err = templates.NewMockTemplater()
+	require.Nil(t, err)
+	a.Notifier, err = notifier.NewGomail(alertstore.Testing, notifier.GomailOpts{})
+	require.Nil(t, err)
+	a.AlertStore, err = alertstore.NewGorm(alertstore.Testing, "testing")
+	require.Nil(t, err)
+	err = a.AlertStore.PrepareDb(mockAlertStore)
+	require.Nil(t, err)
+	a.AlertSource, err = alertsource.NewTestingInflux(ConfigPath)
+	require.Nil(t, err)
+	alertRules := SchemaToAlertRules(mockAlertStore)
+	err = a.AlertSource.PrepareDb(alertRules...)
+	require.Nil(t, err)
+	return a, api, func() error {
+		if err := a.Notifier.Close(); err != nil {
+			return err
+		}
+		if err := a.AlertStore.Close(); err != nil {
+			return err
+		}
+		if err := a.AlertSource.Close(); err != nil {
+			return err
+		}
+		return nil
 	}
 }
 
@@ -2394,35 +2417,19 @@ func TestCreateAlertRule(t *testing.T) {
 		},
 	}
 
-	var got alertstore.CreatedRule
-	var err error
-	_, api := humatest.New(t)
-	a.RegisterHumaOperations(api)
-	var alertRules []alertstore.AlertRule
-
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
-			a.Templater, err = templates.NewMockTemplater()
-			require.Nil(t, err)
-			a.Notifier, err = notifier.NewGomail(alertstore.Testing, notifier.GomailOpts{})
-			require.Nil(t, err)
-			defer a.Notifier.Close()
-			a.AlertStore, err = alertstore.NewGorm(alertstore.Testing, "testing")
-			require.Nil(t, err)
-			defer a.AlertStore.Close()
-			err = a.AlertStore.PrepareDb(tc.mockAlertStore)
-			require.Nil(t, err)
-			a.AlertSource, err = alertsource.NewTestingInflux(ConfigPath)
-			require.Nil(t, err)
-			defer a.AlertSource.Close()
-			alertRules = SchemaToAlertRules(tc.mockAlertStore)
-			err = a.AlertSource.PrepareDb(alertRules...)
+			a, api, closeFunc := setupApp(t, tc.mockAlertStore)
+			defer closeFunc()
+			alertRules := SchemaToAlertRules(tc.mockAlertStore)
+			err := a.AlertSource.PrepareDb(alertRules...)
 			require.Nil(t, err)
 			resp := api.Post("/alert", tc.alertRule)
 			if tc.wantStatus != resp.Code {
 				t.Fatalf("wantStatusCode: %d, response code: %d", tc.wantStatus, resp.Code)
 			}
 			if !tc.wantErr {
+				var got alertstore.CreatedRule
 				err = json.Unmarshal(resp.Body.Bytes(), &got)
 				require.Nil(t, err)
 				gotAlertSourceCount := a.AlertSource.GetSnapshot()
@@ -3940,34 +3947,17 @@ func TestUpdateAlertRule(t *testing.T) {
 		},
 	}
 
-	var err error
-	var got alertstore.AlertRule
-	var alertRules []alertstore.AlertRule
-	_, api := humatest.New(t)
-	a.RegisterHumaOperations(api)
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
-			a.Templater, err = templates.NewMockTemplater()
-			require.Nil(t, err)
-			a.Notifier, err = notifier.NewGomail(alertstore.Testing, notifier.GomailOpts{})
-			require.Nil(t, err)
-			defer a.Notifier.Close()
-			a.AlertStore, err = alertstore.NewGorm(alertstore.Testing, "testing")
-			defer a.AlertStore.Close()
-			err = a.AlertStore.PrepareDb(tc.mockAlertStore)
-			require.Nil(t, err)
-			a.AlertSource, err = alertsource.NewMockAlertSource()
-			require.Nil(t, err)
-			defer a.AlertSource.Close()
-			alertRules = SchemaToAlertRules(tc.mockAlertStore)
-			err = a.AlertSource.PrepareDb(alertRules...)
-			require.Nil(t, err)
+			a, api, closeFunc := setupApp(t, tc.mockAlertStore)
+			defer closeFunc()
 			resp := api.Put(fmt.Sprintf("/alert/%s", tc.alertId), tc.updatedAlertRule)
 			if tc.wantStatus != resp.Code {
 				t.Fatalf("wantStatusCode: %d, response code: %d", tc.wantStatus, resp.Code)
 			}
 			if !tc.wantErr {
-				err = json.Unmarshal(resp.Body.Bytes(), &got)
+				var got alertstore.AlertRule
+				err := json.Unmarshal(resp.Body.Bytes(), &got)
 				require.Nil(t, err)
 				tc.updatedAlertRule.AlertId = tc.alertId
 				if diff := cmp.Diff(tc.updatedAlertRule, got); diff != "" {
@@ -4139,22 +4129,17 @@ func TestGetAlertRule(t *testing.T) {
 		},
 	}
 
-	var err error
-	var got alertstore.AlertRule
-	_, api := humatest.New(t)
-	a.RegisterHumaOperations(api)
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
-			a.AlertStore, err = alertstore.NewGorm(alertstore.Testing, "testing")
-			defer a.AlertStore.Close()
-			err = a.AlertStore.PrepareDb(tc.mockAlertStore)
-			require.Nil(t, err)
+			_, api, closeFunc := setupApp(t, tc.mockAlertStore)
+			defer closeFunc()
 			resp := api.Get(fmt.Sprintf("/alert/%s", tc.alertId))
 			if tc.wantStatus != resp.Code {
 				t.Fatalf("wantStatusCode: %d, response code: %d", tc.wantStatus, resp.Code)
 			}
 			if !tc.wantErr {
-				err = json.Unmarshal(resp.Body.Bytes(), &got)
+				var got alertstore.AlertRule
+				err := json.Unmarshal(resp.Body.Bytes(), &got)
 				require.Nil(t, err)
 				if diff := cmp.Diff(tc.want, got); diff != "" {
 					t.Fatalf("response mismatch (-want +got):\n%s", diff)
@@ -4518,35 +4503,17 @@ func TestDeleteAlert(t *testing.T) {
 		},
 	}
 
-	var got alertstore.AlertRule
-	var alertRules []alertstore.AlertRule
-	var err error
-	_, api := humatest.New(t)
-	a.RegisterHumaOperations(api)
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
-			a.Templater, err = templates.NewMockTemplater()
-			require.Nil(t, err)
-			a.Notifier, err = notifier.NewGomail(alertstore.Testing, notifier.GomailOpts{})
-			require.Nil(t, err)
-			defer a.Notifier.Close()
-			a.AlertSource, err = alertsource.NewTestingInflux(ConfigPath)
-			require.Nil(t, err)
-			defer a.AlertSource.Close()
-			alertRules = SchemaToAlertRules(tc.mockAlertStore)
-			err = a.AlertSource.PrepareDb(alertRules...)
-			require.Nil(t, err)
-			a.AlertStore, err = alertstore.NewGorm(alertstore.Testing, "testing")
-			require.Nil(t, err)
-			defer a.AlertStore.Close()
-			err = a.AlertStore.PrepareDb(tc.mockAlertStore)
-			require.Nil(t, err)
+			a, api, closeFunc := setupApp(t, tc.mockAlertStore)
+			defer closeFunc()
 			resp := api.Delete(fmt.Sprintf("/alert/%s", tc.alertId))
 			if tc.wantStatus != resp.Code {
 				t.Fatalf("wantStatus: %d, response Code: %v", tc.wantStatus, resp.Code)
 			}
 			if !tc.wantErr {
-				err = json.Unmarshal(resp.Body.Bytes(), &got)
+				var got alertstore.AlertRule
+				err := json.Unmarshal(resp.Body.Bytes(), &got)
 				require.Nil(t, err)
 				if diff := cmp.Diff(tc.wantAlertRule, got); err != nil {
 					t.Fatalf("alertRule mismatch (-want +got):\n%s", diff)
@@ -4855,28 +4822,10 @@ func TestRemoveUsersFromAlertRule(t *testing.T) {
 		},
 	}
 
-	var alertRules []alertstore.AlertRule
-	var err error
-	_, api := humatest.New(t)
-	a.RegisterHumaOperations(api)
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
-			a.Templater, err = templates.NewMockTemplater()
-			require.Nil(t, err)
-			a.Notifier, err = notifier.NewGomail(alertstore.Testing, notifier.GomailOpts{})
-			require.Nil(t, err)
-			defer a.Notifier.Close()
-			a.AlertSource, err = alertsource.NewTestingInflux(ConfigPath)
-			require.Nil(t, err)
-			defer a.AlertSource.Close()
-			alertRules = SchemaToAlertRules(tc.mockAlertStore)
-			err = a.AlertSource.PrepareDb(alertRules...)
-			require.Nil(t, err)
-			a.AlertStore, err = alertstore.NewGorm(alertstore.Testing, "testing")
-			require.Nil(t, err)
-			defer a.AlertStore.Close()
-			err = a.AlertStore.PrepareDb(tc.mockAlertStore)
-			require.Nil(t, err)
+			a, api, closeFunc := setupApp(t, tc.mockAlertStore)
+			defer closeFunc()
 			resp := api.Patch(fmt.Sprintf("/alert/%s/emailaddresses", tc.alertId),
 				tc.emailsToRemove)
 			if tc.wantStatus != resp.Code {
@@ -4889,7 +4838,7 @@ func TestRemoveUsersFromAlertRule(t *testing.T) {
 				if tc.wantStatus != http.StatusNoContent {
 					var mu alertstore.MutateAlertUsersResponse
 					body := resp.Body.Bytes()
-					err = json.Unmarshal(body, &mu)
+					err := json.Unmarshal(body, &mu)
 					require.Nil(t, err)
 					if diff := cmp.Diff(tc.emailsToRemove, mu.EmailAddresses); diff != "" {
 						t.Fatalf("emails mismatch (-want +got):\n%s", diff)
@@ -5138,28 +5087,10 @@ func TestAddUsersToAlertRule(t *testing.T) {
 		},
 	}
 
-	var alertRules []alertstore.AlertRule
-	var err error
-	_, api := humatest.New(t)
-	a.RegisterHumaOperations(api)
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
-			a.Templater, err = templates.NewMockTemplater()
-			require.Nil(t, err)
-			a.Notifier, err = notifier.NewGomail(alertstore.Testing, notifier.GomailOpts{})
-			require.Nil(t, err)
-			defer a.Notifier.Close()
-			a.AlertSource, err = alertsource.NewTestingInflux(ConfigPath)
-			require.Nil(t, err)
-			defer a.AlertSource.Close()
-			alertRules = SchemaToAlertRules(tc.mockAlertStore)
-			err = a.AlertSource.PrepareDb(alertRules...)
-			require.Nil(t, err)
-			a.AlertStore, err = alertstore.NewGorm(alertstore.Testing, "testing")
-			require.Nil(t, err)
-			defer a.AlertStore.Close()
-			err = a.AlertStore.PrepareDb(tc.mockAlertStore)
-			require.Nil(t, err)
+			a, api, closeFunc := setupApp(t, tc.mockAlertStore)
+			defer closeFunc()
 			resp := api.Put(fmt.Sprintf("/alert/%s/emailaddresses", tc.alertId),
 				tc.emailsToAdd)
 			if tc.wantStatus != resp.Code {
@@ -5171,7 +5102,7 @@ func TestAddUsersToAlertRule(t *testing.T) {
 				}
 				var mu alertstore.MutateAlertUsersResponse
 				body := resp.Body.Bytes()
-				err = json.Unmarshal(body, &mu)
+				err := json.Unmarshal(body, &mu)
 				require.Nil(t, err)
 				if diff := cmp.Diff(tc.emailsToAdd, mu.EmailAddresses); diff != "" {
 					t.Fatalf("emails mismatch (-want +got):\n%s", diff)
