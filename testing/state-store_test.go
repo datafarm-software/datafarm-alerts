@@ -25,7 +25,6 @@ var EmptyInboxes = notifier.Schema{
 	CreatedAlerts: map[string][]notifier.AlertCreated{},
 	DeletedAlerts: map[string][]notifier.AlertDeleted{},
 }
-var EmptyAlertStore = alertstore.Schema{}
 
 const ConfigPath = "../config.yml"
 const UnregisteredQueryField = "humidity"
@@ -169,7 +168,7 @@ func TestShouldNotify(t *testing.T) {
 	}
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
-			a, _, closeFunc := setupApp(t, alertstore.Schema{})
+			a, _, closeFunc := setupApp(t, name+"-testing", &alertstore.Schema{})
 			defer closeFunc()
 			got = a.ShouldNotify(tc.alert, tc.previous)
 			if got != tc.want {
@@ -183,7 +182,7 @@ func TestRespondToAlert(t *testing.T) {
 	tests := map[string]struct {
 		wantStatus                     int
 		wantUserInboxes                notifier.Schema
-		mockAlertStore, wantAlertStore alertstore.Schema
+		mockAlertStore, wantAlertStore *alertstore.Schema
 		alert                          alertsource.InfluxAlert
 	}{
 
@@ -209,7 +208,7 @@ func TestRespondToAlert(t *testing.T) {
 					},
 				},
 			},
-			mockAlertStore: alertstore.Schema{
+			mockAlertStore: &alertstore.Schema{
 				AlertRecipients: []alertstore.AlertRecipient{
 					{AlertId: AlertId, Email: UserEmail},
 				},
@@ -248,7 +247,7 @@ func TestRespondToAlert(t *testing.T) {
 				DeviceId:        RegisteredDeviceId,
 				QueryField:      RegisteredQueryField,
 			},
-			wantAlertStore: alertstore.Schema{
+			wantAlertStore: &alertstore.Schema{
 				LinearCalibrations: []alertstore.StoredLinearCalibration{},
 				AlertRecipients: []alertstore.AlertRecipient{
 					{AlertId: AlertId, Email: UserEmail},
@@ -304,7 +303,7 @@ func TestRespondToAlert(t *testing.T) {
 					},
 				},
 			},
-			mockAlertStore: alertstore.Schema{
+			mockAlertStore: &alertstore.Schema{
 				AlertRecipients: []alertstore.AlertRecipient{
 					{AlertId: AlertId, Email: UserEmail},
 				},
@@ -355,7 +354,7 @@ func TestRespondToAlert(t *testing.T) {
 				DeviceId:        RegisteredDeviceId,
 				QueryField:      "pressure",
 			},
-			wantAlertStore: alertstore.Schema{
+			wantAlertStore: &alertstore.Schema{
 				AlertRecipients: []alertstore.AlertRecipient{
 					{AlertId: AlertId, Email: UserEmail},
 				},
@@ -403,7 +402,7 @@ func TestRespondToAlert(t *testing.T) {
 		"no notification because duration has not elapsed": {
 			wantStatus:      http.StatusNoContent,
 			wantUserInboxes: EmptyInboxes,
-			mockAlertStore: alertstore.Schema{
+			mockAlertStore: &alertstore.Schema{
 				AlertRecipients: []alertstore.AlertRecipient{},
 				DeviceAlerts: []alertstore.DeviceAlertRule{
 					{
@@ -436,7 +435,7 @@ func TestRespondToAlert(t *testing.T) {
 				DeviceId:        RegisteredDeviceId,
 				QueryField:      RegisteredQueryField,
 			},
-			wantAlertStore: alertstore.Schema{
+			wantAlertStore: &alertstore.Schema{
 				LinearCalibrations: []alertstore.StoredLinearCalibration{},
 				AlertRecipients:    []alertstore.AlertRecipient{},
 				DeviceAlerts: []alertstore.DeviceAlertRule{
@@ -467,7 +466,7 @@ func TestRespondToAlert(t *testing.T) {
 		"no notification because going from crit to warn": {
 			wantStatus:      http.StatusNoContent,
 			wantUserInboxes: EmptyInboxes,
-			mockAlertStore: alertstore.Schema{
+			mockAlertStore: &alertstore.Schema{
 				AlertRecipients: []alertstore.AlertRecipient{},
 				DeviceAlerts: []alertstore.DeviceAlertRule{
 					{
@@ -500,7 +499,7 @@ func TestRespondToAlert(t *testing.T) {
 				DeviceId:        RegisteredDeviceId,
 				QueryField:      RegisteredQueryField,
 			},
-			wantAlertStore: alertstore.Schema{
+			wantAlertStore: &alertstore.Schema{
 				LinearCalibrations: []alertstore.StoredLinearCalibration{},
 				AlertRecipients:    []alertstore.AlertRecipient{},
 				DeviceAlerts: []alertstore.DeviceAlertRule{
@@ -531,7 +530,7 @@ func TestRespondToAlert(t *testing.T) {
 		"no notification because going from crit to ok": {
 			wantStatus:      http.StatusNoContent,
 			wantUserInboxes: EmptyInboxes,
-			mockAlertStore: alertstore.Schema{
+			mockAlertStore: &alertstore.Schema{
 				AlertRecipients: []alertstore.AlertRecipient{},
 				DeviceAlerts: []alertstore.DeviceAlertRule{
 					{
@@ -564,7 +563,7 @@ func TestRespondToAlert(t *testing.T) {
 				DeviceId:        RegisteredDeviceId,
 				QueryField:      RegisteredQueryField,
 			},
-			wantAlertStore: alertstore.Schema{
+			wantAlertStore: &alertstore.Schema{
 				LinearCalibrations: []alertstore.StoredLinearCalibration{},
 				AlertRecipients:    []alertstore.AlertRecipient{},
 				DeviceAlerts: []alertstore.DeviceAlertRule{
@@ -614,7 +613,7 @@ func TestRespondToAlert(t *testing.T) {
 					},
 				},
 			},
-			mockAlertStore: alertstore.Schema{
+			mockAlertStore: &alertstore.Schema{
 				AlertRecipients: []alertstore.AlertRecipient{
 					{AlertId: AlertId, Email: UserEmail},
 				},
@@ -653,7 +652,7 @@ func TestRespondToAlert(t *testing.T) {
 				DeviceId:        RegisteredDeviceId,
 				QueryField:      RegisteredQueryField,
 			},
-			wantAlertStore: alertstore.Schema{
+			wantAlertStore: &alertstore.Schema{
 				LinearCalibrations: []alertstore.StoredLinearCalibration{},
 				AlertRecipients: []alertstore.AlertRecipient{
 					{AlertId: AlertId, Email: UserEmail},
@@ -709,7 +708,7 @@ func TestRespondToAlert(t *testing.T) {
 					},
 				},
 			},
-			mockAlertStore: alertstore.Schema{
+			mockAlertStore: &alertstore.Schema{
 				AlertRecipients: []alertstore.AlertRecipient{
 					{AlertId: AlertId, Email: UserEmail},
 				},
@@ -748,7 +747,7 @@ func TestRespondToAlert(t *testing.T) {
 				DeviceId:        RegisteredDeviceId,
 				QueryField:      RegisteredQueryField,
 			},
-			wantAlertStore: alertstore.Schema{
+			wantAlertStore: &alertstore.Schema{
 				LinearCalibrations: []alertstore.StoredLinearCalibration{},
 				AlertRecipients: []alertstore.AlertRecipient{
 					{AlertId: AlertId, Email: UserEmail},
@@ -804,7 +803,7 @@ func TestRespondToAlert(t *testing.T) {
 					},
 				},
 			},
-			mockAlertStore: alertstore.Schema{
+			mockAlertStore: &alertstore.Schema{
 				AlertRecipients: []alertstore.AlertRecipient{
 					{AlertId: AlertId, Email: UserEmail},
 				},
@@ -843,7 +842,7 @@ func TestRespondToAlert(t *testing.T) {
 				DeviceId:        RegisteredDeviceId,
 				QueryField:      RegisteredQueryField,
 			},
-			wantAlertStore: alertstore.Schema{
+			wantAlertStore: &alertstore.Schema{
 				LinearCalibrations: []alertstore.StoredLinearCalibration{},
 				AlertRecipients: []alertstore.AlertRecipient{
 					{AlertId: AlertId, Email: UserEmail},
@@ -880,7 +879,7 @@ func TestRespondToAlert(t *testing.T) {
 		"no notification because alert on unregistered queryField": {
 			wantStatus:      http.StatusNotFound,
 			wantUserInboxes: EmptyInboxes,
-			mockAlertStore: alertstore.Schema{
+			mockAlertStore: &alertstore.Schema{
 				DeviceAlerts: []alertstore.DeviceAlertRule{
 					{
 						DeviceId:   RegisteredDeviceId,
@@ -911,7 +910,7 @@ func TestRespondToAlert(t *testing.T) {
 				DeviceId:   RegisteredDeviceId,
 				QueryField: UnregisteredQueryField,
 			},
-			wantAlertStore: alertstore.Schema{
+			wantAlertStore: &alertstore.Schema{
 				LinearCalibrations: []alertstore.StoredLinearCalibration{},
 				DeviceAlerts: []alertstore.DeviceAlertRule{
 					{
@@ -941,7 +940,7 @@ func TestRespondToAlert(t *testing.T) {
 		"no notification because alert on unregistered deviceId": {
 			wantStatus:      http.StatusNotFound,
 			wantUserInboxes: EmptyInboxes,
-			mockAlertStore: alertstore.Schema{
+			mockAlertStore: &alertstore.Schema{
 				DeviceAlerts: []alertstore.DeviceAlertRule{
 					{
 						DeviceId:   RegisteredDeviceId,
@@ -972,7 +971,7 @@ func TestRespondToAlert(t *testing.T) {
 				DeviceId:   UnregisteredDeviceId,
 				QueryField: RegisteredQueryField,
 			},
-			wantAlertStore: alertstore.Schema{
+			wantAlertStore: &alertstore.Schema{
 				LinearCalibrations: []alertstore.StoredLinearCalibration{},
 				DeviceAlerts: []alertstore.DeviceAlertRule{
 					{
@@ -1021,7 +1020,7 @@ func TestRespondToAlert(t *testing.T) {
 					},
 				},
 			},
-			mockAlertStore: alertstore.Schema{
+			mockAlertStore: &alertstore.Schema{
 				AlertRecipients: []alertstore.AlertRecipient{
 					{AlertId: AlertId, Email: UserEmail},
 				},
@@ -1052,7 +1051,7 @@ func TestRespondToAlert(t *testing.T) {
 				DeviceId:        RegisteredDeviceId,
 				QueryField:      RegisteredQueryField,
 			},
-			wantAlertStore: alertstore.Schema{
+			wantAlertStore: &alertstore.Schema{
 				LinearCalibrations: []alertstore.StoredLinearCalibration{},
 				AlertRecipients: []alertstore.AlertRecipient{
 					{AlertId: AlertId, Email: UserEmail},
@@ -1089,7 +1088,7 @@ func TestRespondToAlert(t *testing.T) {
 		"no notification first alert": {
 			wantStatus:      http.StatusNoContent,
 			wantUserInboxes: EmptyInboxes,
-			mockAlertStore: alertstore.Schema{
+			mockAlertStore: &alertstore.Schema{
 				AlertRecipients: []alertstore.AlertRecipient{
 					{AlertId: AlertId, Email: UserEmail},
 				},
@@ -1120,7 +1119,7 @@ func TestRespondToAlert(t *testing.T) {
 				DeviceId:        RegisteredDeviceId,
 				QueryField:      RegisteredQueryField,
 			},
-			wantAlertStore: alertstore.Schema{
+			wantAlertStore: &alertstore.Schema{
 				LinearCalibrations: []alertstore.StoredLinearCalibration{},
 				AlertRecipients: []alertstore.AlertRecipient{
 					{AlertId: AlertId, Email: UserEmail},
@@ -1157,7 +1156,7 @@ func TestRespondToAlert(t *testing.T) {
 		"no notification because alert status ok": {
 			wantStatus:      http.StatusNoContent,
 			wantUserInboxes: EmptyInboxes,
-			mockAlertStore: alertstore.Schema{
+			mockAlertStore: &alertstore.Schema{
 				DeviceAlerts: []alertstore.DeviceAlertRule{
 					{
 						DeviceId:   RegisteredDeviceId,
@@ -1190,7 +1189,7 @@ func TestRespondToAlert(t *testing.T) {
 				DeviceId:   RegisteredDeviceId,
 				QueryField: RegisteredQueryField,
 			},
-			wantAlertStore: alertstore.Schema{
+			wantAlertStore: &alertstore.Schema{
 				LinearCalibrations: []alertstore.StoredLinearCalibration{},
 				DeviceAlerts: []alertstore.DeviceAlertRule{
 					{
@@ -1222,7 +1221,7 @@ func TestRespondToAlert(t *testing.T) {
 
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
-			a, api, closeFunc := setupApp(t, tc.mockAlertStore)
+			a, api, closeFunc := setupApp(t, name+"-testing", tc.mockAlertStore)
 			defer closeFunc()
 			resp := api.Post("/alert/notify", tc.alert)
 			if resp.Code != tc.wantStatus {
@@ -1230,11 +1229,13 @@ func TestRespondToAlert(t *testing.T) {
 			}
 			if tc.wantStatus < 300 {
 				if diff := cmp.Diff(tc.wantUserInboxes, a.Notifier.GetUserInboxes()); diff != "" {
-					t.Fatalf("user inboxes mismatch (-want +got):\n%s", diff)
+					t.Fatalf("user inboxes mismatch (-want +got):%s\n", diff)
 				}
-				if diff := cmp.Diff(tc.wantAlertStore, a.AlertStore.GetSnapshot(),
-					cmpopts.EquateApproxTime(1*time.Second)); diff != "" {
-					t.Fatalf("alertstore mismatch (-want +got):\n%s", diff)
+				if tc.wantAlertStore != nil {
+					if diff := cmp.Diff(*tc.wantAlertStore, a.AlertStore.GetSnapshot(),
+						cmpopts.EquateApproxTime(1*time.Second)); diff != "" {
+						t.Fatalf("alertstore mismatch (-want +got):%s\n", diff)
+					}
 				}
 			}
 		})
@@ -1242,33 +1243,35 @@ func TestRespondToAlert(t *testing.T) {
 }
 
 func setupApp(t *testing.T,
-	mockAlertStore alertstore.Schema) (*app.App, humatest.TestAPI, func() error) {
+	dbName string, mockAlertStore *alertstore.Schema) (*app.App, humatest.TestAPI, func() error) {
 	var err error
 	a := &app.App{}
 	_, api := humatest.New(t)
 	a.RegisterHumaOperations(api)
 	a.Templater, err = templates.NewMockTemplater()
-	require.Nil(t, err)
+	require.Nilf(t, err, "templater: %v", err)
 	a.Notifier, err = notifier.NewGomail(alertstore.Testing, notifier.GomailOpts{})
-	require.Nil(t, err)
-	a.AlertStore, err = alertstore.NewGorm(alertstore.Testing, "testing")
-	require.Nil(t, err)
-	err = a.AlertStore.PrepareDb(mockAlertStore)
-	require.Nil(t, err)
+	require.Nilf(t, err, "notifier: %v", err)
+	a.AlertStore, err = alertstore.NewGorm(alertstore.Testing, dbName)
+	require.Nilf(t, err, "alertstore: %v", err)
 	a.AlertSource, err = alertsource.NewTestingInflux(ConfigPath)
-	require.Nil(t, err)
-	alertRules := SchemaToAlertRules(mockAlertStore)
-	err = a.AlertSource.PrepareDb(alertRules...)
-	require.Nil(t, err)
+	require.Nilf(t, err, "alertsource: %v", err)
+	if mockAlertStore != nil {
+		err = a.AlertStore.PrepareDb(*mockAlertStore)
+		require.Nilf(t, err, "alertstore prepare: %v", err)
+		alertRules := SchemaToAlertRules(*mockAlertStore)
+		err = a.AlertSource.PrepareDb(alertRules...)
+		require.Nilf(t, err, "alertsource prepare: %v", err)
+	}
 	return a, api, func() error {
 		if err := a.Notifier.Close(); err != nil {
-			return err
+			t.Logf("closing notifier: %v", err)
 		}
 		if err := a.AlertStore.Close(); err != nil {
-			return err
+			t.Logf("closing alertstore: %v", err)
 		}
 		if err := a.AlertSource.Close(); err != nil {
-			return err
+			t.Logf("closing alertsource: %v", err)
 		}
 		return nil
 	}
@@ -1279,7 +1282,7 @@ func TestCreateAlertRule(t *testing.T) {
 		wantErr                        bool
 		wantResponse                   alertstore.CreatedRule
 		wantStatus                     int
-		wantAlertStore, mockAlertStore alertstore.Schema
+		wantAlertStore, mockAlertStore *alertstore.Schema
 		wantAlertSourceCount           int
 		wantUserInboxes                notifier.Schema
 		alertRule                      alertstore.AlertRule
@@ -1289,8 +1292,7 @@ func TestCreateAlertRule(t *testing.T) {
 			wantErr:              false,
 			wantStatus:           http.StatusOK,
 			wantAlertSourceCount: 1,
-			mockAlertStore:       alertstore.Schema{},
-			wantAlertStore: alertstore.Schema{
+			wantAlertStore: &alertstore.Schema{
 				LinearCalibrations: []alertstore.StoredLinearCalibration{},
 				AlertStates: []alertstore.AlertState{
 					{
@@ -1358,7 +1360,7 @@ func TestCreateAlertRule(t *testing.T) {
 			wantErr:              false,
 			wantStatus:           http.StatusOK,
 			wantAlertSourceCount: 2,
-			mockAlertStore: alertstore.Schema{
+			mockAlertStore: &alertstore.Schema{
 				LinearCalibrations: []alertstore.StoredLinearCalibration{},
 				AlertStates: []alertstore.AlertState{
 					{
@@ -1389,7 +1391,7 @@ func TestCreateAlertRule(t *testing.T) {
 					},
 				},
 			},
-			wantAlertStore: alertstore.Schema{
+			wantAlertStore: &alertstore.Schema{
 				LinearCalibrations: []alertstore.StoredLinearCalibration{},
 				AlertStates: []alertstore.AlertState{
 					{
@@ -1477,13 +1479,13 @@ func TestCreateAlertRule(t *testing.T) {
 			wantErr:              false,
 			wantStatus:           http.StatusOK,
 			wantAlertSourceCount: 1,
-			mockAlertStore: alertstore.Schema{
+			mockAlertStore: &alertstore.Schema{
 				DeviceAlerts:    []alertstore.DeviceAlertRule{},
 				AlertRecipients: []alertstore.AlertRecipient{},
 				AlertStates:     []alertstore.AlertState{},
 				AlertRules:      []alertstore.StoredAlertRule{},
 			},
-			wantAlertStore: alertstore.Schema{
+			wantAlertStore: &alertstore.Schema{
 				LinearCalibrations: []alertstore.StoredLinearCalibration{},
 				AlertStates: []alertstore.AlertState{
 					{
@@ -1547,13 +1549,13 @@ func TestCreateAlertRule(t *testing.T) {
 			wantErr:              false,
 			wantStatus:           http.StatusOK,
 			wantAlertSourceCount: 1,
-			mockAlertStore: alertstore.Schema{
+			mockAlertStore: &alertstore.Schema{
 				DeviceAlerts:    []alertstore.DeviceAlertRule{},
 				AlertRecipients: []alertstore.AlertRecipient{},
 				AlertStates:     []alertstore.AlertState{},
 				AlertRules:      []alertstore.StoredAlertRule{},
 			},
-			wantAlertStore: alertstore.Schema{
+			wantAlertStore: &alertstore.Schema{
 				LinearCalibrations: []alertstore.StoredLinearCalibration{},
 				AlertStates: []alertstore.AlertState{
 					{
@@ -1621,13 +1623,13 @@ func TestCreateAlertRule(t *testing.T) {
 			wantErr:              false,
 			wantStatus:           http.StatusOK,
 			wantAlertSourceCount: 1,
-			mockAlertStore: alertstore.Schema{
+			mockAlertStore: &alertstore.Schema{
 				DeviceAlerts:    []alertstore.DeviceAlertRule{},
 				AlertRecipients: []alertstore.AlertRecipient{},
 				AlertStates:     []alertstore.AlertState{},
 				AlertRules:      []alertstore.StoredAlertRule{},
 			},
-			wantAlertStore: alertstore.Schema{
+			wantAlertStore: &alertstore.Schema{
 				LinearCalibrations: []alertstore.StoredLinearCalibration{},
 				AlertStates: []alertstore.AlertState{
 					{
@@ -1694,13 +1696,12 @@ func TestCreateAlertRule(t *testing.T) {
 		"invalid range on less than alert": {
 			wantErr:    true,
 			wantStatus: http.StatusUnprocessableEntity,
-			mockAlertStore: alertstore.Schema{
+			mockAlertStore: &alertstore.Schema{
 				DeviceAlerts:    []alertstore.DeviceAlertRule{},
 				AlertRecipients: []alertstore.AlertRecipient{},
 				AlertStates:     []alertstore.AlertState{},
 				AlertRules:      []alertstore.StoredAlertRule{},
 			},
-			wantAlertStore:  EmptyAlertStore,
 			wantUserInboxes: EmptyInboxes,
 			alertRule: alertstore.AlertRule{
 				Name:        RegisteredAlertName,
@@ -1712,13 +1713,12 @@ func TestCreateAlertRule(t *testing.T) {
 		"invalid range on range alert": {
 			wantErr:    true,
 			wantStatus: http.StatusUnprocessableEntity,
-			mockAlertStore: alertstore.Schema{
+			mockAlertStore: &alertstore.Schema{
 				DeviceAlerts:    []alertstore.DeviceAlertRule{},
 				AlertRecipients: []alertstore.AlertRecipient{},
 				AlertStates:     []alertstore.AlertState{},
 				AlertRules:      []alertstore.StoredAlertRule{},
 			},
-			wantAlertStore:  EmptyAlertStore,
 			wantUserInboxes: EmptyInboxes,
 			alertRule: alertstore.AlertRule{
 				Name:        RegisteredAlertName,
@@ -1727,10 +1727,9 @@ func TestCreateAlertRule(t *testing.T) {
 			},
 		},
 		"invalid alert rule": {
-			wantErr:        true,
-			wantStatus:     http.StatusUnprocessableEntity,
-			wantAlertStore: EmptyAlertStore,
-			mockAlertStore: alertstore.Schema{
+			wantErr:    true,
+			wantStatus: http.StatusUnprocessableEntity,
+			mockAlertStore: &alertstore.Schema{
 				DeviceAlerts:    []alertstore.DeviceAlertRule{},
 				AlertRecipients: []alertstore.AlertRecipient{},
 				AlertStates:     []alertstore.AlertState{},
@@ -1791,7 +1790,7 @@ func TestCreateAlertRule(t *testing.T) {
 				AlertType:      alertstore.LessThan,
 				AlertLevel:     alertstore.Crit,
 			},
-			mockAlertStore: alertstore.Schema{
+			mockAlertStore: &alertstore.Schema{
 				AlertRecipients: []alertstore.AlertRecipient{
 					{AlertId: AlertId, Email: UserEmail},
 				},
@@ -1821,7 +1820,7 @@ func TestCreateAlertRule(t *testing.T) {
 					},
 				},
 			},
-			wantAlertStore: alertstore.Schema{
+			wantAlertStore: &alertstore.Schema{
 				LinearCalibrations: []alertstore.StoredLinearCalibration{},
 				AlertRecipients: []alertstore.AlertRecipient{
 					{AlertId: AlertId, Email: UserEmail},
@@ -1859,7 +1858,7 @@ func TestCreateAlertRule(t *testing.T) {
 		"identical alert including user email, so conflict": {
 			wantErr:    true,
 			wantStatus: http.StatusConflict,
-			mockAlertStore: alertstore.Schema{
+			mockAlertStore: &alertstore.Schema{
 				AlertRecipients: []alertstore.AlertRecipient{
 					{AlertId: AlertId, Email: UserEmail},
 				},
@@ -1900,7 +1899,7 @@ func TestCreateAlertRule(t *testing.T) {
 			wantResponse: alertstore.CreatedRule{
 				AlertId: "alert2",
 			},
-			wantAlertStore: alertstore.Schema{
+			wantAlertStore: &alertstore.Schema{
 				LinearCalibrations: []alertstore.StoredLinearCalibration{},
 				AlertStates: []alertstore.AlertState{
 					{
@@ -1952,7 +1951,7 @@ func TestCreateAlertRule(t *testing.T) {
 				},
 			},
 			wantAlertSourceCount: 2,
-			mockAlertStore: alertstore.Schema{
+			mockAlertStore: &alertstore.Schema{
 				AlertStates: []alertstore.AlertState{
 					{
 						Id:          AlertId,
@@ -2018,7 +2017,7 @@ func TestCreateAlertRule(t *testing.T) {
 			wantResponse: alertstore.CreatedRule{
 				AlertId: "alert2",
 			},
-			wantAlertStore: alertstore.Schema{
+			wantAlertStore: &alertstore.Schema{
 				LinearCalibrations: []alertstore.StoredLinearCalibration{},
 				AlertStates: []alertstore.AlertState{
 					{
@@ -2064,7 +2063,7 @@ func TestCreateAlertRule(t *testing.T) {
 					},
 				},
 			},
-			mockAlertStore: alertstore.Schema{
+			mockAlertStore: &alertstore.Schema{
 				AlertRecipients: []alertstore.AlertRecipient{
 					{AlertId: AlertId, Email: UserEmail},
 				},
@@ -2135,7 +2134,7 @@ func TestCreateAlertRule(t *testing.T) {
 			wantResponse: alertstore.CreatedRule{
 				AlertId: "alert2",
 			},
-			wantAlertStore: alertstore.Schema{
+			wantAlertStore: &alertstore.Schema{
 				LinearCalibrations: []alertstore.StoredLinearCalibration{},
 				AlertStates: []alertstore.AlertState{
 					{
@@ -2181,7 +2180,7 @@ func TestCreateAlertRule(t *testing.T) {
 					},
 				},
 			},
-			mockAlertStore: alertstore.Schema{
+			mockAlertStore: &alertstore.Schema{
 				AlertRecipients: []alertstore.AlertRecipient{
 					{AlertId: AlertId, Email: UserEmail},
 				},
@@ -2250,13 +2249,13 @@ func TestCreateAlertRule(t *testing.T) {
 			wantErr:              false,
 			wantStatus:           http.StatusOK,
 			wantAlertSourceCount: 1,
-			mockAlertStore: alertstore.Schema{
+			mockAlertStore: &alertstore.Schema{
 				DeviceAlerts:    []alertstore.DeviceAlertRule{},
 				AlertRecipients: []alertstore.AlertRecipient{},
 				AlertStates:     []alertstore.AlertState{},
 				AlertRules:      []alertstore.StoredAlertRule{},
 			},
-			wantAlertStore: alertstore.Schema{
+			wantAlertStore: &alertstore.Schema{
 				LinearCalibrations: []alertstore.StoredLinearCalibration{},
 				AlertStates: []alertstore.AlertState{
 					{
@@ -2324,14 +2323,14 @@ func TestCreateAlertRule(t *testing.T) {
 			wantErr:              false,
 			wantStatus:           http.StatusOK,
 			wantAlertSourceCount: 1,
-			mockAlertStore: alertstore.Schema{
+			mockAlertStore: &alertstore.Schema{
 				DeviceAlerts:       []alertstore.DeviceAlertRule{},
 				AlertRecipients:    []alertstore.AlertRecipient{},
 				AlertStates:        []alertstore.AlertState{},
 				AlertRules:         []alertstore.StoredAlertRule{},
 				LinearCalibrations: []alertstore.StoredLinearCalibration{},
 			},
-			wantAlertStore: alertstore.Schema{
+			wantAlertStore: &alertstore.Schema{
 				AlertStates: []alertstore.AlertState{
 					{
 						Id:       AlertId,
@@ -2419,18 +2418,15 @@ func TestCreateAlertRule(t *testing.T) {
 
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
-			a, api, closeFunc := setupApp(t, tc.mockAlertStore)
+			a, api, closeFunc := setupApp(t, name+"-testing", tc.mockAlertStore)
 			defer closeFunc()
-			alertRules := SchemaToAlertRules(tc.mockAlertStore)
-			err := a.AlertSource.PrepareDb(alertRules...)
-			require.Nil(t, err)
 			resp := api.Post("/alert", tc.alertRule)
 			if tc.wantStatus != resp.Code {
 				t.Fatalf("wantStatusCode: %d, response code: %d", tc.wantStatus, resp.Code)
 			}
 			if !tc.wantErr {
 				var got alertstore.CreatedRule
-				err = json.Unmarshal(resp.Body.Bytes(), &got)
+				err := json.Unmarshal(resp.Body.Bytes(), &got)
 				require.Nil(t, err)
 				gotAlertSourceCount := a.AlertSource.GetSnapshot()
 				if tc.wantAlertSourceCount != gotAlertSourceCount {
@@ -2439,13 +2435,16 @@ func TestCreateAlertRule(t *testing.T) {
 						tc.wantAlertSourceCount, gotAlertSourceCount)
 				}
 				if diff := cmp.Diff(tc.wantUserInboxes, a.Notifier.GetUserInboxes()); diff != "" {
-					t.Fatalf("user inboxes mismatch (-want +got):\n%s", diff)
+					t.Fatalf("user inboxes mismatch (-want +got):%s\n", diff)
 				}
-				if diff := cmp.Diff(tc.wantAlertStore, a.AlertStore.GetSnapshot()); diff != "" {
-					t.Fatalf("alertstore mismatch (-want +got):\n%s", diff)
+				if tc.wantAlertStore != nil {
+					diff := cmp.Diff(*tc.wantAlertStore, a.AlertStore.GetSnapshot())
+					if diff != "" {
+						t.Fatalf("alertstore mismatch (-want +got):%s\n", diff)
+					}
 				}
 				if diff := cmp.Diff(tc.wantResponse, got); diff != "" {
-					t.Fatalf("response mismatch (-want +got):\n%s", diff)
+					t.Fatalf("response mismatch (-want +got):%s\n", diff)
 				}
 			}
 		})
@@ -2516,7 +2515,7 @@ func TestUpdateAlertRule(t *testing.T) {
 		alertId                        string
 		wantUserInboxes                notifier.Schema
 		updatedAlertRule               alertstore.AlertRule
-		mockAlertStore, wantAlertStore alertstore.Schema
+		mockAlertStore, wantAlertStore *alertstore.Schema
 		wantAlertSourceCount           int
 	}{
 
@@ -2553,7 +2552,7 @@ func TestUpdateAlertRule(t *testing.T) {
 					},
 				},
 			},
-			mockAlertStore: alertstore.Schema{
+			mockAlertStore: &alertstore.Schema{
 				AlertRecipients: []alertstore.AlertRecipient{
 					{AlertId: AlertId, Email: UserEmail},
 				},
@@ -2574,7 +2573,7 @@ func TestUpdateAlertRule(t *testing.T) {
 					},
 				},
 			},
-			wantAlertStore: alertstore.Schema{
+			wantAlertStore: &alertstore.Schema{
 				LinearCalibrations: []alertstore.StoredLinearCalibration{},
 				AlertStates: []alertstore.AlertState{
 					{
@@ -2627,7 +2626,7 @@ func TestUpdateAlertRule(t *testing.T) {
 				DeletedAlerts: map[string][]notifier.AlertDeleted{},
 				CreatedAlerts: map[string][]notifier.AlertCreated{},
 			},
-			mockAlertStore: alertstore.Schema{
+			mockAlertStore: &alertstore.Schema{
 				AlertRecipients: []alertstore.AlertRecipient{
 					{AlertId: AlertId, Email: UserEmail},
 				},
@@ -2649,7 +2648,7 @@ func TestUpdateAlertRule(t *testing.T) {
 					},
 				},
 			},
-			wantAlertStore: alertstore.Schema{
+			wantAlertStore: &alertstore.Schema{
 				LinearCalibrations: []alertstore.StoredLinearCalibration{},
 				AlertStates:        []alertstore.AlertState{},
 				AlertRecipients: []alertstore.AlertRecipient{
@@ -2707,7 +2706,7 @@ func TestUpdateAlertRule(t *testing.T) {
 					},
 				},
 			},
-			mockAlertStore: alertstore.Schema{
+			mockAlertStore: &alertstore.Schema{
 				AlertRecipients: []alertstore.AlertRecipient{
 					{AlertId: AlertId, Email: UserEmail},
 					{AlertId: "alert2", Email: "user2@alerts.com"},
@@ -2751,7 +2750,7 @@ func TestUpdateAlertRule(t *testing.T) {
 					},
 				},
 			},
-			wantAlertStore: alertstore.Schema{
+			wantAlertStore: &alertstore.Schema{
 				LinearCalibrations: []alertstore.StoredLinearCalibration{},
 				AlertStates: []alertstore.AlertState{
 					{
@@ -2837,7 +2836,7 @@ func TestUpdateAlertRule(t *testing.T) {
 					},
 				},
 			},
-			mockAlertStore: alertstore.Schema{
+			mockAlertStore: &alertstore.Schema{
 				AlertRecipients: []alertstore.AlertRecipient{
 					{AlertId: AlertId, Email: UserEmail},
 				},
@@ -2868,7 +2867,7 @@ func TestUpdateAlertRule(t *testing.T) {
 					},
 				},
 			},
-			wantAlertStore: alertstore.Schema{
+			wantAlertStore: &alertstore.Schema{
 				LinearCalibrations: []alertstore.StoredLinearCalibration{},
 				AlertRecipients: []alertstore.AlertRecipient{
 					{AlertId: AlertId, Email: UserEmail},
@@ -2934,7 +2933,7 @@ func TestUpdateAlertRule(t *testing.T) {
 					},
 				},
 			},
-			mockAlertStore: alertstore.Schema{
+			mockAlertStore: &alertstore.Schema{
 				AlertRecipients: []alertstore.AlertRecipient{
 					{AlertId: AlertId, Email: UserEmail},
 				},
@@ -2956,7 +2955,7 @@ func TestUpdateAlertRule(t *testing.T) {
 					},
 				},
 			},
-			wantAlertStore: alertstore.Schema{
+			wantAlertStore: &alertstore.Schema{
 				LinearCalibrations: []alertstore.StoredLinearCalibration{},
 				AlertStates: []alertstore.AlertState{
 					{
@@ -3022,7 +3021,7 @@ func TestUpdateAlertRule(t *testing.T) {
 					},
 				},
 			},
-			mockAlertStore: alertstore.Schema{
+			mockAlertStore: &alertstore.Schema{
 				AlertRecipients: []alertstore.AlertRecipient{
 					{AlertId: AlertId, Email: UserEmail},
 				},
@@ -3044,7 +3043,7 @@ func TestUpdateAlertRule(t *testing.T) {
 					},
 				},
 			},
-			wantAlertStore: alertstore.Schema{
+			wantAlertStore: &alertstore.Schema{
 				LinearCalibrations: []alertstore.StoredLinearCalibration{},
 				AlertStates: []alertstore.AlertState{
 					{
@@ -3112,7 +3111,7 @@ func TestUpdateAlertRule(t *testing.T) {
 					},
 				},
 			},
-			mockAlertStore: alertstore.Schema{
+			mockAlertStore: &alertstore.Schema{
 				AlertRecipients: []alertstore.AlertRecipient{
 					{AlertId: AlertId, Email: UserEmail},
 				},
@@ -3134,7 +3133,7 @@ func TestUpdateAlertRule(t *testing.T) {
 					},
 				},
 			},
-			wantAlertStore: alertstore.Schema{
+			wantAlertStore: &alertstore.Schema{
 				AlertStates: []alertstore.AlertState{
 					{
 						Duration: SomeDuration,
@@ -3197,7 +3196,7 @@ func TestUpdateAlertRule(t *testing.T) {
 				DeletedAlerts: map[string][]notifier.AlertDeleted{},
 				CreatedAlerts: map[string][]notifier.AlertCreated{},
 			},
-			mockAlertStore: alertstore.Schema{
+			mockAlertStore: &alertstore.Schema{
 				AlertRecipients: []alertstore.AlertRecipient{
 					{AlertId: AlertId, Email: UserEmail},
 				},
@@ -3227,7 +3226,7 @@ func TestUpdateAlertRule(t *testing.T) {
 					},
 				},
 			},
-			wantAlertStore: alertstore.Schema{
+			wantAlertStore: &alertstore.Schema{
 				AlertStates: []alertstore.AlertState{},
 				AlertRecipients: []alertstore.AlertRecipient{
 					{AlertId: AlertId, Email: UserEmail},
@@ -3293,7 +3292,7 @@ func TestUpdateAlertRule(t *testing.T) {
 					},
 				},
 			},
-			mockAlertStore: alertstore.Schema{
+			mockAlertStore: &alertstore.Schema{
 				AlertRecipients: []alertstore.AlertRecipient{
 					{AlertId: AlertId, Email: UserEmail},
 				},
@@ -3315,7 +3314,7 @@ func TestUpdateAlertRule(t *testing.T) {
 					},
 				},
 			},
-			wantAlertStore: alertstore.Schema{
+			wantAlertStore: &alertstore.Schema{
 				LinearCalibrations: []alertstore.StoredLinearCalibration{},
 				AlertStates: []alertstore.AlertState{
 					{
@@ -3364,7 +3363,7 @@ func TestUpdateAlertRule(t *testing.T) {
 				AlertLevel:     alertstore.Crit,
 				AlertType:      alertstore.Range,
 			},
-			mockAlertStore: alertstore.Schema{
+			mockAlertStore: &alertstore.Schema{
 				AlertRecipients: []alertstore.AlertRecipient{
 					{AlertId: AlertId, Email: UserEmail},
 				},
@@ -3386,7 +3385,7 @@ func TestUpdateAlertRule(t *testing.T) {
 					},
 				},
 			},
-			wantAlertStore: alertstore.Schema{
+			wantAlertStore: &alertstore.Schema{
 				LinearCalibrations: []alertstore.StoredLinearCalibration{},
 				AlertRecipients: []alertstore.AlertRecipient{
 					{AlertId: AlertId, Email: UserEmail},
@@ -3427,7 +3426,7 @@ func TestUpdateAlertRule(t *testing.T) {
 				AlertLevel:     alertstore.Crit,
 				AlertType:      alertstore.Range,
 			},
-			mockAlertStore: alertstore.Schema{
+			mockAlertStore: &alertstore.Schema{
 				AlertRecipients: []alertstore.AlertRecipient{
 					{AlertId: AlertId, Email: UserEmail},
 				},
@@ -3449,7 +3448,7 @@ func TestUpdateAlertRule(t *testing.T) {
 					},
 				},
 			},
-			wantAlertStore: alertstore.Schema{
+			wantAlertStore: &alertstore.Schema{
 				LinearCalibrations: []alertstore.StoredLinearCalibration{},
 				AlertRecipients: []alertstore.AlertRecipient{
 					{AlertId: AlertId, Email: UserEmail},
@@ -3489,7 +3488,7 @@ func TestUpdateAlertRule(t *testing.T) {
 				AlertLevel:     alertstore.Crit,
 				AlertType:      alertstore.InactiveSensor,
 			},
-			mockAlertStore: alertstore.Schema{
+			mockAlertStore: &alertstore.Schema{
 				AlertRecipients: []alertstore.AlertRecipient{
 					{AlertId: AlertId, Email: UserEmail},
 				},
@@ -3511,7 +3510,7 @@ func TestUpdateAlertRule(t *testing.T) {
 					},
 				},
 			},
-			wantAlertStore: alertstore.Schema{
+			wantAlertStore: &alertstore.Schema{
 				AlertRecipients: []alertstore.AlertRecipient{
 					{AlertId: AlertId, Email: UserEmail},
 				},
@@ -3566,7 +3565,7 @@ func TestUpdateAlertRule(t *testing.T) {
 					},
 				},
 			},
-			mockAlertStore: alertstore.Schema{
+			mockAlertStore: &alertstore.Schema{
 				AlertRecipients: []alertstore.AlertRecipient{
 					{AlertId: AlertId, Email: UserEmail},
 				},
@@ -3587,7 +3586,7 @@ func TestUpdateAlertRule(t *testing.T) {
 					},
 				},
 			},
-			wantAlertStore: alertstore.Schema{
+			wantAlertStore: &alertstore.Schema{
 				LinearCalibrations: []alertstore.StoredLinearCalibration{},
 				AlertStates: []alertstore.AlertState{
 					{
@@ -3663,7 +3662,7 @@ func TestUpdateAlertRule(t *testing.T) {
 					},
 				},
 			},
-			mockAlertStore: alertstore.Schema{
+			mockAlertStore: &alertstore.Schema{
 				AlertRecipients: []alertstore.AlertRecipient{
 					{AlertId: AlertId, Email: UserEmail},
 				},
@@ -3685,7 +3684,7 @@ func TestUpdateAlertRule(t *testing.T) {
 					},
 				},
 			},
-			wantAlertStore: alertstore.Schema{
+			wantAlertStore: &alertstore.Schema{
 				LinearCalibrations: []alertstore.StoredLinearCalibration{},
 				AlertStates: []alertstore.AlertState{
 					{
@@ -3752,7 +3751,7 @@ func TestUpdateAlertRule(t *testing.T) {
 					},
 				},
 			},
-			mockAlertStore: alertstore.Schema{
+			mockAlertStore: &alertstore.Schema{
 				AlertRecipients: []alertstore.AlertRecipient{
 					{AlertId: AlertId, Email: UserEmail},
 				},
@@ -3774,7 +3773,7 @@ func TestUpdateAlertRule(t *testing.T) {
 					},
 				},
 			},
-			wantAlertStore: alertstore.Schema{
+			wantAlertStore: &alertstore.Schema{
 				LinearCalibrations: []alertstore.StoredLinearCalibration{},
 				AlertStates: []alertstore.AlertState{
 					{
@@ -3808,10 +3807,9 @@ func TestUpdateAlertRule(t *testing.T) {
 		},
 
 		"error when trying to update non existent alert rule": {
-			wantStatus:     http.StatusNotFound,
-			wantErr:        true,
-			alertId:        AlertId,
-			mockAlertStore: alertstore.Schema{},
+			wantStatus: http.StatusNotFound,
+			wantErr:    true,
+			alertId:    AlertId,
 			updatedAlertRule: alertstore.AlertRule{
 				Name:           RegisteredAlertName,
 				EmailAddresses: []string{UserEmail},
@@ -3825,10 +3823,9 @@ func TestUpdateAlertRule(t *testing.T) {
 		},
 
 		"invalid: 1 range value on a range type alert check": {
-			wantStatus:     http.StatusBadRequest,
-			wantErr:        true,
-			mockAlertStore: alertstore.Schema{},
-			alertId:        AlertId,
+			wantStatus: http.StatusBadRequest,
+			wantErr:    true,
+			alertId:    AlertId,
 			updatedAlertRule: alertstore.AlertRule{
 				Name:           RegisteredAlertName,
 				EmailAddresses: []string{UserEmail},
@@ -3842,10 +3839,9 @@ func TestUpdateAlertRule(t *testing.T) {
 		},
 
 		"invalid: 2 range values on a less than type alert check": {
-			wantStatus:     http.StatusBadRequest,
-			wantErr:        true,
-			mockAlertStore: alertstore.Schema{},
-			alertId:        AlertId,
+			wantStatus: http.StatusBadRequest,
+			wantErr:    true,
+			alertId:    AlertId,
 			updatedAlertRule: alertstore.AlertRule{
 				EmailAddresses: []string{UserEmail},
 				Name:           RegisteredAlertName,
@@ -3891,7 +3887,7 @@ func TestUpdateAlertRule(t *testing.T) {
 					},
 				},
 			},
-			mockAlertStore: alertstore.Schema{
+			mockAlertStore: &alertstore.Schema{
 				AlertRecipients: []alertstore.AlertRecipient{
 					{AlertId: AlertId, Email: UserEmail},
 				},
@@ -3913,7 +3909,7 @@ func TestUpdateAlertRule(t *testing.T) {
 					},
 				},
 			},
-			wantAlertStore: alertstore.Schema{
+			wantAlertStore: &alertstore.Schema{
 				LinearCalibrations: []alertstore.StoredLinearCalibration{},
 				AlertStates: []alertstore.AlertState{
 					{
@@ -3949,7 +3945,7 @@ func TestUpdateAlertRule(t *testing.T) {
 
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
-			a, api, closeFunc := setupApp(t, tc.mockAlertStore)
+			a, api, closeFunc := setupApp(t, name+"-testing", tc.mockAlertStore)
 			defer closeFunc()
 			resp := api.Put(fmt.Sprintf("/alert/%s", tc.alertId), tc.updatedAlertRule)
 			if tc.wantStatus != resp.Code {
@@ -3961,10 +3957,13 @@ func TestUpdateAlertRule(t *testing.T) {
 				require.Nil(t, err)
 				tc.updatedAlertRule.AlertId = tc.alertId
 				if diff := cmp.Diff(tc.updatedAlertRule, got); diff != "" {
-					t.Fatalf("response alertrule mismatch (-want +got):\n%s", diff)
+					t.Fatalf("response alertrule mismatch (-want +got):%s\n", diff)
 				}
-				if diff := cmp.Diff(tc.wantAlertStore, a.AlertStore.GetSnapshot()); diff != "" {
-					t.Fatalf("alertstore mismatch (-want +got):\n%s", diff)
+				if tc.wantAlertStore != nil {
+					diff := cmp.Diff(*tc.wantAlertStore, a.AlertStore.GetSnapshot())
+					if diff != "" {
+						t.Fatalf("alertstore mismatch (-want +got):%s\n", diff)
+					}
 				}
 				alertSourceCount := a.AlertSource.GetSnapshot()
 				if alertSourceCount != tc.wantAlertSourceCount {
@@ -3972,7 +3971,7 @@ func TestUpdateAlertRule(t *testing.T) {
 						alertSourceCount, tc.wantAlertSourceCount)
 				}
 				if diff := cmp.Diff(tc.wantUserInboxes, a.Notifier.GetUserInboxes()); diff != "" {
-					t.Fatalf("user inboxes mismatch (-want +got):\n%s", diff)
+					t.Fatalf("user inboxes mismatch (-want +got):%s\n", diff)
 				}
 			}
 		})
@@ -3985,14 +3984,14 @@ func TestGetAlertRule(t *testing.T) {
 		want           alertstore.AlertRule
 		wantStatus     int
 		alertId        string
-		mockAlertStore alertstore.Schema
+		mockAlertStore *alertstore.Schema
 	}{
 
 		"successfully get a stored threshold alert": {
 			wantErr:    false,
 			wantStatus: http.StatusOK,
 			alertId:    AlertId,
-			mockAlertStore: alertstore.Schema{
+			mockAlertStore: &alertstore.Schema{
 				AlertRecipients: []alertstore.AlertRecipient{
 					{AlertId: AlertId, Email: UserEmail},
 				},
@@ -4031,7 +4030,7 @@ func TestGetAlertRule(t *testing.T) {
 			wantErr:    false,
 			wantStatus: http.StatusOK,
 			alertId:    AlertId,
-			mockAlertStore: alertstore.Schema{
+			mockAlertStore: &alertstore.Schema{
 				AlertRecipients: []alertstore.AlertRecipient{
 					{AlertId: AlertId, Email: UserEmail},
 				},
@@ -4065,18 +4064,17 @@ func TestGetAlertRule(t *testing.T) {
 		},
 
 		"alert doesn't exist": {
-			wantErr:        true,
-			want:           alertstore.AlertRule{},
-			wantStatus:     404,
-			alertId:        "alert2",
-			mockAlertStore: alertstore.Schema{},
+			wantErr:    true,
+			want:       alertstore.AlertRule{},
+			wantStatus: 404,
+			alertId:    "alert2",
 		},
 
 		"successfully get a stored threshold alert with a linear calibration": {
 			wantErr:    false,
 			wantStatus: http.StatusOK,
 			alertId:    AlertId,
-			mockAlertStore: alertstore.Schema{
+			mockAlertStore: &alertstore.Schema{
 				AlertRecipients: []alertstore.AlertRecipient{
 					{AlertId: AlertId, Email: UserEmail},
 				},
@@ -4131,7 +4129,7 @@ func TestGetAlertRule(t *testing.T) {
 
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
-			_, api, closeFunc := setupApp(t, tc.mockAlertStore)
+			_, api, closeFunc := setupApp(t, name+"-testing", tc.mockAlertStore)
 			defer closeFunc()
 			resp := api.Get(fmt.Sprintf("/alert/%s", tc.alertId))
 			if tc.wantStatus != resp.Code {
@@ -4142,7 +4140,7 @@ func TestGetAlertRule(t *testing.T) {
 				err := json.Unmarshal(resp.Body.Bytes(), &got)
 				require.Nil(t, err)
 				if diff := cmp.Diff(tc.want, got); diff != "" {
-					t.Fatalf("response mismatch (-want +got):\n%s", diff)
+					t.Fatalf("response mismatch (-want +got):%s\n", diff)
 				}
 			}
 		})
@@ -4156,7 +4154,7 @@ func TestDeleteAlert(t *testing.T) {
 		alertId                        string
 		wantAlertRule                  alertstore.AlertRule
 		wantUserInboxes                notifier.Schema
-		mockAlertStore, wantAlertStore alertstore.Schema
+		mockAlertStore, wantAlertStore *alertstore.Schema
 		wantAlertSourceCount           int
 	}{
 
@@ -4183,7 +4181,7 @@ func TestDeleteAlert(t *testing.T) {
 				},
 			},
 			wantAlertSourceCount: 0,
-			mockAlertStore: alertstore.Schema{
+			mockAlertStore: &alertstore.Schema{
 				AlertRecipients: []alertstore.AlertRecipient{
 					{AlertId: AlertId, Email: UserEmail},
 				},
@@ -4210,7 +4208,7 @@ func TestDeleteAlert(t *testing.T) {
 					},
 				},
 			},
-			wantAlertStore: alertstore.Schema{
+			wantAlertStore: &alertstore.Schema{
 				DeviceAlerts:       []alertstore.DeviceAlertRule{},
 				AlertRecipients:    []alertstore.AlertRecipient{},
 				AlertStates:        []alertstore.AlertState{},
@@ -4259,7 +4257,7 @@ func TestDeleteAlert(t *testing.T) {
 				},
 			},
 			wantAlertSourceCount: 0,
-			mockAlertStore: alertstore.Schema{
+			mockAlertStore: &alertstore.Schema{
 				AlertRecipients: []alertstore.AlertRecipient{
 					{AlertId: AlertId, Email: UserEmail},
 				},
@@ -4295,7 +4293,7 @@ func TestDeleteAlert(t *testing.T) {
 					},
 				},
 			},
-			wantAlertStore: alertstore.Schema{
+			wantAlertStore: &alertstore.Schema{
 				DeviceAlerts:       []alertstore.DeviceAlertRule{},
 				AlertRecipients:    []alertstore.AlertRecipient{},
 				AlertStates:        []alertstore.AlertState{},
@@ -4342,7 +4340,7 @@ func TestDeleteAlert(t *testing.T) {
 				},
 			},
 			wantAlertSourceCount: 1,
-			mockAlertStore: alertstore.Schema{
+			mockAlertStore: &alertstore.Schema{
 				AlertRecipients: []alertstore.AlertRecipient{
 					{AlertId: AlertId, Email: UserEmail},
 					{AlertId: "alert2", Email: UserEmail},
@@ -4386,7 +4384,7 @@ func TestDeleteAlert(t *testing.T) {
 					},
 				},
 			},
-			wantAlertStore: alertstore.Schema{
+			wantAlertStore: &alertstore.Schema{
 				LinearCalibrations: []alertstore.StoredLinearCalibration{},
 				AlertRecipients: []alertstore.AlertRecipient{
 					{AlertId: AlertId, Email: UserEmail},
@@ -4449,7 +4447,7 @@ func TestDeleteAlert(t *testing.T) {
 				},
 			},
 			wantAlertSourceCount: 0,
-			mockAlertStore: alertstore.Schema{
+			mockAlertStore: &alertstore.Schema{
 				AlertRecipients: []alertstore.AlertRecipient{
 					{AlertId: AlertId, Email: UserEmail},
 				},
@@ -4475,7 +4473,7 @@ func TestDeleteAlert(t *testing.T) {
 					},
 				},
 			},
-			wantAlertStore: alertstore.Schema{
+			wantAlertStore: &alertstore.Schema{
 				LinearCalibrations: []alertstore.StoredLinearCalibration{},
 				DeviceAlerts:       []alertstore.DeviceAlertRule{},
 				AlertRecipients:    []alertstore.AlertRecipient{},
@@ -4499,13 +4497,12 @@ func TestDeleteAlert(t *testing.T) {
 			wantStatus:      http.StatusNotFound,
 			wantUserInboxes: EmptyInboxes,
 			alertId:         "alert2",
-			mockAlertStore:  alertstore.Schema{},
 		},
 	}
 
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
-			a, api, closeFunc := setupApp(t, tc.mockAlertStore)
+			a, api, closeFunc := setupApp(t, name+"-testing", tc.mockAlertStore)
 			defer closeFunc()
 			resp := api.Delete(fmt.Sprintf("/alert/%s", tc.alertId))
 			if tc.wantStatus != resp.Code {
@@ -4516,10 +4513,13 @@ func TestDeleteAlert(t *testing.T) {
 				err := json.Unmarshal(resp.Body.Bytes(), &got)
 				require.Nil(t, err)
 				if diff := cmp.Diff(tc.wantAlertRule, got); err != nil {
-					t.Fatalf("alertRule mismatch (-want +got):\n%s", diff)
+					t.Fatalf("alertRule mismatch (-want +got):%s\n", diff)
 				}
-				if diff := cmp.Diff(tc.wantAlertStore, a.AlertStore.GetSnapshot()); diff != "" {
-					t.Fatalf("alertStore mismatch (-want +got):\n%s", diff)
+				if tc.wantAlertStore != nil {
+					diff := cmp.Diff(*tc.wantAlertStore, a.AlertStore.GetSnapshot())
+					if diff != "" {
+						t.Fatalf("alertStore mismatch (-want +got):%s\n", diff)
+					}
 				}
 				alertsCount := a.AlertSource.GetSnapshot()
 				if tc.wantAlertSourceCount != alertsCount {
@@ -4527,7 +4527,7 @@ func TestDeleteAlert(t *testing.T) {
 						tc.wantAlertSourceCount, alertsCount)
 				}
 				if diff := cmp.Diff(tc.wantUserInboxes, a.Notifier.GetUserInboxes()); diff != "" {
-					t.Fatalf("user inboxes mismatch (-want +got):\n%s", diff)
+					t.Fatalf("user inboxes mismatch (-want +got):%s\n", diff)
 				}
 			}
 		})
@@ -4537,7 +4537,7 @@ func TestDeleteAlert(t *testing.T) {
 func TestRemoveUsersFromAlertRule(t *testing.T) {
 	tests := map[string]struct {
 		wantErr                        bool
-		mockAlertStore, wantAlertStore alertstore.Schema
+		mockAlertStore, wantAlertStore *alertstore.Schema
 		wantStatus                     int
 		wantUserInboxes                notifier.Schema
 		emailsToRemove                 []string
@@ -4546,7 +4546,7 @@ func TestRemoveUsersFromAlertRule(t *testing.T) {
 	}{
 
 		"remove 1 email from alert rule": {
-			mockAlertStore: alertstore.Schema{
+			mockAlertStore: &alertstore.Schema{
 				DeviceAlerts: []alertstore.DeviceAlertRule{
 					{
 						DeviceId:   RegisteredDeviceId,
@@ -4575,7 +4575,7 @@ func TestRemoveUsersFromAlertRule(t *testing.T) {
 					},
 				},
 			},
-			wantAlertStore: alertstore.Schema{
+			wantAlertStore: &alertstore.Schema{
 				LinearCalibrations: []alertstore.StoredLinearCalibration{},
 				DeviceAlerts: []alertstore.DeviceAlertRule{
 					{
@@ -4627,7 +4627,7 @@ func TestRemoveUsersFromAlertRule(t *testing.T) {
 		},
 
 		"try to remove email that isnt attached to the alert": {
-			mockAlertStore: alertstore.Schema{
+			mockAlertStore: &alertstore.Schema{
 				DeviceAlerts: []alertstore.DeviceAlertRule{
 					{
 						DeviceId:   RegisteredDeviceId,
@@ -4650,7 +4650,7 @@ func TestRemoveUsersFromAlertRule(t *testing.T) {
 				},
 				AlertStates: []alertstore.AlertState{},
 			},
-			wantAlertStore: alertstore.Schema{
+			wantAlertStore: &alertstore.Schema{
 				LinearCalibrations: []alertstore.StoredLinearCalibration{},
 				DeviceAlerts: []alertstore.DeviceAlertRule{
 					{
@@ -4682,7 +4682,7 @@ func TestRemoveUsersFromAlertRule(t *testing.T) {
 		},
 
 		"remove last email from alert, so delete alert": {
-			mockAlertStore: alertstore.Schema{
+			mockAlertStore: &alertstore.Schema{
 				DeviceAlerts: []alertstore.DeviceAlertRule{
 					{
 						DeviceId:   RegisteredDeviceId,
@@ -4704,7 +4704,7 @@ func TestRemoveUsersFromAlertRule(t *testing.T) {
 					},
 				},
 			},
-			wantAlertStore: alertstore.Schema{
+			wantAlertStore: &alertstore.Schema{
 				LinearCalibrations: []alertstore.StoredLinearCalibration{},
 				DeviceAlerts:       []alertstore.DeviceAlertRule{},
 				AlertRecipients:    []alertstore.AlertRecipient{},
@@ -4735,7 +4735,7 @@ func TestRemoveUsersFromAlertRule(t *testing.T) {
 		},
 
 		"remove last email from alert among other unknown emails, so delete alert": {
-			mockAlertStore: alertstore.Schema{
+			mockAlertStore: &alertstore.Schema{
 				DeviceAlerts: []alertstore.DeviceAlertRule{
 					{
 						DeviceId:   RegisteredDeviceId,
@@ -4757,7 +4757,7 @@ func TestRemoveUsersFromAlertRule(t *testing.T) {
 					},
 				},
 			},
-			wantAlertStore: alertstore.Schema{
+			wantAlertStore: &alertstore.Schema{
 				LinearCalibrations: []alertstore.StoredLinearCalibration{},
 				DeviceAlerts:       []alertstore.DeviceAlertRule{},
 				AlertRecipients:    []alertstore.AlertRecipient{},
@@ -4789,7 +4789,7 @@ func TestRemoveUsersFromAlertRule(t *testing.T) {
 
 		"alert rule not found": {
 			wantErr: true,
-			mockAlertStore: alertstore.Schema{
+			mockAlertStore: &alertstore.Schema{
 				DeviceAlerts: []alertstore.DeviceAlertRule{
 					{
 						DeviceId:   RegisteredDeviceId,
@@ -4814,7 +4814,6 @@ func TestRemoveUsersFromAlertRule(t *testing.T) {
 					},
 				},
 			},
-			wantAlertStore:       alertstore.Schema{},
 			wantStatus:           http.StatusNotFound,
 			emailsToRemove:       []string{AnotherUserEmail},
 			alertId:              UnregisteredAlertId,
@@ -4824,7 +4823,7 @@ func TestRemoveUsersFromAlertRule(t *testing.T) {
 
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
-			a, api, closeFunc := setupApp(t, tc.mockAlertStore)
+			a, api, closeFunc := setupApp(t, name+"-testing", tc.mockAlertStore)
 			defer closeFunc()
 			resp := api.Patch(fmt.Sprintf("/alert/%s/emailaddresses", tc.alertId),
 				tc.emailsToRemove)
@@ -4832,8 +4831,11 @@ func TestRemoveUsersFromAlertRule(t *testing.T) {
 				t.Fatalf("wantStatus: %d, response Code: %v", tc.wantStatus, resp.Code)
 			}
 			if !tc.wantErr {
-				if diff := cmp.Diff(tc.wantAlertStore, a.AlertStore.GetSnapshot()); diff != "" {
-					t.Fatalf("alertStore mismatch (-want +got):\n%s", diff)
+				if tc.wantAlertStore != nil {
+					diff := cmp.Diff(*tc.wantAlertStore, a.AlertStore.GetSnapshot())
+					if diff != "" {
+						t.Fatalf("alertStore mismatch (-want +got):%s\n", diff)
+					}
 				}
 				if tc.wantStatus != http.StatusNoContent {
 					var mu alertstore.MutateAlertUsersResponse
@@ -4841,7 +4843,7 @@ func TestRemoveUsersFromAlertRule(t *testing.T) {
 					err := json.Unmarshal(body, &mu)
 					require.Nil(t, err)
 					if diff := cmp.Diff(tc.emailsToRemove, mu.EmailAddresses); diff != "" {
-						t.Fatalf("emails mismatch (-want +got):\n%s", diff)
+						t.Fatalf("emails mismatch (-want +got):%s\n", diff)
 					}
 				}
 				alertsCount := a.AlertSource.GetSnapshot()
@@ -4850,7 +4852,7 @@ func TestRemoveUsersFromAlertRule(t *testing.T) {
 						tc.wantAlertSourceCount, alertsCount)
 				}
 				if diff := cmp.Diff(tc.wantUserInboxes, a.Notifier.GetUserInboxes()); diff != "" {
-					t.Fatalf("user inboxes mismatch (-want +got):\n%s", diff)
+					t.Fatalf("user inboxes mismatch (-want +got):%s\n", diff)
 				}
 			}
 		})
@@ -4860,7 +4862,7 @@ func TestRemoveUsersFromAlertRule(t *testing.T) {
 func TestAddUsersToAlertRule(t *testing.T) {
 	tests := map[string]struct {
 		wantErr                        bool
-		mockAlertStore, wantAlertStore alertstore.Schema
+		mockAlertStore, wantAlertStore *alertstore.Schema
 		wantUserInboxes                notifier.Schema
 		wantStatus                     int
 		emailsToAdd                    []string
@@ -4870,7 +4872,7 @@ func TestAddUsersToAlertRule(t *testing.T) {
 
 		"add 1 email to alert rule": {
 			wantErr: false,
-			mockAlertStore: alertstore.Schema{
+			mockAlertStore: &alertstore.Schema{
 				DeviceAlerts: []alertstore.DeviceAlertRule{
 					{
 						DeviceId:   RegisteredDeviceId,
@@ -4895,7 +4897,7 @@ func TestAddUsersToAlertRule(t *testing.T) {
 					},
 				},
 			},
-			wantAlertStore: alertstore.Schema{
+			wantAlertStore: &alertstore.Schema{
 				LinearCalibrations: []alertstore.StoredLinearCalibration{},
 				DeviceAlerts: []alertstore.DeviceAlertRule{
 					{
@@ -4952,7 +4954,7 @@ func TestAddUsersToAlertRule(t *testing.T) {
 
 		"some new emails, some old emails": {
 			wantErr: false,
-			mockAlertStore: alertstore.Schema{
+			mockAlertStore: &alertstore.Schema{
 				DeviceAlerts: []alertstore.DeviceAlertRule{
 					{
 						DeviceId:   RegisteredDeviceId,
@@ -4981,7 +4983,7 @@ func TestAddUsersToAlertRule(t *testing.T) {
 					},
 				},
 			},
-			wantAlertStore: alertstore.Schema{
+			wantAlertStore: &alertstore.Schema{
 				LinearCalibrations: []alertstore.StoredLinearCalibration{},
 				DeviceAlerts: []alertstore.DeviceAlertRule{
 					{
@@ -5054,7 +5056,7 @@ func TestAddUsersToAlertRule(t *testing.T) {
 
 		"alert rule not found": {
 			wantErr: true,
-			mockAlertStore: alertstore.Schema{
+			mockAlertStore: &alertstore.Schema{
 				DeviceAlerts: []alertstore.DeviceAlertRule{
 					{
 						DeviceId:   RegisteredDeviceId,
@@ -5079,7 +5081,6 @@ func TestAddUsersToAlertRule(t *testing.T) {
 					},
 				},
 			},
-			wantAlertStore:       alertstore.Schema{},
 			wantStatus:           http.StatusNotFound,
 			emailsToAdd:          []string{AnotherUserEmail},
 			alertId:              UnregisteredAlertId,
@@ -5089,7 +5090,7 @@ func TestAddUsersToAlertRule(t *testing.T) {
 
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
-			a, api, closeFunc := setupApp(t, tc.mockAlertStore)
+			a, api, closeFunc := setupApp(t, name+"-testing", tc.mockAlertStore)
 			defer closeFunc()
 			resp := api.Put(fmt.Sprintf("/alert/%s/emailaddresses", tc.alertId),
 				tc.emailsToAdd)
@@ -5097,15 +5098,18 @@ func TestAddUsersToAlertRule(t *testing.T) {
 				t.Fatalf("wantStatus: %d, response Code: %v", tc.wantStatus, resp.Code)
 			}
 			if !tc.wantErr {
-				if diff := cmp.Diff(tc.wantAlertStore, a.AlertStore.GetSnapshot()); diff != "" {
-					t.Fatalf("alertStore mismatch (-want +got):\n%s", diff)
+				if tc.wantAlertStore != nil {
+					diff := cmp.Diff(*tc.wantAlertStore, a.AlertStore.GetSnapshot())
+					if diff != "" {
+						t.Fatalf("alertStore mismatch (-want +got): %s\n", diff)
+					}
 				}
 				var mu alertstore.MutateAlertUsersResponse
 				body := resp.Body.Bytes()
 				err := json.Unmarshal(body, &mu)
 				require.Nil(t, err)
 				if diff := cmp.Diff(tc.emailsToAdd, mu.EmailAddresses); diff != "" {
-					t.Fatalf("emails mismatch (-want +got):\n%s", diff)
+					t.Fatalf("emails mismatch (-want +got):%s\n", diff)
 				}
 				alertsCount := a.AlertSource.GetSnapshot()
 				if tc.wantAlertSourceCount != alertsCount {
@@ -5113,7 +5117,7 @@ func TestAddUsersToAlertRule(t *testing.T) {
 						tc.wantAlertSourceCount, alertsCount)
 				}
 				if diff := cmp.Diff(tc.wantUserInboxes, a.Notifier.GetUserInboxes()); diff != "" {
-					t.Fatalf("user inboxes mismatch (-want +got):\n%s", diff)
+					t.Fatalf("user inboxes mismatch (-want +got):%s\n", diff)
 				}
 			}
 		})
