@@ -1324,9 +1324,15 @@ func TestCreateAlertRule(t *testing.T) {
 	}{
 
 		"successfully create a less than alert rule": {
-			wantErr:              false,
 			wantStatus:           http.StatusOK,
 			wantAlertSourceCount: 1,
+			mockAlertStore: &alertstore.Schema{
+				DeviceAlerts:       []alertstore.DeviceAlertRule{},
+				AlertRecipients:    []alertstore.AlertRecipient{},
+				AlertStates:        []alertstore.AlertState{},
+				AlertRules:         []alertstore.StoredAlertRule{},
+				LinearCalibrations: []alertstore.StoredLinearCalibration{},
+			},
 			wantAlertStore: &alertstore.Schema{
 				LinearCalibrations: []alertstore.StoredLinearCalibration{},
 				AlertStates: []alertstore.AlertState{
@@ -1392,7 +1398,6 @@ func TestCreateAlertRule(t *testing.T) {
 		},
 
 		"deal with conflict on alert rule name": {
-			wantErr:              false,
 			wantStatus:           http.StatusOK,
 			wantAlertSourceCount: 2,
 			mockAlertStore: &alertstore.Schema{
@@ -1511,7 +1516,6 @@ func TestCreateAlertRule(t *testing.T) {
 		},
 
 		"successfully create an inactive sensor alert rule": {
-			wantErr:              false,
 			wantStatus:           http.StatusOK,
 			wantAlertSourceCount: 1,
 			mockAlertStore: &alertstore.Schema{
@@ -1581,7 +1585,6 @@ func TestCreateAlertRule(t *testing.T) {
 		},
 
 		"successfully create a greater than alert rule": {
-			wantErr:              false,
 			wantStatus:           http.StatusOK,
 			wantAlertSourceCount: 1,
 			mockAlertStore: &alertstore.Schema{
@@ -1655,7 +1658,6 @@ func TestCreateAlertRule(t *testing.T) {
 		},
 
 		"successfully create a range alert rule": {
-			wantErr:              false,
 			wantStatus:           http.StatusOK,
 			wantAlertSourceCount: 1,
 			mockAlertStore: &alertstore.Schema{
@@ -1729,9 +1731,15 @@ func TestCreateAlertRule(t *testing.T) {
 		},
 
 		"invalid range on less than alert": {
-			wantErr:         true,
 			wantStatus:      http.StatusUnprocessableEntity,
 			wantUserInboxes: EmptyInboxes,
+			mockAlertStore: &alertstore.Schema{
+				DeviceAlerts:       []alertstore.DeviceAlertRule{},
+				AlertRecipients:    []alertstore.AlertRecipient{},
+				AlertStates:        []alertstore.AlertState{},
+				AlertRules:         []alertstore.StoredAlertRule{},
+				LinearCalibrations: []alertstore.StoredLinearCalibration{},
+			},
 			alertRule: alertstore.AlertRule{
 				Name:        RegisteredAlertName,
 				RangeValues: []float32{5, 10},
@@ -1750,7 +1758,15 @@ func TestCreateAlertRule(t *testing.T) {
 				AlertType:   alertstore.Range,
 				AlertLevel:  alertstore.Warn,
 			},
+			mockAlertStore: &alertstore.Schema{
+				DeviceAlerts:       []alertstore.DeviceAlertRule{},
+				AlertRecipients:    []alertstore.AlertRecipient{},
+				AlertStates:        []alertstore.AlertState{},
+				AlertRules:         []alertstore.StoredAlertRule{},
+				LinearCalibrations: []alertstore.StoredLinearCalibration{},
+			},
 		},
+
 		"invalid alert rule": {
 			wantErr:    true,
 			wantStatus: http.StatusUnprocessableEntity,
@@ -1760,6 +1776,13 @@ func TestCreateAlertRule(t *testing.T) {
 				Duration:       "",
 				AlertType:      alertstore.Range,
 				AlertLevel:     alertstore.Warn,
+			},
+			mockAlertStore: &alertstore.Schema{
+				DeviceAlerts:       []alertstore.DeviceAlertRule{},
+				AlertRecipients:    []alertstore.AlertRecipient{},
+				AlertStates:        []alertstore.AlertState{},
+				AlertRules:         []alertstore.StoredAlertRule{},
+				LinearCalibrations: []alertstore.StoredLinearCalibration{},
 			},
 		},
 
@@ -2269,6 +2292,13 @@ func TestCreateAlertRule(t *testing.T) {
 			wantErr:              false,
 			wantStatus:           http.StatusOK,
 			wantAlertSourceCount: 1,
+			mockAlertStore: &alertstore.Schema{
+				DeviceAlerts:       []alertstore.DeviceAlertRule{},
+				AlertRecipients:    []alertstore.AlertRecipient{},
+				AlertStates:        []alertstore.AlertState{},
+				AlertRules:         []alertstore.StoredAlertRule{},
+				LinearCalibrations: []alertstore.StoredLinearCalibration{},
+			},
 			wantAlertStore: &alertstore.Schema{
 				LinearCalibrations: []alertstore.StoredLinearCalibration{},
 				AlertStates: []alertstore.AlertState{
@@ -2337,6 +2367,13 @@ func TestCreateAlertRule(t *testing.T) {
 			wantErr:              false,
 			wantStatus:           http.StatusOK,
 			wantAlertSourceCount: 1,
+			mockAlertStore: &alertstore.Schema{
+				DeviceAlerts:       []alertstore.DeviceAlertRule{},
+				AlertRecipients:    []alertstore.AlertRecipient{},
+				AlertStates:        []alertstore.AlertState{},
+				AlertRules:         []alertstore.StoredAlertRule{},
+				LinearCalibrations: []alertstore.StoredLinearCalibration{},
+			},
 			wantAlertStore: &alertstore.Schema{
 				AlertStates: []alertstore.AlertState{
 					{
@@ -4483,6 +4520,13 @@ func TestDeleteAlert(t *testing.T) {
 			wantStatus:      http.StatusNotFound,
 			wantUserInboxes: EmptyInboxes,
 			alertId:         "alert2",
+			mockAlertStore: &alertstore.Schema{
+				DeviceAlerts:       []alertstore.DeviceAlertRule{},
+				AlertRecipients:    []alertstore.AlertRecipient{},
+				AlertStates:        []alertstore.AlertState{},
+				AlertRules:         []alertstore.StoredAlertRule{},
+				LinearCalibrations: []alertstore.StoredLinearCalibration{},
+			},
 		},
 	}
 
