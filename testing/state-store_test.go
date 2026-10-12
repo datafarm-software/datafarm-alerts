@@ -413,9 +413,10 @@ func TestRespondToAlert(t *testing.T) {
 				},
 				AlertRules: []alertstore.StoredAlertRule{
 					{
-						AlertId:    AlertId,
-						Duration:   "24h",
-						AlertLevel: alertstore.Warn,
+						AlertId:     AlertId,
+						Duration:    "24h",
+						AlertLevel:  alertstore.Warn,
+						RangeValues: []float32{OldValue},
 					},
 				},
 				AlertStates: []alertstore.AlertState{
@@ -448,9 +449,10 @@ func TestRespondToAlert(t *testing.T) {
 				},
 				AlertRules: []alertstore.StoredAlertRule{
 					{
-						AlertId:    AlertId,
-						Duration:   "24h",
-						AlertLevel: alertstore.Warn,
+						AlertId:     AlertId,
+						Duration:    "24h",
+						AlertLevel:  alertstore.Warn,
+						RangeValues: []float32{OldValue},
 					},
 				},
 				AlertStates: []alertstore.AlertState{
@@ -479,9 +481,10 @@ func TestRespondToAlert(t *testing.T) {
 				},
 				AlertRules: []alertstore.StoredAlertRule{
 					{
-						AlertId:    AlertId,
-						Duration:   "24h",
-						AlertLevel: alertstore.Warn,
+						AlertId:     AlertId,
+						Duration:    "24h",
+						AlertLevel:  alertstore.Warn,
+						RangeValues: []float32{OldValue},
 					},
 				},
 				AlertStates: []alertstore.AlertState{
@@ -514,9 +517,10 @@ func TestRespondToAlert(t *testing.T) {
 				},
 				AlertRules: []alertstore.StoredAlertRule{
 					{
-						AlertId:    AlertId,
-						Duration:   "24h",
-						AlertLevel: alertstore.Warn,
+						AlertId:     AlertId,
+						Duration:    "24h",
+						AlertLevel:  alertstore.Warn,
+						RangeValues: []float32{OldValue},
 					},
 				},
 				AlertStates: []alertstore.AlertState{
@@ -545,9 +549,10 @@ func TestRespondToAlert(t *testing.T) {
 				},
 				AlertRules: []alertstore.StoredAlertRule{
 					{
-						AlertId:    AlertId,
-						Duration:   "24h",
-						AlertLevel: alertstore.Warn,
+						AlertId:     AlertId,
+						Duration:    "24h",
+						AlertLevel:  alertstore.Warn,
+						RangeValues: []float32{OldValue},
 					},
 				},
 				AlertStates: []alertstore.AlertState{
@@ -580,9 +585,10 @@ func TestRespondToAlert(t *testing.T) {
 				},
 				AlertRules: []alertstore.StoredAlertRule{
 					{
-						AlertId:    AlertId,
-						Duration:   "24h",
-						AlertLevel: alertstore.Warn,
+						AlertId:     AlertId,
+						Duration:    "24h",
+						AlertLevel:  alertstore.Warn,
+						RangeValues: []float32{OldValue},
 					},
 				},
 				AlertStates: []alertstore.AlertState{
@@ -895,9 +901,10 @@ func TestRespondToAlert(t *testing.T) {
 				},
 				AlertRules: []alertstore.StoredAlertRule{
 					{
-						AlertId:    AlertId,
-						Duration:   "24h",
-						AlertLevel: alertstore.Warn,
+						AlertId:     AlertId,
+						Duration:    "24h",
+						AlertLevel:  alertstore.Warn,
+						RangeValues: []float32{OldValue},
 					},
 				},
 				AlertStates: []alertstore.AlertState{
@@ -928,9 +935,10 @@ func TestRespondToAlert(t *testing.T) {
 				},
 				AlertRules: []alertstore.StoredAlertRule{
 					{
-						AlertId:    AlertId,
-						Duration:   "24h",
-						AlertLevel: alertstore.Warn,
+						AlertId:     AlertId,
+						Duration:    "24h",
+						AlertLevel:  alertstore.Warn,
+						RangeValues: []float32{OldValue},
 					},
 				},
 				AlertStates: []alertstore.AlertState{
@@ -958,9 +966,10 @@ func TestRespondToAlert(t *testing.T) {
 				},
 				AlertRules: []alertstore.StoredAlertRule{
 					{
-						AlertId:    AlertId,
-						Duration:   "24h",
-						AlertLevel: alertstore.Warn,
+						AlertId:     AlertId,
+						Duration:    "24h",
+						AlertLevel:  alertstore.Warn,
+						RangeValues: []float32{OldValue},
 					},
 				},
 				AlertStates: []alertstore.AlertState{
@@ -991,9 +1000,10 @@ func TestRespondToAlert(t *testing.T) {
 				},
 				AlertRules: []alertstore.StoredAlertRule{
 					{
-						AlertId:    AlertId,
-						AlertLevel: alertstore.Warn,
-						Duration:   "24h",
+						AlertId:     AlertId,
+						AlertLevel:  alertstore.Warn,
+						Duration:    "24h",
+						RangeValues: []float32{OldValue},
 					},
 				},
 				AlertStates: []alertstore.AlertState{
