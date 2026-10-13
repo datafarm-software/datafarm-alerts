@@ -111,16 +111,16 @@ type StoredAlertRule struct {
 
 // NOTE: AlertRule never gets stored in the database. A read-only view is created from the normalized schema, which can return an instance of AlertRule. So the gorm tags are for serializing into memory only.
 type AlertRule struct {
-	AlertId           string             `json:"alertId" doc:"Alert Id."`
-	EmailAddresses    []string           `gorm:"serializer:json" json:"emailAddresses" minItems:"1" format:"email" doc:"List of email addresses to notify in the event of the alert. If updated, new list will replace old one as an overwrite."`
-	RangeValues       []float32          `gorm:"serializer:json" json:"rangeValues" maxItems:"2" doc:"One or two values, depending on whether the alertRange is a range or < >"`
-	Name              string             `json:"name" pattern:"^[a-zA-Z0-9:, ]+$" doc:"The name of the alert. For easier recognition."`
-	Duration          string             `json:"duration" pattern:"^[0-9]{1,2}[mhdw]$" doc:"A duration literal, specifying how often a check should occur."`
-	DeviceId          string             `json:"deviceId" pattern:"^[a-zA-Z0-9]+$" doc:"The device for which data should be checked."`
-	QueryField        string             `json:"queryField" pattern:"^[a-zA-Z0-9_]+$" doc:"The field on the device, for which data should be checked."`
-	AlertType         AlertType          `json:"alertType" maximum:"3" doc:"Specify type of check to perform. 0 = Less Than, 1 = Greater Than, 2 = Range, 3 = Inactive Sensor Check."`
-	AlertLevel        AlertLevel         `json:"alertLevel" minimum:"1" maximum:"2" doc:"Specify the alert level to notify. 1 = WARN, 2 = CRIT"`
-	LinearCalibration *LinearCalibration `json:"linearCalibration" gorm:"embedded;embeddedPrefix:lc_" required:"false" doc:"If provided, the alert will scale the specified device's data accordingly. It is assumed that the AlertRule RangeValues are  already on the calibrated level."`
+	AlertId           string             `log:"alertId" json:"alertId" doc:"Alert Id."`
+	EmailAddresses    []string           `log:"email-addresses" gorm:"serializer:json" json:"emailAddresses" minItems:"1" format:"email" doc:"List of email addresses to notify in the event of the alert. If updated, new list will replace old one as an overwrite."`
+	RangeValues       []float32          `log:"range-values" gorm:"serializer:json" json:"rangeValues" maxItems:"2" doc:"One or two values, depending on whether the alertRange is a range or < >"`
+	Name              string             `log:"name" json:"name" pattern:"^[a-zA-Z0-9:, ]+$" doc:"The name of the alert. For easier recognition."`
+	Duration          string             `log:"duration" json:"duration" pattern:"^[0-9]{1,2}[mhdw]$" doc:"A duration literal, specifying how often a check should occur."`
+	DeviceId          string             `log:"deviceId" json:"deviceId" pattern:"^[a-zA-Z0-9]+$" doc:"The device for which data should be checked."`
+	QueryField        string             `log:"queryField" json:"queryField" pattern:"^[a-zA-Z0-9_]+$" doc:"The field on the device, for which data should be checked."`
+	AlertType         AlertType          `log:"alertType" json:"alertType" maximum:"3" doc:"Specify type of check to perform. 0 = Less Than, 1 = Greater Than, 2 = Range, 3 = Inactive Sensor Check."`
+	AlertLevel        AlertLevel         `log:"alertLevel" json:"alertLevel" minimum:"1" maximum:"2" doc:"Specify the alert level to notify. 1 = WARN, 2 = CRIT"`
+	LinearCalibration *LinearCalibration `log:"linear-calibration" json:"linearCalibration" gorm:"embedded;embeddedPrefix:lc_" required:"false" doc:"If provided, the alert will scale the specified device's data accordingly. It is assumed that the AlertRule RangeValues are  already on the calibrated level."`
 }
 
 type CreatedRule struct {
@@ -211,10 +211,10 @@ func (c CalibratedValue) Round64(resolution Resolution) float64 {
 }
 
 type LinearCalibration struct {
-	RawMin float64 `json:"raw-min" required:"false"`
-	RawMax float64 `json:"raw-max" required:"false"`
-	CalMin float64 `json:"cal-min" required:"false"`
-	CalMax float64 `json:"cal-max" required:"false"`
+	RawMin float64 `log:"raw-min" json:"raw-min" required:"false"`
+	RawMax float64 `log:"raw-max" json:"raw-max" required:"false"`
+	CalMin float64 `log:"cal-min" json:"cal-min" required:"false"`
+	CalMax float64 `log:"cal-max" json:"cal-max" required:"false"`
 }
 
 func (l LinearCalibration) MarshalBinary() (data []byte, err error) {

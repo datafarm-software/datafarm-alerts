@@ -636,11 +636,7 @@ func (a *App) CreateAlertRule(
 		return nil, huma.Error500InternalServerError(
 			"Internal error while getting request log.")
 	}
-	defer func() {
-		if err != nil {
-			log.Struct(in.Body)
-		}
-	}()
+	log.Struct(in.Body)
 	if in.Body.AlertType < alertstore.Range && len(in.Body.RangeValues) > 1 {
 		return nil,
 			huma.Error400BadRequest("More than one range value on less than or greater alert.")
@@ -673,9 +669,9 @@ func (a *App) CreateAlertRule(
 		existingAlert, err := a.AlertStore.GetAlertRule(existingAlertId)
 		if err != nil {
 			log.AddMetadata(logging.Metadata{
-				"source":        {"alertstore.getAlertRule"},
-				"alertId":       {existingAlertId},
-				"error.message": {err.Error()},
+				"source":           {"alertstore.getAlertRule"},
+				"existing.alertId": {existingAlertId},
+				"error.message":    {err.Error()},
 			})
 			return nil, huma.Error500InternalServerError(
 				"Internal error while getting existing alert rule.")
@@ -717,7 +713,10 @@ func (a *App) CreateAlertRule(
 	recipients := a.ConvertToRecipients(alertId, uniqueEmails)
 	stateDuration, err := alertstore.ParseDuration(in.Body.Duration)
 	if err != nil {
-		log.Printf("parseDuration: %s, error: %v", in.Body.Duration, err)
+		log.AddMetadata(logging.Metadata{
+			"source":        {"alertstore.parseDuration"},
+			"error.message": {err.Error()},
+		})
 		return nil, huma.Error400BadRequest(
 			"Could not parse the provided rule duration.")
 	}
@@ -758,7 +757,10 @@ func (a *App) CreateAlertRule(
 		}
 	}
 	if err := a.AlertStore.Store(dbRecord); err != nil {
-		log.Printf("storing alert: %v", err)
+		log.AddMetadata(logging.Metadata{
+			"source":        {"alertstore.store"},
+			"error.message": {err.Error()},
+		})
 		return nil, huma.Error500InternalServerError(
 			"internal error storing the alert rule")
 	}
@@ -777,7 +779,10 @@ func (a *App) CreateAlertRule(
 		users = append(users, auth.UserInfo{EmailAddress: e})
 	}
 	if err := a.Notifier.Notify(alertCreated, a.Templater, users...); err != nil {
-		log.Printf("alert created notify: %v", err)
+		log.AddMetadata(logging.Metadata{
+			"source":        {"notifier.notify"},
+			"error.message": {err.Error()},
+		})
 		return nil, huma.Error500InternalServerError(
 			"Internal error notifying users of alert creation.")
 	}
