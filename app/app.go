@@ -1020,15 +1020,24 @@ func (a *App) DeleteAlertRule(ctx context.Context,
 	in *struct {
 		AlertId string `path:"alertId"`
 	},
-) (*struct {
+) (_ *struct {
 	Body alertstore.AlertRule
-}, error,
+}, err error,
 ) {
+	log, ok := ctx.Value("request-log").(logging.LogAccumulator)
+	if !ok {
+		return nil, huma.Error500InternalServerError(
+			"Internal error while getting request log.")
+	}
 	if err := a.AlertStore.DeleteAlertState(in.AlertId); err != nil {
 		if errors.Is(err, alertstore.NoAlert) {
 			return nil, huma.Error404NotFound("Alert State with given id does not exist.")
 		}
-		log.Printf("deleting alert state: %s: %v", in.AlertId, err)
+		log.AddMetadata(logging.Metadata{
+			"source":        {"alertstore.deleteAlertState"},
+			"alertId":       {in.AlertId},
+			"error.message": {err.Error()},
+		})
 		return nil, huma.Error500InternalServerError(
 			"Internal error while deleting alert state.")
 	}
@@ -1037,12 +1046,20 @@ func (a *App) DeleteAlertRule(ctx context.Context,
 		if errors.Is(err, alertstore.NoAlert) {
 			return nil, huma.Error404NotFound("Alert Rule with given id does not exist.")
 		}
-		log.Printf("deleting alert rule: %s: %v", in.AlertId, err)
+		log.AddMetadata(logging.Metadata{
+			"source":        {"alertstore.deleteAlertRule"},
+			"alertId":       {in.AlertId},
+			"error.message": {err.Error()},
+		})
 		return nil, huma.Error500InternalServerError(
 			"Internal error while deleting alert rule.")
 	}
 	if err = a.AlertSource.DeleteAlertRule(in.AlertId); err != nil {
-		log.Printf("deleting source alert rule: %s: %v", in.AlertId, err)
+		log.AddMetadata(logging.Metadata{
+			"source":        {"alertsource.deleteAlertRule"},
+			"alertId":       {in.AlertId},
+			"error.message": {err.Error()},
+		})
 		return nil, huma.Error500InternalServerError(
 			"Internal error while deleting the alert rule from source.")
 	}
@@ -1063,7 +1080,10 @@ func (a *App) DeleteAlertRule(ctx context.Context,
 		users = append(users, auth.UserInfo{EmailAddress: e})
 	}
 	if err = a.Notifier.Notify(message, a.Templater, users...); err != nil {
-		log.Printf("alertDeletedNotify: %v", err)
+		log.AddMetadata(logging.Metadata{
+			"source":        {"notifier.notify"},
+			"error.message": {err.Error()},
+		})
 		return nil, huma.Error500InternalServerError(
 			"Internal error notifying users alert is deleted.")
 	}
