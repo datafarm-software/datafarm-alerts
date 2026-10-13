@@ -5,7 +5,7 @@ go 1.26.0
 require (
 	github.com/danielgtaylor/huma/v2 v2.37.2
 	github.com/datafarm-software/datafarm-api v1.5.4
-	github.com/datafarm-software/telemetry v1.0.1
+	github.com/datafarm-software/telemetry v1.1.1
 	github.com/geraud22/config-from-yaml v1.1.1
 	github.com/glebarez/sqlite v1.11.0
 	github.com/google/go-cmp v0.7.0
@@ -77,8 +77,8 @@ require (
 	golang.org/x/net v0.61.0 // indirect
 	golang.org/x/sys v0.49.0 // indirect
 	golang.org/x/time v0.14.0 // indirect
-	google.golang.org/genproto/googleapis/api v0.0.0-20261005182115-fad411399dd8 // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20261005182115-fad411399dd8 // indirect
+	google.golang.org/genproto/googleapis/api v0.0.0-20261012220534-4341edf3f941 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20261012220534-4341edf3f941 // indirect
 	google.golang.org/grpc v1.84.0 // indirect
 	google.golang.org/protobuf v1.36.12 // indirect
 	gopkg.in/alexcesaro/quotedprintable.v3 v3.0.0-20150716171945-2caba252f4dc // indirect

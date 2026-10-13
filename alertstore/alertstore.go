@@ -9,9 +9,11 @@ import (
 	"time"
 )
 
-var InvalidDuration = time.Duration(-(1 * time.Hour))
-var AlertExists = errors.New("alert exists")
-var NoAlert = errors.New("no alert")
+var (
+	InvalidDuration = time.Duration(-(1 * time.Hour))
+	AlertExists     = errors.New("alert exists")
+	NoAlert         = errors.New("no alert")
+)
 
 type AlertType int
 
@@ -55,17 +57,17 @@ type AlertStore interface {
 	PrepareDb(Schema) error
 	GetSnapshot() Schema
 	Store(dbRecord Schema) error
-	//NOTE: could return alertstore.NoAlert
+	// NOTE: could return alertstore.NoAlert
 	GetAlertState(alertId string) (AlertState, error)
-	//NOTE: could return alertstore.NoAlert
+	// NOTE: could return alertstore.NoAlert
 	GetAlertRule(alertId string) (AlertRule, error)
 	GetAlertRecipients(alertId string) ([]string, error)
 	UpdateAlertState(alert AlertState) error
 	UpdateAlertRule(alertId string, dbRecord Schema) error
-	//NOTE: could return alertstore.AlertExists
+	// NOTE: could return alertstore.AlertExists
 	CheckAlertRuleExists(AlertRule) (string, error)
 	DeleteAlertState(alertId string) error
-	//NOTE: could return alertstore.NoAlert
+	// NOTE: could return alertstore.NoAlert
 	DeleteAlertRule(alertId string) (AlertRule, error)
 	RemoveUsersFromAlertRule([]AlertRecipient) error
 }
@@ -90,12 +92,12 @@ type AlertRecipient struct {
 }
 
 type AlertState struct {
-	Time        time.Time
+	Time        time.Time `log:"time"`
 	Duration    time.Duration
-	RangeValues []float32 `gorm:"serializer:json"`
-	Value       float64
-	Id          string `gorm:"primaryKey;unique;not null;check:length(id)>0"`
-	Level       AlertLevel
+	RangeValues []float32  `gorm:"serializer:json"`
+	Value       float64    `log:"value"`
+	Id          string     `log:"alertId" gorm:"primaryKey;unique;not null;check:length(id)>0"`
+	Level       AlertLevel `log:"level"`
 }
 
 type StoredAlertRule struct {
@@ -172,10 +174,12 @@ type StoredLinearCalibration struct {
 
 type Resolution float64
 
-const NearestOne Resolution = 1
-const OneDecimalPlace Resolution = 10
-const TwoDecimalPlaces Resolution = 100
-const ThreeDecimalPlaces Resolution = 1000
+const (
+	NearestOne         Resolution = 1
+	OneDecimalPlace    Resolution = 10
+	TwoDecimalPlaces   Resolution = 100
+	ThreeDecimalPlaces Resolution = 1000
+)
 
 type ValueRounder interface {
 	F32() float32

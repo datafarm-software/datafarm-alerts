@@ -9,7 +9,6 @@ import (
 	"os"
 	"reflect"
 	"slices"
-	"strings"
 	"time"
 
 	"github.com/danielgtaylor/huma/v2"
@@ -43,7 +42,7 @@ type Opts struct {
 	Influx        alertsource.InfluxOpts `mapstructure:"influx" validate:"required"`
 	Gomail        notifier.GomailOpts    `mapstructure:"gomail" validate:"required"`
 	TelemetryOpts struct {
-		CollectorEndpoint string `mapstructure:"endpoint" validate:"required`
+		CollectorEndpoint string `mapstructure:"endpoint" validate:"required"`
 	} `mapstructure:"telemetry" validate:"required"`
 }
 
@@ -100,7 +99,8 @@ func Start(opts Opts) error {
 	}
 	app.telemetryApi.Meter, err = metering.NewOtlpMeter(metering.OtlpOpts{
 		Name:     "datafarm-software/datafarm-alerts",
-		Endpoint: opts.TelemetryOpts.CollectorEndpoint, Res: res},
+		Endpoint: opts.TelemetryOpts.CollectorEndpoint, Res: res,
+	},
 		metering.WithLatency(), metering.WithMemoryUsage(),
 		metering.WithOtelRuntime(), metering.WithUptime(), metering.WithRequestCount())
 	if err != nil {
@@ -196,7 +196,9 @@ func (a *App) RegisterHumaOperations(api huma.API) {
 							Status: 500,
 							Detail: "Internal error while registering the alert.",
 						},
-					}}},
+					},
+				},
+			},
 			"400": {
 				Description: "Bad Request",
 				Content: map[string]*huma.MediaType{
@@ -299,7 +301,9 @@ func (a *App) RegisterHumaOperations(api huma.API) {
 							Status: 500,
 							Detail: "Internal error while retrieving the alert.",
 						},
-					}}},
+					},
+				},
+			},
 			"400": {
 				Description: "Bad Request",
 				Content: map[string]*huma.MediaType{
@@ -350,7 +354,9 @@ func (a *App) RegisterHumaOperations(api huma.API) {
 							Status: 500,
 							Detail: "Internal error while deleting the alert.",
 						},
-					}}},
+					},
+				},
+			},
 			"400": {
 				Description: "Bad Request",
 				Content: map[string]*huma.MediaType{
@@ -492,44 +498,66 @@ func (a *App) RegisterHumaOperations(api huma.API) {
 
 func (a *App) RespondToAlert(
 	ctx context.Context,
-	in *struct{ Body alertsource.InfluxAlert }) (*struct{}, error) {
+	in *struct{ Body alertsource.InfluxAlert },
+) (_ *struct{}, err error) {
+	log, ok := ctx.Value("request-log").(logging.LogAccumulator)
+	if !ok {
+		return nil, huma.Error500InternalServerError(
+			"Internal error while getting request log.")
+	}
 	source := alertsource.AlertFromSource(&in.Body)
 	alert := source.AlertState()
+	defer func() {
+		if err != nil {
+			log.Struct(alert)
+		}
+	}()
 	alertRule, err := a.AlertStore.GetAlertRule(alert.Id)
 	if err != nil {
 		if !errors.Is(err, alertstore.NoAlert) {
-			log.Printf("getting alert rule for %s: %v", alert.Id, err)
-			return nil, huma.Error500InternalServerError("Internal error getting the alert rule.")
+			log.AddMetadata(logging.Metadata{
+				"source":        {"alertstore.getAlertRule"},
+				"error.message": {err.Error()},
+			})
+			return nil, huma.Error500InternalServerError(
+				"Internal error getting the alert rule.")
 		}
-		log.Printf("Alert rule not found. %s", in.Body.Id)
 		return nil, huma.Error404NotFound("Alert rule not found.")
 	}
-	if strings.Contains(strings.ToLower(alertRule.Name), "summer") {
-		log.Printf("InfluxAlert: %v\n", in.Body)
-		log.Printf("AlertRule: %v\n", alertRule)
-	}
 	if alertRule.QueryField != in.Body.QueryField || alertRule.DeviceId != in.Body.DeviceId {
-		return nil, huma.Error404NotFound("Received alert with unknown DeviceId and QueryField combination.")
+		return nil, huma.Error404NotFound(
+			"Received alert with unknown DeviceId and QueryField combination.")
 	}
 	previousAlert, err := a.AlertStore.GetAlertState(alert.Id)
 	if err != nil {
 		if !errors.Is(err, alertstore.NoAlert) {
-			log.Printf("getting previous alert for %s: %v", alert.Id, err)
-			return nil, huma.Error500InternalServerError("Internal error getting previous alert state.")
+			log.AddMetadata(logging.Metadata{
+				"source":        {"alertstore.getAlertState"},
+				"error.message": {err.Error()},
+			})
+			return nil, huma.Error500InternalServerError(
+				"Internal error getting previous alert state.")
 		}
-		//NOTE: if no previous state is found, assume first time alert.
+		// NOTE: if no previous state is found, assume first time alert.
 		previousAlert.Level = alertstore.Ok
 	}
 	alert.Duration, err = alertstore.ParseDuration(alertRule.Duration)
 	if err != nil {
-		log.Printf("parsing duration for alert: %s, %s, err: %v", alert.Id, alertRule.Duration, err)
-		return nil, huma.Error500InternalServerError("Internal error parsing the duration of the alert.")
+		log.AddMetadata(logging.Metadata{
+			"source":        {"alertstore.parseDuration"},
+			"error.message": {err.Error()},
+		})
+		return nil, huma.Error500InternalServerError(
+			"Internal error parsing the duration of the alert.")
 	}
 	shouldNotify := a.ShouldNotify(alert, previousAlert)
 	if shouldNotify || alert.Level != previousAlert.Level || alert.Level == alertstore.Ok {
-		//NOTE: not intended to update state with every alert that comes in, for the sake of comparing durations between alerts sent, with some edge cases around that like the first alert coming in etc.
+		// NOTE: not intended to update state with every alert that comes in, for the sake of comparing durations between alerts sent, with some edge cases around that like the first alert coming in etc.
 		if err = a.AlertStore.UpdateAlertState(alert); err != nil {
-			log.Printf("updating alert state for id: %s, err: %v", alert.Id, err)
+			log.AddMetadata(logging.Metadata{
+				"source":        {"alertstore.updateAlertState"},
+				"error.message": {err.Error()},
+			})
 			return nil, huma.Error500InternalServerError("Internal error updating alert state.")
 		}
 	}
@@ -548,7 +576,12 @@ func (a *App) RespondToAlert(
 	}
 	emails, err := a.AlertStore.GetAlertRecipients(alert.Id)
 	if err != nil {
-		return nil, huma.Error500InternalServerError("Internal error getting alert recipients.")
+		log.AddMetadata(logging.Metadata{
+			"source":        {"alertstore.getAlertRecipients"},
+			"error.message": {err.Error()},
+		})
+		return nil, huma.Error500InternalServerError(
+			"Internal error getting alert recipients.")
 	}
 	message := notifier.AlertNotification{
 		Name:        alertRule.Name,
@@ -566,7 +599,10 @@ func (a *App) RespondToAlert(
 		users = append(users, auth.UserInfo{EmailAddress: e})
 	}
 	if err = a.Notifier.Notify(message, a.Templater, users...); err != nil {
-		log.Printf("notifying users: %v", err)
+		log.AddMetadata(logging.Metadata{
+			"source":        {"notifier.Notify"},
+			"error.message": {err.Error()},
+		})
 		return nil, huma.Error500InternalServerError("Internal error notifying users.")
 	}
 	return nil, nil
@@ -593,14 +629,23 @@ func (a *App) CreateAlertRule(
 	ctx context.Context,
 	in *struct {
 		Body alertstore.AlertRule
-	}) (*struct{ Body alertstore.CreatedRule }, error) {
+	},
+) (_ *struct{ Body alertstore.CreatedRule }, err error) {
+	log, ok := ctx.Value("request-log").(logging.LogAccumulator)
+	if !ok {
+		return nil, huma.Error500InternalServerError(
+			"Internal error while getting request log.")
+	}
+	defer func() {
+		if err != nil {
+			log.Struct(in.Body)
+		}
+	}()
 	if in.Body.AlertType < alertstore.Range && len(in.Body.RangeValues) > 1 {
-		log.Printf("can't have more than one range value on greater or less than alert.")
 		return nil,
 			huma.Error400BadRequest("More than one range value on less than or greater alert.")
 	}
 	if in.Body.AlertType == alertstore.Range && len(in.Body.RangeValues) != 2 {
-		log.Printf("Need 2 range values for range alert.")
 		return nil, huma.Error400BadRequest("Need 2 range values for range alert.")
 	}
 	alertCreatedMessageValues := in.Body.RangeValues
@@ -618,13 +663,20 @@ func (a *App) CreateAlertRule(
 	existingAlertId, err := a.AlertStore.CheckAlertRuleExists(in.Body)
 	if err != nil {
 		if !errors.Is(err, alertstore.AlertExists) {
-			log.Printf("checking alert exists: %v", err)
+			log.AddMetadata(logging.Metadata{
+				"source":        {"alertstore.checkAlertRuleExists"},
+				"error.message": {err.Error()},
+			})
 			return nil,
 				huma.Error500InternalServerError("Internal error checking if alert exists.")
 		}
 		existingAlert, err := a.AlertStore.GetAlertRule(existingAlertId)
 		if err != nil {
-			log.Printf("getting existing alert rule: %v", err)
+			log.AddMetadata(logging.Metadata{
+				"source":        {"alertstore.getAlertRule"},
+				"alertId":       {existingAlertId},
+				"error.message": {err.Error()},
+			})
 			return nil, huma.Error500InternalServerError(
 				"Internal error while getting existing alert rule.")
 		}
@@ -654,8 +706,12 @@ func (a *App) CreateAlertRule(
 	}
 	alertId, err := a.AlertSource.CreateAlertRule(in.Body)
 	if err != nil {
-		log.Printf("registering alert: %v", err)
-		return nil, huma.Error500InternalServerError("Internal error while registering the alert.")
+		log.AddMetadata(logging.Metadata{
+			"source":        {"alertsource.createAlertRule"},
+			"error.message": {err.Error()},
+		})
+		return nil, huma.Error500InternalServerError(
+			"Internal error while registering the alert.")
 	}
 	uniqueEmails := removeDuplicates(in.Body.EmailAddresses)
 	recipients := a.ConvertToRecipients(alertId, uniqueEmails)
@@ -697,12 +753,14 @@ func (a *App) CreateAlertRule(
 		if !in.Body.LinearCalibration.IsEmpty() {
 			dbRecord.LinearCalibrations = append(dbRecord.LinearCalibrations,
 				alertstore.StoredLinearCalibration{
-					AlertId: alertId, LinearCalibration: in.Body.LinearCalibration})
+					AlertId: alertId, LinearCalibration: in.Body.LinearCalibration,
+				})
 		}
 	}
 	if err := a.AlertStore.Store(dbRecord); err != nil {
 		log.Printf("storing alert: %v", err)
-		return nil, huma.Error500InternalServerError("internal error storing the alert rule")
+		return nil, huma.Error500InternalServerError(
+			"internal error storing the alert rule")
 	}
 	alertCreated := notifier.AlertCreated{
 		Name:        in.Body.Name,
@@ -908,7 +966,8 @@ func (a *App) GetAlertRule(
 	},
 ) (*struct {
 	Body alertstore.AlertRule
-}, error) {
+}, error,
+) {
 	alert, err := a.AlertStore.GetAlertRule(in.AlertId)
 	if err != nil {
 		if !errors.Is(err, alertstore.NoAlert) {
@@ -927,13 +986,15 @@ func (a *App) DeleteAlertRule(ctx context.Context,
 	},
 ) (*struct {
 	Body alertstore.AlertRule
-}, error) {
+}, error,
+) {
 	if err := a.AlertStore.DeleteAlertState(in.AlertId); err != nil {
 		if errors.Is(err, alertstore.NoAlert) {
 			return nil, huma.Error404NotFound("Alert State with given id does not exist.")
 		}
 		log.Printf("deleting alert state: %s: %v", in.AlertId, err)
-		return nil, huma.Error500InternalServerError("Internal error while deleting alert state.")
+		return nil, huma.Error500InternalServerError(
+			"Internal error while deleting alert state.")
 	}
 	alertRule, err := a.AlertStore.DeleteAlertRule(in.AlertId)
 	if err != nil {
@@ -941,11 +1002,13 @@ func (a *App) DeleteAlertRule(ctx context.Context,
 			return nil, huma.Error404NotFound("Alert Rule with given id does not exist.")
 		}
 		log.Printf("deleting alert rule: %s: %v", in.AlertId, err)
-		return nil, huma.Error500InternalServerError("Internal error while deleting alert rule.")
+		return nil, huma.Error500InternalServerError(
+			"Internal error while deleting alert rule.")
 	}
 	if err = a.AlertSource.DeleteAlertRule(in.AlertId); err != nil {
 		log.Printf("deleting source alert rule: %s: %v", in.AlertId, err)
-		return nil, huma.Error500InternalServerError("Internal error while deleting the alert rule from source.")
+		return nil, huma.Error500InternalServerError(
+			"Internal error while deleting the alert rule from source.")
 	}
 	message := notifier.AlertDeleted{
 		Name:        alertRule.Name,
@@ -976,7 +1039,8 @@ func (a *App) AddUsersToAlertRule(ctx context.Context, in *struct {
 	Body    []string `doc:"List of user email addresses." format:"email"`
 }) (*struct {
 	Body alertstore.MutateAlertUsersResponse
-}, error) {
+}, error,
+) {
 	ar, err := a.AlertStore.GetAlertRule(in.AlertId)
 	if err != nil {
 		if errors.Is(err, alertstore.NoAlert) {
@@ -1043,7 +1107,8 @@ func (a *App) RemoveUsersFromAlertRule(ctx context.Context, in *struct {
 }) (*struct {
 	Status int
 	Body   alertstore.MutateAlertUsersResponse
-}, error) {
+}, error,
+) {
 	ar, err := a.AlertStore.GetAlertRule(in.AlertId)
 	if err != nil {
 		if errors.Is(err, alertstore.NoAlert) {
