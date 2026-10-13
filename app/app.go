@@ -995,10 +995,19 @@ func (a *App) GetAlertRule(
 	Body alertstore.AlertRule
 }, error,
 ) {
+	log, ok := ctx.Value("request-log").(logging.LogAccumulator)
+	if !ok {
+		return nil, huma.Error500InternalServerError(
+			"Internal error while getting request log.")
+	}
 	alert, err := a.AlertStore.GetAlertRule(in.AlertId)
 	if err != nil {
 		if !errors.Is(err, alertstore.NoAlert) {
-			log.Printf("GetAlertRule(%s): %v", in.AlertId, err)
+			log.AddMetadata(logging.Metadata{
+				"source":        {"alertstore.getAlertRule"},
+				"alertId":       {in.AlertId},
+				"error.message": {err.Error()},
+			})
 			return nil, huma.Error500InternalServerError(
 				"Internal error retrieving alert.")
 		}
