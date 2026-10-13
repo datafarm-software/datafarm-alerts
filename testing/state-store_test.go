@@ -6,10 +6,16 @@ import (
 	"testing"
 	"time"
 
+	"github.com/datafarm-software/datafarm-api/api"
+	"github.com/datafarm-software/telemetry/logging"
+	"github.com/datafarm-software/telemetry/metering"
+	"github.com/datafarm-software/telemetry/tracing"
+	"github.com/gorilla/mux"
 	"github.com/segmentio/encoding/json"
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/danielgtaylor/huma/v2/adapters/humamux"
 	"github.com/danielgtaylor/huma/v2/humatest"
 	"github.com/geraud22/datafarm-alerts/alertsource"
 	"github.com/geraud22/datafarm-alerts/alertstore"
@@ -26,37 +32,41 @@ var EmptyInboxes = notifier.Schema{
 	DeletedAlerts: map[string][]notifier.AlertDeleted{},
 }
 
-const ConfigPath = "../config.yml"
-const UnregisteredQueryField = "humidity"
-const RegisteredQueryField = "temperature"
-const UnregisteredDeviceId = "device2"
-const RegisteredDeviceId = "device1"
-const SomeDuration = (24 * time.Hour)
-const AlertId = "alert1"
-const UnregisteredAlertId = "alertUnregistered"
-const UserEmail = "user1@alert.com"
-const AnotherUserEmail = "another@email.com"
-const RegisteredAlertName = "Temperature Check"
-const NewValue = 20
-const OldValue = 10
-const GreaterThanTen = "10.00 <"
-const LessThanTen = "< 10.00"
-const GreaterThanFive = "5.00 <"
-const LessThanFive = "< 5.00"
-const InactiveSensorCondition = "Inactive Sensor"
-const RangeCondition = "> 10.00, 20.00 <"
+const (
+	ConfigPath              = "../config.yml"
+	UnregisteredQueryField  = "humidity"
+	RegisteredQueryField    = "temperature"
+	UnregisteredDeviceId    = "device2"
+	RegisteredDeviceId      = "device1"
+	SomeDuration            = (24 * time.Hour)
+	AlertId                 = "alert1"
+	UnregisteredAlertId     = "alertUnregistered"
+	UserEmail               = "user1@alert.com"
+	AnotherUserEmail        = "another@email.com"
+	RegisteredAlertName     = "Temperature Check"
+	NewValue                = 20
+	OldValue                = 10
+	GreaterThanTen          = "10.00 <"
+	LessThanTen             = "< 10.00"
+	GreaterThanFive         = "5.00 <"
+	LessThanFive            = "< 5.00"
+	InactiveSensorCondition = "Inactive Sensor"
+	RangeCondition          = "> 10.00, 20.00 <"
+)
 
-var AlertReceived = time.Date(1994, 6, 24, 6, 0, 0, 0, time.UTC)
-var BeforeDuration = AlertReceived.Add(-1 * time.Hour)
-var AfterDuration = AlertReceived.Add(25 * time.Hour)
-var OnDuration = AlertReceived.Add(24 * time.Hour)
-var WithinDuration = AlertReceived.Add(6 * time.Hour)
-var SixtyThousandLitres = alertstore.LinearCalibration{
-	RawMin: 4,
-	RawMax: 10.6,
-	CalMin: 0,
-	CalMax: 97000,
-}
+var (
+	AlertReceived       = time.Date(1994, 6, 24, 6, 0, 0, 0, time.UTC)
+	BeforeDuration      = AlertReceived.Add(-1 * time.Hour)
+	AfterDuration       = AlertReceived.Add(25 * time.Hour)
+	OnDuration          = AlertReceived.Add(24 * time.Hour)
+	WithinDuration      = AlertReceived.Add(6 * time.Hour)
+	SixtyThousandLitres = alertstore.LinearCalibration{
+		RawMin: 4,
+		RawMax: 10.6,
+		CalMin: 0,
+		CalMax: 97000,
+	}
+)
 
 func TestShouldNotify(t *testing.T) {
 	var got bool
@@ -64,7 +74,6 @@ func TestShouldNotify(t *testing.T) {
 		want            bool
 		alert, previous alertstore.AlertState
 	}{
-
 		"no change within duration, so do nothing": {
 			want: false,
 			alert: alertstore.AlertState{
@@ -185,7 +194,6 @@ func TestRespondToAlert(t *testing.T) {
 		mockAlertStore, wantAlertStore *alertstore.Schema
 		alert                          alertsource.InfluxAlert
 	}{
-
 		"send alert because still crit after duration": {
 			wantStatus: http.StatusNoContent,
 			wantUserInboxes: notifier.Schema{
@@ -1265,10 +1273,20 @@ func TestRespondToAlert(t *testing.T) {
 }
 
 func setupApp(t *testing.T,
-	dbName string, mockAlertStore *alertstore.Schema) (*app.App, humatest.TestAPI, func() error) {
+	dbName string, mockAlertStore *alertstore.Schema,
+) (*app.App, humatest.TestAPI, func() error) {
 	var err error
-	a := &app.App{}
-	_, api := humatest.New(t)
+	a := &app.App{
+		TelemetryApi: api.Api{
+			Meter:  metering.MockMeter(),
+			Tracer: tracing.MockTracer(),
+			Logger: logging.MockLogger(),
+		},
+	}
+	config := app.Config()
+	router := mux.NewRouter()
+	humaApi := humamux.New(router, config)
+	api := humatest.Wrap(t, humaApi)
 	a.RegisterHumaOperations(api)
 
 	var closers []func() error
@@ -1322,7 +1340,6 @@ func TestCreateAlertRule(t *testing.T) {
 		wantUserInboxes                notifier.Schema
 		alertRule                      alertstore.AlertRule
 	}{
-
 		"successfully create a less than alert rule": {
 			wantStatus:           http.StatusOK,
 			wantAlertSourceCount: 1,
@@ -2379,7 +2396,7 @@ func TestCreateAlertRule(t *testing.T) {
 					{
 						Id:       AlertId,
 						Duration: SomeDuration,
-						//NOTE: the raw value according to the calibration gets stored
+						// NOTE: the raw value according to the calibration gets stored
 						RangeValues: []float32{8.082474},
 						Level:       alertstore.Warn,
 					},
@@ -2397,7 +2414,7 @@ func TestCreateAlertRule(t *testing.T) {
 				AlertRules: []alertstore.StoredAlertRule{
 					{
 						AlertId: AlertId,
-						//NOTE: the raw value according to the calibration gets stored
+						// NOTE: the raw value according to the calibration gets stored
 						RangeValues: []float32{8.082474},
 						Name:        RegisteredAlertName,
 						Duration:    "24h",
@@ -2562,7 +2579,6 @@ func TestUpdateAlertRule(t *testing.T) {
 		mockAlertStore, wantAlertStore *alertstore.Schema
 		wantAlertSourceCount           int
 	}{
-
 		"update the range values of an alert": {
 			wantStatus:           http.StatusOK,
 			wantAlertSourceCount: 1,
@@ -4051,7 +4067,6 @@ func TestGetAlertRule(t *testing.T) {
 		alertId        string
 		mockAlertStore *alertstore.Schema
 	}{
-
 		"successfully get a stored threshold alert": {
 			wantErr:    false,
 			wantStatus: http.StatusOK,
@@ -4222,7 +4237,6 @@ func TestDeleteAlert(t *testing.T) {
 		mockAlertStore, wantAlertStore *alertstore.Schema
 		wantAlertSourceCount           int
 	}{
-
 		"delete an alert": {
 			wantErr:    false,
 			wantStatus: http.StatusOK,
@@ -4595,7 +4609,6 @@ func TestRemoveUsersFromAlertRule(t *testing.T) {
 		alertId                        string
 		wantAlertSourceCount           int
 	}{
-
 		"remove 1 email from alert rule": {
 			mockAlertStore: &alertstore.Schema{
 				DeviceAlerts: []alertstore.DeviceAlertRule{
@@ -4906,7 +4919,6 @@ func TestAddUsersToAlertRule(t *testing.T) {
 		alertId                        string
 		wantAlertSourceCount           int
 	}{
-
 		"add 1 email to alert rule": {
 			wantErr: false,
 			mockAlertStore: &alertstore.Schema{

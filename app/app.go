@@ -7,7 +7,9 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"os/exec"
 	"reflect"
+	"regexp"
 	"slices"
 	"time"
 
@@ -16,12 +18,12 @@ import (
 	"github.com/datafarm-software/telemetry/logging"
 	"github.com/datafarm-software/telemetry/metering"
 	"github.com/datafarm-software/telemetry/tracing"
+	"github.com/gorilla/mux"
 
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/sdk/resource"
 
 	"github.com/google/go-cmp/cmp"
-	"github.com/gorilla/mux"
 
 	"github.com/danielgtaylor/huma/v2/adapters/humamux"
 	"github.com/danielgtaylor/huma/v2/humacli"
@@ -42,12 +44,12 @@ type Opts struct {
 	Influx        alertsource.InfluxOpts `mapstructure:"influx" validate:"required"`
 	Gomail        notifier.GomailOpts    `mapstructure:"gomail" validate:"required"`
 	TelemetryOpts struct {
-		CollectorEndpoint string `mapstructure:"endpoint" validate:"required"`
+		CollectorEndpoint string `mapstructure:"collectorendpoint" validate:"required"`
 	} `mapstructure:"telemetry" validate:"required"`
 }
 
 type App struct {
-	telemetryApi dfApi.Api
+	TelemetryApi dfApi.Api
 	AlertSource  alertsource.AlertSource
 	AlertStore   alertstore.AlertStore
 	Notifier     notifier.Notifier
@@ -77,7 +79,7 @@ func Start(opts Opts) error {
 	if err != nil {
 		return fmt.Errorf("init templater: %v", err)
 	}
-	app.telemetryApi = dfApi.Api{}
+	app.TelemetryApi = dfApi.Api{}
 	res, err := resource.New(context.Background(), resource.WithContainer(),
 		resource.WithAttributes(
 			attribute.String("service.name", "datafarm-alerts"),
@@ -86,18 +88,18 @@ func Start(opts Opts) error {
 	if err != nil {
 		return fmt.Errorf("init resource: %v", err)
 	}
-	app.telemetryApi.Logger, err = logging.NewOtlpLogger(
+	app.TelemetryApi.Logger, err = logging.NewOtlpLogger(
 		res, opts.TelemetryOpts.CollectorEndpoint)
 	if err != nil {
 		return fmt.Errorf("init logger: %v", err)
 	}
-	app.telemetryApi.Tracer, err = tracing.NewOtlpTracer(
+	app.TelemetryApi.Tracer, err = tracing.NewOtlpTracer(
 		res, "datafarm-software/datafarm-alerts",
 		opts.TelemetryOpts.CollectorEndpoint, 0.25)
 	if err != nil {
 		return fmt.Errorf("init tracer: %v", err)
 	}
-	app.telemetryApi.Meter, err = metering.NewOtlpMeter(metering.OtlpOpts{
+	app.TelemetryApi.Meter, err = metering.NewOtlpMeter(metering.OtlpOpts{
 		Name:     "datafarm-software/datafarm-alerts",
 		Endpoint: opts.TelemetryOpts.CollectorEndpoint, Res: res,
 	},
@@ -109,8 +111,7 @@ func Start(opts Opts) error {
 
 	cli := humacli.New(func(hooks humacli.Hooks, options *Opts) {
 		router := mux.NewRouter()
-		config := huma.DefaultConfig("SensorData Alerts API", "1.0.0")
-		api := humamux.New(router, config)
+		api := humamux.New(router, Config())
 		app.RegisterHumaOperations(api)
 		server := &http.Server{
 			Addr:    fmt.Sprintf("%s:%d", opts.Http.Address, opts.Http.Port),
@@ -131,6 +132,40 @@ func Start(opts Opts) error {
 	})
 	cli.Run()
 	return nil
+}
+
+var versionRegex = regexp.MustCompile(`[\d]+.[\d]+.[\d]+`)
+
+func findVersion(stdOut []byte) string {
+	verStr := string(stdOut)
+	return versionRegex.FindString(verStr)
+}
+
+func Config() (config huma.Config) {
+	var cmd *exec.Cmd
+	cmd = exec.Command("git", "describe", "--tags", "--abbrev=0")
+	stdOut, _ := cmd.Output()
+	verStr := findVersion(stdOut)
+	if verStr == "" {
+		cmd = exec.Command("cat", "/app/.git-version")
+		stdOut, _ = cmd.Output()
+		verStr = findVersion(stdOut)
+	}
+	if verStr == "" {
+		// NOTE: if all else fails, fallback to v1
+		verStr = "1"
+	}
+	config = huma.DefaultConfig("DataFarm Alerts API", verStr)
+	config.Info.Description = `
+## Welcome
+
+The DataFarm Alerts API provides our clients with email notifications on their SensorData.
+
+### Contributing
+
+DataFarm welcomes external contribution to this API, through Open Source under the GPL-3.0 License. If you would like to contribute please visit the project's Github page to get started: www.github.com/datafarm-software/datafarm-alerts.
+`
+	return config
 }
 
 func (a *App) Close() error {
@@ -161,8 +196,8 @@ type ErrorResponse struct {
 
 func (a *App) RegisterHumaOperations(api huma.API) {
 	mw := []func(ctx huma.Context, next func(huma.Context)){
-		a.telemetryApi.CountApiRequest, a.telemetryApi.TraceRequest,
-		a.telemetryApi.LogRequest, a.telemetryApi.RecordLatency,
+		a.TelemetryApi.CountApiRequest, a.TelemetryApi.TraceRequest,
+		a.TelemetryApi.LogRequest, a.TelemetryApi.RecordLatency,
 	}
 	allMw := huma.Middlewares(mw)
 
@@ -172,7 +207,6 @@ func (a *App) RegisterHumaOperations(api huma.API) {
 		Path:        "/alert/notify",
 		Tags:        []string{"Post"},
 		Summary:     "Post an alert.",
-		Hidden:      false,
 		Middlewares: allMw,
 	}
 	huma.Register(api, operation, a.RespondToAlert)
@@ -265,6 +299,34 @@ func (a *App) RegisterHumaOperations(api huma.API) {
 					},
 				},
 			},
+			"400": {
+				Description: "Bad Request",
+				Content: map[string]*huma.MediaType{
+					"application/json": {
+						Schema: huma.SchemaFromType(registry, reflect.TypeFor[HumaError]()),
+						Example: HumaError{
+							Schema: "http://localhost:3030/schemas/ErrorModel.json",
+							Title:  "Bad Request",
+							Status: 400,
+							Detail: "AlertId failed the regex.",
+						},
+					},
+				},
+			},
+			"404": {
+				Description: "Not Found",
+				Content: map[string]*huma.MediaType{
+					"application/json": {
+						Schema: huma.SchemaFromType(registry, reflect.TypeFor[HumaError]()),
+						Example: HumaError{
+							Schema: "http://localhost:3030/schemas/ErrorModel.json",
+							Title:  "Not Found",
+							Status: http.StatusNotFound,
+							Detail: "AlertId Not Found.",
+						},
+					},
+				},
+			},
 		},
 	}
 	huma.Register(api, operation, a.GetAlertRule)
@@ -304,6 +366,20 @@ func (a *App) RegisterHumaOperations(api huma.API) {
 					},
 				},
 			},
+			"404": {
+				Description: "Not Found",
+				Content: map[string]*huma.MediaType{
+					"application/json": {
+						Schema: huma.SchemaFromType(registry, reflect.TypeFor[HumaError]()),
+						Example: HumaError{
+							Schema: "http://localhost:3030/schemas/ErrorModel.json",
+							Title:  "Not Found",
+							Status: http.StatusNotFound,
+							Detail: "AlertId Not Found.",
+						},
+					},
+				},
+			},
 			"400": {
 				Description: "Bad Request",
 				Content: map[string]*huma.MediaType{
@@ -313,7 +389,7 @@ func (a *App) RegisterHumaOperations(api huma.API) {
 							Schema: "http://localhost:3030/schemas/ErrorModel.json",
 							Title:  "Bad Request",
 							Status: 400,
-							Detail: "Something went wrong.",
+							Detail: "AlertId failed the regex.",
 						},
 					},
 				},
@@ -353,6 +429,20 @@ func (a *App) RegisterHumaOperations(api huma.API) {
 							Title:  "Internal Server Error",
 							Status: 500,
 							Detail: "Internal error while deleting the alert.",
+						},
+					},
+				},
+			},
+			"404": {
+				Description: "Not Found",
+				Content: map[string]*huma.MediaType{
+					"application/json": {
+						Schema: huma.SchemaFromType(registry, reflect.TypeFor[HumaError]()),
+						Example: HumaError{
+							Schema: "http://localhost:3030/schemas/ErrorModel.json",
+							Title:  "Not Found",
+							Status: http.StatusNotFound,
+							Detail: "AlertId Not Found.",
 						},
 					},
 				},
@@ -406,6 +496,20 @@ func (a *App) RegisterHumaOperations(api huma.API) {
 							Title:  "Internal Server Error",
 							Status: 500,
 							Detail: "Internal error while updating the email addresses.",
+						},
+					},
+				},
+			},
+			"400": {
+				Description: "Bad Request",
+				Content: map[string]*huma.MediaType{
+					"application/json": {
+						Schema: huma.SchemaFromType(registry, reflect.TypeFor[HumaError]()),
+						Example: HumaError{
+							Schema: "http://localhost:3030/schemas/ErrorModel.json",
+							Title:  "Bad Request",
+							Status: http.StatusBadRequest,
+							Detail: "Contains Invalid Email Address.",
 						},
 					},
 				},
@@ -479,17 +583,7 @@ func (a *App) RegisterHumaOperations(api huma.API) {
 			},
 			"204": {
 				Description: "No Content will be returned in the event of the client removing all remaining users from the Alert Rule. In this case the sytem will also remove the Alert Rule.",
-				Content: map[string]*huma.MediaType{
-					"application/json": {
-						Schema: huma.SchemaFromType(registry, reflect.TypeFor[HumaError]()),
-						Example: HumaError{
-							Schema: "http://localhost:3030/schemas/ErrorModel.json",
-							Title:  "Not Found",
-							Status: http.StatusNotFound,
-							Detail: "AlertId Not Found.",
-						},
-					},
-				},
+				Content:     map[string]*huma.MediaType{},
 			},
 		},
 	}
@@ -686,10 +780,10 @@ func (a *App) CreateAlertRule(
 			}
 		}
 		if _, err = a.AddUsersToAlertRule(ctx, &struct {
-			AlertId string   `path:"alertId"`
-			Body    []string `doc:"List of user email addresses." format:"email"`
+			AlertId string `path:"alertId"`
+			Body    alertstore.Emails
 		}{
-			existingAlertId, in.Body.EmailAddresses,
+			existingAlertId, alertstore.Emails{Addresses: in.Body.EmailAddresses},
 		}); err != nil {
 			return nil, huma.Error500InternalServerError(
 				"Internal error adding users to alert.")
@@ -1091,8 +1185,8 @@ func (a *App) DeleteAlertRule(ctx context.Context,
 }
 
 func (a *App) AddUsersToAlertRule(ctx context.Context, in *struct {
-	AlertId string   `path:"alertId"`
-	Body    []string `doc:"List of user email addresses." format:"email"`
+	AlertId string `path:"alertId"`
+	Body    alertstore.Emails
 }) (_ *struct {
 	Body alertstore.MutateAlertUsersResponse
 }, err error,
@@ -1106,7 +1200,7 @@ func (a *App) AddUsersToAlertRule(ctx context.Context, in *struct {
 		if err != nil {
 			log.AddMetadata(logging.Metadata{
 				"alertId":         {in.AlertId},
-				"email-addresses": in.Body,
+				"email-addresses": in.Body.Addresses,
 			})
 		}
 	}()
@@ -1120,7 +1214,7 @@ func (a *App) AddUsersToAlertRule(ctx context.Context, in *struct {
 		}
 	}
 	var dbRecord alertstore.Schema
-	uniqueEmails := removeDuplicates(in.Body)
+	uniqueEmails := removeDuplicates(in.Body.Addresses)
 	dbRecord.AlertRecipients = a.ConvertToRecipients(in.AlertId, uniqueEmails)
 	dbRecord.DeviceAlerts = []alertstore.DeviceAlertRule{
 		{
@@ -1168,14 +1262,14 @@ func (a *App) AddUsersToAlertRule(ctx context.Context, in *struct {
 		Body alertstore.MutateAlertUsersResponse
 	}{
 		Body: alertstore.MutateAlertUsersResponse{
-			AlertId: ar.AlertId, EmailAddresses: in.Body,
+			AlertId: ar.AlertId, EmailAddresses: in.Body.Addresses,
 		},
 	}, nil
 }
 
 func (a *App) RemoveUsersFromAlertRule(ctx context.Context, in *struct {
-	AlertId string   `path:"alertId"`
-	Body    []string `doc:"List of user email addresses." format:"email"`
+	AlertId string `path:"alertId"`
+	Body    alertstore.Emails
 }) (_ *struct {
 	Status int
 	Body   alertstore.MutateAlertUsersResponse
@@ -1190,7 +1284,7 @@ func (a *App) RemoveUsersFromAlertRule(ctx context.Context, in *struct {
 		if err != nil {
 			log.AddMetadata(logging.Metadata{
 				"alertId":         {in.AlertId},
-				"email-addresses": in.Body,
+				"email-addresses": in.Body.Addresses,
 			})
 		}
 	}()
@@ -1203,8 +1297,8 @@ func (a *App) RemoveUsersFromAlertRule(ctx context.Context, in *struct {
 				"Internal error checking if AlertId exists.")
 		}
 	}
-	emailsToDelete := make([]string, 0, len(in.Body))
-	for _, email := range in.Body {
+	emailsToDelete := make([]string, 0, len(in.Body.Addresses))
+	for _, email := range in.Body.Addresses {
 		if slices.Contains(ar.EmailAddresses, email) {
 			emailsToDelete = append(emailsToDelete, email)
 		}
@@ -1257,6 +1351,6 @@ func (a *App) RemoveUsersFromAlertRule(ctx context.Context, in *struct {
 		Body   alertstore.MutateAlertUsersResponse
 	}{Status: http.StatusOK, Body: alertstore.MutateAlertUsersResponse{
 		AlertId:        in.AlertId,
-		EmailAddresses: in.Body,
+		EmailAddresses: in.Body.Addresses,
 	}}, nil
 }

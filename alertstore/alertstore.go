@@ -172,6 +172,10 @@ type StoredLinearCalibration struct {
 	*LinearCalibration `gorm:"embedded;embeddedPrefix:lc_"`
 }
 
+type Emails struct {
+	Addresses []string `json:"emailAddresses" doc:"List of user email addresses." format:"email"`
+}
+
 type Resolution float64
 
 const (
