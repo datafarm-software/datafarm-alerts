@@ -1176,11 +1176,24 @@ func (a *App) AddUsersToAlertRule(ctx context.Context, in *struct {
 func (a *App) RemoveUsersFromAlertRule(ctx context.Context, in *struct {
 	AlertId string   `path:"alertId"`
 	Body    []string `doc:"List of user email addresses." format:"email"`
-}) (*struct {
+}) (_ *struct {
 	Status int
 	Body   alertstore.MutateAlertUsersResponse
-}, error,
+}, err error,
 ) {
+	log, ok := ctx.Value("request-log").(logging.LogAccumulator)
+	if !ok {
+		return nil, huma.Error500InternalServerError(
+			"Internal error while getting request log.")
+	}
+	defer func() {
+		if err != nil {
+			log.AddMetadata(logging.Metadata{
+				"alertId":         {in.AlertId},
+				"email-addresses": in.Body,
+			})
+		}
+	}()
 	ar, err := a.AlertStore.GetAlertRule(in.AlertId)
 	if err != nil {
 		if errors.Is(err, alertstore.NoAlert) {
@@ -1231,7 +1244,10 @@ func (a *App) RemoveUsersFromAlertRule(ctx context.Context, in *struct {
 	}
 	if len(users) > 0 {
 		if err = a.Notifier.Notify(message, a.Templater, users...); err != nil {
-			log.Printf("remove users from alert notify: %v", err)
+			log.AddMetadata(logging.Metadata{
+				"source":        {"notifier.notify"},
+				"error.message": {err.Error()},
+			})
 			return nil, huma.Error500InternalServerError(
 				"Internal error notifying users unregistered from alert.")
 		}
