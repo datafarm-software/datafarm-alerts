@@ -670,7 +670,7 @@ func (a *App) CreateAlertRule(
 		if err != nil {
 			log.AddMetadata(logging.Metadata{
 				"source":           {"alertstore.getAlertRule"},
-				"existing.alertId": {existingAlertId},
+				"alertId.existing": {existingAlertId},
 				"error.message":    {err.Error()},
 			})
 			return nil, huma.Error500InternalServerError(
@@ -801,16 +801,20 @@ func (a *App) UpdateAlertRule(
 	},
 ) (*struct{ Body alertstore.AlertRule }, error) {
 	if in.Body.AlertType < alertstore.Range && len(in.Body.RangeValues) > 1 {
-		log.Printf("can't have more than one range value on greater or less than alert.")
 		return nil,
 			huma.Error400BadRequest("More than one range value on less than or greater alert.")
 	}
 	if in.Body.AlertType == alertstore.Range && len(in.Body.RangeValues) != 2 {
-		log.Printf("Need 2 range values for range alert.")
 		return nil, huma.Error400BadRequest("Need 2 range values for range alert.")
 	}
-	in.Body.AlertId = in.AlertId
 	alertCreatedMessageValues := in.Body.RangeValues
+	in.Body.AlertId = in.AlertId
+	log, ok := ctx.Value("request-log").(logging.LogAccumulator)
+	if !ok {
+		return nil, huma.Error500InternalServerError(
+			"Internal error while getting request log.")
+	}
+	log.Struct(in.Body)
 	if in.Body.LinearCalibration != nil {
 		if !in.Body.LinearCalibration.IsEmpty() {
 			newRange := make([]float32, 0, len(in.Body.RangeValues))
@@ -827,7 +831,10 @@ func (a *App) UpdateAlertRule(
 		if errors.Is(err, alertstore.NoAlert) {
 			return nil, huma.Error404NotFound("Alert not found.")
 		}
-		log.Printf("unexpected error while getting alert rule for: %s, error: %v", in.AlertId, err)
+		log.AddMetadata(logging.Metadata{
+			"source":        {"alertstore.getAlertRule"},
+			"error.message": {err.Error()},
+		})
 		return nil, huma.Error500InternalServerError(
 			"Internal error while getting the alert.")
 	}
@@ -885,7 +892,10 @@ func (a *App) UpdateAlertRule(
 		}
 	}
 	if err := a.AlertStore.UpdateAlertRule(in.Body.AlertId, dbRecord); err != nil {
-		log.Printf("alertstore update alert rule for id: %s, error: %v", in.AlertId, err)
+		log.AddMetadata(logging.Metadata{
+			"source":        {"alertstore.updateAlertRule"},
+			"error.message": {err.Error()},
+		})
 		return nil, huma.Error500InternalServerError(
 			"Internal error while storing the updated alert rule.")
 	}
@@ -894,13 +904,19 @@ func (a *App) UpdateAlertRule(
 			return nil, huma.Error404NotFound(
 				"Could not update rule with alertsource. Alert not found.")
 		}
-		log.Printf("alertsource update alert rule for id: %s, error: %v", in.AlertId, err)
+		log.AddMetadata(logging.Metadata{
+			"source":        {"alertsource.updateAlertRule"},
+			"error.message": {err.Error()},
+		})
 		return nil, huma.Error500InternalServerError(
 			"Internal error while updating the alert rule with source.")
 	}
 	stateDuration, err := alertstore.ParseDuration(in.Body.Duration)
 	if err != nil {
-		log.Printf("parseDuration: %s, error: %v", in.Body.Duration, err)
+		log.AddMetadata(logging.Metadata{
+			"source":        {"alertstore.parseDuration"},
+			"error.message": {err.Error()},
+		})
 		return nil, huma.Error400BadRequest(
 			"Could not parse the provided rule duration.")
 	}
@@ -911,7 +927,10 @@ func (a *App) UpdateAlertRule(
 		Level:       in.Body.AlertLevel,
 	}
 	if err = a.AlertStore.UpdateAlertState(alertState); err != nil {
-		log.Printf("updating alert state for id: %s, err: %v", alertState.Id, err)
+		log.AddMetadata(logging.Metadata{
+			"source":        {"alertstore.updateAlertState"},
+			"error.message": {err.Error()},
+		})
 		return nil, huma.Error500InternalServerError("Internal error updating alert state.")
 	}
 	message := notifier.AlertUpdated{
@@ -933,7 +952,10 @@ func (a *App) UpdateAlertRule(
 		users = append(users, auth.UserInfo{EmailAddress: e})
 	}
 	if err = a.Notifier.Notify(message, a.Templater, users...); err != nil {
-		log.Printf("update alert notify: %v", err)
+		log.AddMetadata(logging.Metadata{
+			"source":        {"notifer.notify"},
+			"error.message": {err.Error()},
+		})
 		return nil, huma.Error500InternalServerError(
 			"Internal error while notifying users of updated alert rule.")
 	}
