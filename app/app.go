@@ -13,6 +13,14 @@ import (
 	"time"
 
 	"github.com/danielgtaylor/huma/v2"
+	dfApi "github.com/datafarm-software/datafarm-api/api"
+	"github.com/datafarm-software/telemetry/logging"
+	"github.com/datafarm-software/telemetry/metering"
+	"github.com/datafarm-software/telemetry/tracing"
+
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/sdk/resource"
+
 	"github.com/google/go-cmp/cmp"
 	"github.com/gorilla/mux"
 
@@ -31,16 +39,20 @@ type HttpOpts struct {
 }
 
 type Opts struct {
-	Http   HttpOpts               `mapstructure:"http" validate:"required"`
-	Influx alertsource.InfluxOpts `mapstructure:"influx" validate:"required"`
-	Gomail notifier.GomailOpts    `mapstructure:"gomail" validate:"required"`
+	Http          HttpOpts               `mapstructure:"http" validate:"required"`
+	Influx        alertsource.InfluxOpts `mapstructure:"influx" validate:"required"`
+	Gomail        notifier.GomailOpts    `mapstructure:"gomail" validate:"required"`
+	TelemetryOpts struct {
+		CollectorEndpoint string `mapstructure:"endpoint" validate:"required`
+	} `mapstructure:"telemetry" validate:"required"`
 }
 
 type App struct {
-	AlertSource alertsource.AlertSource
-	AlertStore  alertstore.AlertStore
-	Notifier    notifier.Notifier
-	Templater   templates.Templater
+	telemetryApi dfApi.Api
+	AlertSource  alertsource.AlertSource
+	AlertStore   alertstore.AlertStore
+	Notifier     notifier.Notifier
+	Templater    templates.Templater
 }
 
 func Start(opts Opts) error {
@@ -66,6 +78,35 @@ func Start(opts Opts) error {
 	if err != nil {
 		return fmt.Errorf("init templater: %v", err)
 	}
+	app.telemetryApi = dfApi.Api{}
+	res, err := resource.New(context.Background(), resource.WithContainer(),
+		resource.WithAttributes(
+			attribute.String("service.name", "datafarm-alerts"),
+		),
+	)
+	if err != nil {
+		return fmt.Errorf("init resource: %v", err)
+	}
+	app.telemetryApi.Logger, err = logging.NewOtlpLogger(
+		res, opts.TelemetryOpts.CollectorEndpoint)
+	if err != nil {
+		return fmt.Errorf("init logger: %v", err)
+	}
+	app.telemetryApi.Tracer, err = tracing.NewOtlpTracer(
+		res, "datafarm-software/datafarm-alerts",
+		opts.TelemetryOpts.CollectorEndpoint, 0.25)
+	if err != nil {
+		return fmt.Errorf("init tracer: %v", err)
+	}
+	app.telemetryApi.Meter, err = metering.NewOtlpMeter(metering.OtlpOpts{
+		Name:     "datafarm-software/datafarm-alerts",
+		Endpoint: opts.TelemetryOpts.CollectorEndpoint, Res: res},
+		metering.WithLatency(), metering.WithMemoryUsage(),
+		metering.WithOtelRuntime(), metering.WithUptime(), metering.WithRequestCount())
+	if err != nil {
+		return fmt.Errorf("init meter: %v", err)
+	}
+
 	cli := humacli.New(func(hooks humacli.Hooks, options *Opts) {
 		router := mux.NewRouter()
 		config := huma.DefaultConfig("SensorData Alerts API", "1.0.0")
@@ -119,18 +160,26 @@ type ErrorResponse struct {
 }
 
 func (a *App) RegisterHumaOperations(api huma.API) {
+	mw := []func(ctx huma.Context, next func(huma.Context)){
+		a.telemetryApi.CountApiRequest, a.telemetryApi.TraceRequest,
+		a.telemetryApi.LogRequest, a.telemetryApi.RecordLatency,
+	}
+	allMw := huma.Middlewares(mw)
+
 	registry := huma.NewMapRegistry("#/errors", huma.DefaultSchemaNamer)
 	operation := huma.Operation{
-		Method:  "POST",
-		Path:    "/alert/notify",
-		Tags:    []string{"Post"},
-		Summary: "Post an alert.",
-		Hidden:  false,
+		Method:      "POST",
+		Path:        "/alert/notify",
+		Tags:        []string{"Post"},
+		Summary:     "Post an alert.",
+		Hidden:      false,
+		Middlewares: allMw,
 	}
 	huma.Register(api, operation, a.RespondToAlert)
 	operation = huma.Operation{
 		Method:      "POST",
 		Path:        "/alert",
+		Middlewares: allMw,
 		Tags:        []string{"Post"},
 		Summary:     "Create an alert rule.",
 		Description: "Clients can use this route to setup a new sensordata check, which will alert them according to the provided AlertRule request body.",
@@ -179,8 +228,9 @@ func (a *App) RegisterHumaOperations(api huma.API) {
 	}
 	huma.Register(api, operation, a.CreateAlertRule)
 	operation = huma.Operation{
-		Method: "GET",
-		Path:   "/alert/{alertId}",
+		Method:      "GET",
+		Path:        "/alert/{alertId}",
+		Middlewares: allMw,
 		Parameters: []*huma.Param{
 			{
 				Name:            "alertId",
@@ -217,8 +267,9 @@ func (a *App) RegisterHumaOperations(api huma.API) {
 	}
 	huma.Register(api, operation, a.GetAlertRule)
 	operation = huma.Operation{
-		Method: "PUT",
-		Path:   "/alert/{alertId}",
+		Method:      "PUT",
+		Path:        "/alert/{alertId}",
+		Middlewares: allMw,
 		Parameters: []*huma.Param{
 			{
 				Name:            "alertId",
@@ -267,8 +318,9 @@ func (a *App) RegisterHumaOperations(api huma.API) {
 	}
 	huma.Register(api, operation, a.UpdateAlertRule)
 	operation = huma.Operation{
-		Method: "DELETE",
-		Path:   "/alert/{alertId}",
+		Method:      "DELETE",
+		Path:        "/alert/{alertId}",
+		Middlewares: allMw,
 		Parameters: []*huma.Param{
 			{
 				Name:            "alertId",
@@ -317,8 +369,9 @@ func (a *App) RegisterHumaOperations(api huma.API) {
 	}
 	huma.Register(api, operation, a.DeleteAlertRule)
 	operation = huma.Operation{
-		Method: "PUT",
-		Path:   "/alert/{alertId}/emailaddresses",
+		Method:      "PUT",
+		Path:        "/alert/{alertId}/emailaddresses",
+		Middlewares: allMw,
 		Parameters: []*huma.Param{
 			{
 				Name:            "alertId",
@@ -369,8 +422,9 @@ func (a *App) RegisterHumaOperations(api huma.API) {
 	}
 	huma.Register(api, operation, a.AddUsersToAlertRule)
 	operation = huma.Operation{
-		Method: "PATCH",
-		Path:   "/alert/{alertId}/emailaddresses",
+		Method:      "PATCH",
+		Path:        "/alert/{alertId}/emailaddresses",
+		Middlewares: allMw,
 		Parameters: []*huma.Param{
 			{
 				Name:            "alertId",
