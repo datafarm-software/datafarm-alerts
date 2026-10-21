@@ -57,17 +57,17 @@ type AlertStore interface {
 	PrepareDb(Schema) error
 	GetSnapshot() Schema
 	Store(dbRecord Schema) error
-	// NOTE: could return alertstore.NoAlert
+	// NOTE: could return store.NoAlert
 	GetAlertState(alertId string) (AlertState, error)
-	// NOTE: could return alertstore.NoAlert
+	// NOTE: could return store.NoAlert
 	GetAlertRule(alertId string) (AlertRule, error)
 	GetAlertRecipients(alertId string) ([]string, error)
 	UpdateAlertState(alert AlertState) error
 	UpdateAlertRule(alertId string, dbRecord Schema) error
-	// NOTE: could return alertstore.AlertExists
+	// NOTE: could return store.AlertExists
 	CheckAlertRuleExists(AlertRule) (string, error)
 	DeleteAlertState(alertId string) error
-	// NOTE: could return alertstore.NoAlert
+	// NOTE: could return store.NoAlert
 	DeleteAlertRule(alertId string) (AlertRule, error)
 	RemoveUsersFromAlertRule([]AlertRecipient) error
 }

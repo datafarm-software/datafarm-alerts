@@ -11,10 +11,12 @@ import (
 
 type TemplateName string
 
-const AlertNotificationTempl TemplateName = "alert-notification"
-const AlertCreatedTempl TemplateName = "alert-create"
-const AlertDeletedTempl TemplateName = "alert-delete"
-const AlertUpdatedTempl TemplateName = "alert-update"
+const (
+	AlertNotificationTempl TemplateName = "alert-notification"
+	AlertCreatedTempl      TemplateName = "alert-create"
+	AlertDeletedTempl      TemplateName = "alert-delete"
+	AlertUpdatedTempl      TemplateName = "alert-update"
+)
 
 type Templater interface {
 	Render(name TemplateName, data any) (string, error)
@@ -41,8 +43,8 @@ func findHtmlPaths(files fs.FS) ([]string, error) {
 
 func parseTemplates(files fs.FS, htmlPaths []string) (*template.Template, error) {
 	funcMap := map[string]any{
-		"alertTypeToString":  alertstore.AlertTypeToString,
-		"alertLevelToString": alertstore.AlertLevelToString,
+		"alertTypeToString":  store.AlertTypeToString,
+		"alertLevelToString": store.AlertLevelToString,
 	}
 	return template.New("base").Funcs(funcMap).ParseFS(files, htmlPaths...)
 }

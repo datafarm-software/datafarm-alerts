@@ -13,8 +13,8 @@ import (
 	"sync"
 	"time"
 
-	cfy "github.com/geraud22/config-from-yaml"
 	"github.com/datafarm-software/datafarm-alerts/alerts/store"
+	cfy "github.com/geraud22/config-from-yaml"
 	influxdb2 "github.com/influxdata/influxdb-client-go/v2"
 	"github.com/influxdata/influxdb-client-go/v2/domain"
 )
@@ -55,23 +55,23 @@ type InfluxAlert struct {
 	_               struct{}  `json:"-" additionalProperties:"true"`
 }
 
-func (i *InfluxAlert) AlertLevel() alertstore.AlertLevel {
-	var al alertstore.AlertLevel
+func (i *InfluxAlert) AlertLevel() store.AlertLevel {
+	var al store.AlertLevel
 	switch i.Level {
 	case "ok":
-		al = alertstore.Ok
+		al = store.Ok
 	case "warn":
-		al = alertstore.Warn
+		al = store.Warn
 	case "crit":
-		al = alertstore.Crit
+		al = store.Crit
 	default:
-		al = alertstore.Invalid
+		al = store.Invalid
 	}
 	return al
 }
 
-func (i *InfluxAlert) AlertState() alertstore.AlertState {
-	return alertstore.AlertState{
+func (i *InfluxAlert) AlertState() store.AlertState {
+	return store.AlertState{
 		Time:  i.SensorTimestamp,
 		Id:    i.Id,
 		Value: i.Value,
@@ -176,7 +176,7 @@ func (l localCheckImpl) TaskId() (taskId string, err error) {
 	return taskId, nil
 }
 
-func (i *Influx) CreateAlertRule(ar alertstore.AlertRule) (string, error) {
+func (i *Influx) CreateAlertRule(ar store.AlertRule) (string, error) {
 	check, err := i.domainCheck(ar)
 	if err != nil {
 		return "", err
@@ -210,7 +210,7 @@ func (i *Influx) CreateAlertRule(ar alertstore.AlertRule) (string, error) {
 	return alertId, nil
 }
 
-func (i *Influx) addCustomValuesToThreshold(taskId string, ar alertstore.AlertRule) error {
+func (i *Influx) addCustomValuesToThreshold(taskId string, ar store.AlertRule) error {
 	task, err := i.getTask(taskId)
 	if err != nil {
 		return fmt.Errorf(
@@ -227,7 +227,7 @@ func (i *Influx) addCustomValuesToThreshold(taskId string, ar alertstore.AlertRu
 	return nil
 }
 
-func (i *Influx) UpdateAlertRule(ar alertstore.AlertRule) error {
+func (i *Influx) UpdateAlertRule(ar store.AlertRule) error {
 	check, err := i.domainCheck(ar)
 	if err != nil {
 		return err
@@ -257,10 +257,10 @@ func (i *Influx) UpdateAlertRule(ar alertstore.AlertRule) error {
 	return nil
 }
 
-func (i *Influx) domainCheck(ar alertstore.AlertRule) (domain.Check, error) {
+func (i *Influx) domainCheck(ar store.AlertRule) (domain.Check, error) {
 	var check domain.Check
 	var err error
-	if ar.AlertType == alertstore.InactiveSensor {
+	if ar.AlertType == store.InactiveSensor {
 		check, err = i.createDeadmanCheck(ar)
 	} else {
 		check, err = i.createThresholdCheck(ar)
@@ -395,7 +395,7 @@ func (i *Influx) updateTask(task *domain.Task) error {
 	return err
 }
 
-func (i *Influx) PrepareDb(...alertstore.AlertRule) error {
+func (i *Influx) PrepareDb(...store.AlertRule) error {
 	return nil
 }
 
@@ -403,7 +403,7 @@ func (i *Influx) GetSnapshot() int {
 	return 0
 }
 
-func (i *Influx) createThresholdCheck(ar alertstore.AlertRule) (*domain.ThresholdCheck, error) {
+func (i *Influx) createThresholdCheck(ar store.AlertRule) (*domain.ThresholdCheck, error) {
 	var lesser domain.LesserThreshold
 	var greater domain.GreaterThreshold
 	var rang domain.RangeThreshold
@@ -412,14 +412,14 @@ func (i *Influx) createThresholdCheck(ar alertstore.AlertRule) (*domain.Threshol
 	lo := domain.CheckStatusLevelOK
 	var al domain.CheckStatusLevel
 	switch ar.AlertLevel {
-	case alertstore.Warn:
+	case store.Warn:
 		al = domain.CheckStatusLevelWARN
-	case alertstore.Crit:
+	case store.Crit:
 		al = domain.CheckStatusLevelCRIT
 	default:
 		return nil, fmt.Errorf("alert rule level invalid: %d - %s",
 			ar.AlertLevel,
-			alertstore.AlertLevelString[ar.AlertLevel])
+			store.AlertLevelString[ar.AlertLevel])
 	}
 	allValues := true
 	threshold := "threshold"
@@ -429,7 +429,7 @@ func (i *Influx) createThresholdCheck(ar alertstore.AlertRule) (*domain.Threshol
 		return nil, NoRangeValues
 	}
 	switch ar.AlertType {
-	case alertstore.LessThan:
+	case store.LessThan:
 		greater = domain.GreaterThreshold{
 			Value:         ar.RangeValues[0],
 			ThresholdBase: domain.ThresholdBase{Level: &lo},
@@ -440,7 +440,7 @@ func (i *Influx) createThresholdCheck(ar alertstore.AlertRule) (*domain.Threshol
 		}
 		thresholds = append(thresholds, &lesser, &greater)
 
-	case alertstore.GreaterThan:
+	case store.GreaterThan:
 		greater = domain.GreaterThreshold{
 			Value:         ar.RangeValues[0],
 			ThresholdBase: domain.ThresholdBase{Level: &al, AllValues: &allValues},
@@ -451,7 +451,7 @@ func (i *Influx) createThresholdCheck(ar alertstore.AlertRule) (*domain.Threshol
 		}
 		thresholds = []domain.Threshold{&lesser, &greater}
 
-	case alertstore.Range:
+	case store.Range:
 		if ar.RangeValues[0] >= ar.RangeValues[1] {
 			return nil, fmt.Errorf("first boundary is not smaller than the second.")
 		}
@@ -461,7 +461,7 @@ func (i *Influx) createThresholdCheck(ar alertstore.AlertRule) (*domain.Threshol
 			Min:           ar.RangeValues[0],
 		}
 		thresholds = append(thresholds, &rang)
-	case alertstore.InactiveSensor:
+	case store.InactiveSensor:
 		return nil, fmt.Errorf("inactive sensor check requested.")
 	default:
 		return nil, fmt.Errorf("unknown alert type: %d", ar.AlertType)
@@ -495,7 +495,7 @@ func (i *Influx) createThresholdCheck(ar alertstore.AlertRule) (*domain.Threshol
 	return &check, nil
 }
 
-func (i *Influx) createDeadmanCheck(ar alertstore.AlertRule) (*domain.DeadmanCheck, error) {
+func (i *Influx) createDeadmanCheck(ar store.AlertRule) (*domain.DeadmanCheck, error) {
 	lc := domain.CheckStatusLevelCRIT
 	hydratedFlux := fmt.Sprintf(Flux, i.org, ar.DeviceId, ar.QueryField, ar.Duration)
 	hydratedStatusMessage := fmt.Sprintf(DeadmanStatusMessage, ar.Duration)
@@ -536,7 +536,7 @@ func (i *Influx) createDeadmanCheck(ar alertstore.AlertRule) (*domain.DeadmanChe
 	return &check, nil
 }
 
-func parseInterval(duration string, t alertstore.AlertType) (string, error) {
+func parseInterval(duration string, t store.AlertType) (string, error) {
 	unit := duration[len(duration)-1]
 	timeDuration := duration[:len(duration)-1]
 	tdInt, err := strconv.Atoi(timeDuration)
@@ -561,7 +561,7 @@ func parseInterval(duration string, t alertstore.AlertType) (string, error) {
 	}
 	everyInt := max(int64(everySeconds/2), 1)
 	every := fmt.Sprintf("%ds", everyInt)
-	if t == alertstore.InactiveSensor {
+	if t == store.InactiveSensor {
 		if everyInt >= DeadmanEveryMax {
 			every = "5m"
 		}
@@ -634,7 +634,7 @@ func (i *TestingInflux) Close() error {
 	return i.influx.Close()
 }
 
-func (i *TestingInflux) PrepareDb(alerts ...alertstore.AlertRule) error {
+func (i *TestingInflux) PrepareDb(alerts ...store.AlertRule) error {
 	var err error
 	for _, rule := range alerts {
 		_, err = i.CreateAlertRule(rule)
@@ -645,7 +645,7 @@ func (i *TestingInflux) PrepareDb(alerts ...alertstore.AlertRule) error {
 	return err
 }
 
-func (i *TestingInflux) CreateAlertRule(ar alertstore.AlertRule) (string, error) {
+func (i *TestingInflux) CreateAlertRule(ar store.AlertRule) (string, error) {
 	alertId, err := i.influx.CreateAlertRule(ar)
 	if err != nil {
 		return "", err
@@ -656,7 +656,7 @@ func (i *TestingInflux) CreateAlertRule(ar alertstore.AlertRule) (string, error)
 	return testingAlertId, nil
 }
 
-func (i *TestingInflux) UpdateAlertRule(ar alertstore.AlertRule) error {
+func (i *TestingInflux) UpdateAlertRule(ar store.AlertRule) error {
 	ar.AlertId = i.testingAlertIdsMap[ar.AlertId]
 	return i.influx.UpdateAlertRule(ar)
 }

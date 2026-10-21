@@ -8,8 +8,8 @@ import (
 	"os"
 	"strings"
 
-	"github.com/datafarm-software/datafarm-alerts/alerts/store"
 	"github.com/datafarm-software/datafarm-alerts/alerts/auth"
+	"github.com/datafarm-software/datafarm-alerts/alerts/store"
 	"github.com/datafarm-software/datafarm-alerts/alerts/templates"
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
@@ -24,7 +24,7 @@ func newMessage(from, to string, email Email) *gomail.Message {
 	m.SetHeader("To", to)
 	m.SetHeader("Subject", email.subject)
 	m.SetBody("text/html", email.html)
-	m.Embed("templates/assets/email-logo.png",
+	m.Embed("alets/templates/assets/email-logo.png",
 		gomail.SetHeader(map[string][]string{
 			"Content-ID": {"<" + logoCID + ">"},
 		}),
@@ -42,12 +42,12 @@ type GomailOpts struct {
 
 type Gomail struct {
 	dialer     *gomail.Dialer
-	mode       alertstore.Mode
+	mode       store.Mode
 	inboxes    Schema
 	senderAddr string
 }
 
-func NewGomail(mode alertstore.Mode, opts GomailOpts) (Notifier, error) {
+func NewGomail(mode store.Mode, opts GomailOpts) (Notifier, error) {
 	d := gomail.NewDialer(opts.SmtpServer, opts.SmtpPort, opts.Username, opts.Password)
 	d.TLSConfig = &tls.Config{ServerName: opts.SmtpServer}
 	g := Gomail{
@@ -55,7 +55,7 @@ func NewGomail(mode alertstore.Mode, opts GomailOpts) (Notifier, error) {
 		senderAddr: opts.SenderAddress,
 		mode:       mode,
 	}
-	if mode == alertstore.Testing {
+	if mode == store.Testing {
 		g.inboxes = Schema{
 			Notifications: make(map[string][]AlertNotification),
 			CreatedAlerts: make(map[string][]AlertCreated),
@@ -90,7 +90,7 @@ func (g *Gomail) generateEmails(
 		case AlertNotification:
 			t.Timestamp = t.Timestamp.Local()
 			email.subject = fmt.Sprintf("%s, Level: %s",
-				t.Name, alertstore.AlertLevelString[t.AlertLevel])
+				t.Name, store.AlertLevelString[t.AlertLevel])
 			tmplName = templates.AlertNotificationTempl
 			t.Condition, err = formatAlertCondition(t.AlertType, t.AlertValues)
 			if err != nil {
@@ -100,7 +100,7 @@ func (g *Gomail) generateEmails(
 				Message  AlertNotification
 				UserInfo auth.UserInfo
 			}{Message: t, UserInfo: u}
-			if g.mode == alertstore.Testing {
+			if g.mode == store.Testing {
 				g.inboxes.Notifications[u.EmailAddress] = append(
 					g.inboxes.Notifications[u.EmailAddress], t)
 			}
@@ -115,7 +115,7 @@ func (g *Gomail) generateEmails(
 				Message  AlertCreated
 				UserInfo auth.UserInfo
 			}{Message: t, UserInfo: u}
-			if g.mode == alertstore.Testing {
+			if g.mode == store.Testing {
 				g.inboxes.CreatedAlerts[u.EmailAddress] = append(
 					g.inboxes.CreatedAlerts[u.EmailAddress], t)
 			}
@@ -130,7 +130,7 @@ func (g *Gomail) generateEmails(
 				Message  AlertUpdated
 				UserInfo auth.UserInfo
 			}{Message: t, UserInfo: u}
-			if g.mode == alertstore.Testing {
+			if g.mode == store.Testing {
 				g.inboxes.CreatedAlerts[u.EmailAddress] = append(
 					g.inboxes.CreatedAlerts[u.EmailAddress], AlertCreated(t))
 			}
@@ -145,7 +145,7 @@ func (g *Gomail) generateEmails(
 				Message  AlertDeleted
 				UserInfo auth.UserInfo
 			}{Message: t, UserInfo: u}
-			if g.mode == alertstore.Testing {
+			if g.mode == store.Testing {
 				g.inboxes.DeletedAlerts[u.EmailAddress] = append(
 					g.inboxes.DeletedAlerts[u.EmailAddress], t)
 			}
@@ -183,7 +183,7 @@ func (g *Gomail) Notify(message Message, templater templates.Templater,
 		return fmt.Errorf("no users to notify")
 	}
 	var sender gomail.SendCloser
-	if g.mode == alertstore.Testing {
+	if g.mode == store.Testing {
 		sender = &mockSender{}
 		log.Printf("notifying %T: %v", message, message)
 	} else {
@@ -204,7 +204,7 @@ func (g *Gomail) Notify(message Message, templater templates.Templater,
 		m = newMessage(g.senderAddr, recipient, email)
 		if v, ok = message.(AlertNotification); ok {
 			switch v.AlertLevel {
-			case alertstore.Crit:
+			case store.Crit:
 				m.SetHeader("X-Priority", "1")
 				m.SetHeader("Priority", "urgent")
 				m.SetHeader("Importance", "high")
@@ -214,7 +214,7 @@ func (g *Gomail) Notify(message Message, templater templates.Templater,
 			err = fmt.Errorf("mockSender send: %v", err)
 			break
 		}
-		if g.mode == alertstore.Testing {
+		if g.mode == store.Testing {
 			if err = g.toFile(email.html); err != nil {
 				err = fmt.Errorf("toHtml: %v", err)
 				break

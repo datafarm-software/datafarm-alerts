@@ -5,21 +5,21 @@ import (
 )
 
 type AlertFromSource interface {
-	AlertState() alertstore.AlertState
-	AlertLevel() alertstore.AlertLevel
+	AlertState() store.AlertState
+	AlertLevel() store.AlertLevel
 }
 
 type TestingAlertSource interface {
-	PrepareDb(...alertstore.AlertRule) error
+	PrepareDb(...store.AlertRule) error
 	GetSnapshot() int
 }
 
 type AlertSource interface {
 	TestingAlertSource
 	Close() error
-	CreateAlertRule(alertstore.AlertRule) (string, error)
-	// NOTE: Could return alertstore.NoAlert
-	UpdateAlertRule(alertstore.AlertRule) error
-	// NOTE: Could return alertstore.NoAlert
+	CreateAlertRule(store.AlertRule) (string, error)
+	// NOTE: Could return store.NoAlert
+	UpdateAlertRule(store.AlertRule) error
+	// NOTE: Could return store.NoAlert
 	DeleteAlertRule(alertId string) error
 }

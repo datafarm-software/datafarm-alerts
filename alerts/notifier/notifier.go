@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/datafarm-software/datafarm-alerts/alerts/store"
 	"github.com/datafarm-software/datafarm-alerts/alerts/auth"
+	"github.com/datafarm-software/datafarm-alerts/alerts/store"
 	"github.com/datafarm-software/datafarm-alerts/alerts/templates"
 )
 
@@ -34,8 +34,8 @@ type AlertNotification struct {
 	Value       float64
 	Duration    string
 	AlertValues []float32
-	AlertType   alertstore.AlertType
-	AlertLevel  alertstore.AlertLevel
+	AlertType   store.AlertType
+	AlertLevel  store.AlertLevel
 	Condition   string
 	Timestamp   time.Time
 }
@@ -47,7 +47,7 @@ func (a AlertNotification) String(username string) (string, error) {
 	}
 	return fmt.Sprintf(
 		Notification,
-		username, alertstore.AlertLevelString[a.AlertLevel], a.Value,
+		username, store.AlertLevelString[a.AlertLevel], a.Value,
 		a.Name, a.DeviceId, a.QueryField, a.Timestamp.String(), condition), nil
 }
 
@@ -56,11 +56,11 @@ type AlertCreated struct {
 	DeviceId          string
 	QueryField        string
 	Duration          string
-	AlertLevel        alertstore.AlertLevel
-	AlertType         alertstore.AlertType
+	AlertLevel        store.AlertLevel
+	AlertType         store.AlertType
 	AlertValues       []float32
 	Condition         string
-	LinearCalibration *alertstore.LinearCalibration
+	LinearCalibration *store.LinearCalibration
 }
 
 func (a AlertCreated) String(username string) (string, error) {
@@ -69,32 +69,32 @@ func (a AlertCreated) String(username string) (string, error) {
 		return "", err
 	}
 	return fmt.Sprintf(AlertCreatedNotification, username, a.Name, a.DeviceId,
-		a.QueryField, a.Duration, alertstore.AlertLevelString[a.AlertLevel],
+		a.QueryField, a.Duration, store.AlertLevelString[a.AlertLevel],
 		condition), nil
 }
 
-func formatAlertCondition(alertType alertstore.AlertType, alertValues []float32) (string, error) {
+func formatAlertCondition(alertType store.AlertType, alertValues []float32) (string, error) {
 	var condition string
 	switch alertType {
-	case alertstore.LessThan:
+	case store.LessThan:
 		if len(alertValues) != 1 {
 			return "", fmt.Errorf("received len(%d) alertValues slice on LessThan type",
 				len(alertValues))
 		}
 		condition = fmt.Sprintf("< %.2f", alertValues[0])
-	case alertstore.GreaterThan:
+	case store.GreaterThan:
 		if len(alertValues) != 1 {
 			return "", fmt.Errorf("received len(%d) alertValues slice on GreaterThan type",
 				len(alertValues))
 		}
 		condition = fmt.Sprintf("%.2f <", alertValues[0])
-	case alertstore.Range:
+	case store.Range:
 		if len(alertValues) != 2 {
 			return "", fmt.Errorf("received len(%d) alertValues slice on Range type",
 				len(alertValues))
 		}
 		condition = fmt.Sprintf("> %.2f, %.2f <", alertValues[0], alertValues[1])
-	case alertstore.InactiveSensor:
+	case store.InactiveSensor:
 		condition = "Inactive Sensor"
 	default:
 		return "", fmt.Errorf("unknown alert type: %d", alertType)
@@ -110,7 +110,7 @@ func (a AlertDeleted) String(username string) (string, error) {
 		return "", err
 	}
 	return fmt.Sprintf(AlertDeletedNotification, username, a.Name, a.DeviceId,
-		a.QueryField, a.Duration, alertstore.AlertLevelString[a.AlertLevel],
+		a.QueryField, a.Duration, store.AlertLevelString[a.AlertLevel],
 		condition), nil
 }
 
@@ -122,7 +122,7 @@ func (a AlertUpdated) String(username string) (string, error) {
 		return "", err
 	}
 	return fmt.Sprintf(AlertUpdatedNotification, username, a.Name, a.DeviceId,
-		a.QueryField, a.Duration, alertstore.AlertLevelString[a.AlertLevel],
+		a.QueryField, a.Duration, store.AlertLevelString[a.AlertLevel],
 		condition), nil
 }
 
