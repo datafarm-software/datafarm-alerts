@@ -1,9 +1,9 @@
-package alertsource
+package source
 
 import (
 	"fmt"
 
-	"github.com/geraud22/datafarm-alerts/alertstore"
+	"github.com/datafarm-software/datafarm-alerts/alerts/store"
 )
 
 type MockAlertSource struct {

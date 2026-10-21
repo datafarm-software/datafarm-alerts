@@ -8,9 +8,9 @@ import (
 	"os"
 	"strings"
 
-	"github.com/geraud22/datafarm-alerts/alertstore"
-	"github.com/geraud22/datafarm-alerts/auth"
-	"github.com/geraud22/datafarm-alerts/templates"
+	"github.com/datafarm-software/datafarm-alerts/alerts/store"
+	"github.com/datafarm-software/datafarm-alerts/alerts/auth"
+	"github.com/datafarm-software/datafarm-alerts/alerts/templates"
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
 	"gopkg.in/gomail.v2"

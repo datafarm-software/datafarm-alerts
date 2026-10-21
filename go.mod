@@ -1,4 +1,4 @@
-module github.com/geraud22/datafarm-alerts
+module github.com/datafarm-software/datafarm-alerts
 
 go 1.26.0
 

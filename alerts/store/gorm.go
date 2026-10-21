@@ -1,4 +1,4 @@
-package alertstore
+package store
 
 import (
 	"context"

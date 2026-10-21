@@ -1,4 +1,4 @@
-package alertsource
+package source
 
 import (
 	"bytes"
@@ -14,7 +14,7 @@ import (
 	"time"
 
 	cfy "github.com/geraud22/config-from-yaml"
-	"github.com/geraud22/datafarm-alerts/alertstore"
+	"github.com/datafarm-software/datafarm-alerts/alerts/store"
 	influxdb2 "github.com/influxdata/influxdb-client-go/v2"
 	"github.com/influxdata/influxdb-client-go/v2/domain"
 )
@@ -27,18 +27,22 @@ const Flux string = `from(bucket: "%s")
     |> filter(fn: (r) => r["_field"] == "%s")
     |> aggregateWindow(every: %s, fn: last, createEmpty: false)`
 
-const CustomCheckMap = `|> map(fn: (r) => ({r with %s}))`
-const CustomCheckFormat = `%s: r.%s`
-const V1FieldAsCols = `|> v1["fieldsAsCols"]()`
+const (
+	CustomCheckMap    = `|> map(fn: (r) => ({r with %s}))`
+	CustomCheckFormat = `%s: r.%s`
+	V1FieldAsCols     = `|> v1["fieldsAsCols"]()`
+)
 
-var QueryField = "query_field"
-var ThresholdStatusMessage string = `Check: ${r._check_name} State: ${r._level}.`
-var DeadmanStatusMessage string = `Check: ${r._check_name}. No alert received within duration: %s`
-var ZeroSeconds = "0s"
-var ctx context.Context
-var DontReportZero = false
-var DeadmanEveryMax = int64(5 * 60)
-var ThresholdEveryMax = int64(15 * 60)
+var (
+	QueryField                    = "query_field"
+	ThresholdStatusMessage string = `Check: ${r._check_name} State: ${r._level}.`
+	DeadmanStatusMessage   string = `Check: ${r._check_name}. No alert received within duration: %s`
+	ZeroSeconds                   = "0s"
+	ctx                    context.Context
+	DontReportZero         = false
+	DeadmanEveryMax        = int64(5 * 60)
+	ThresholdEveryMax      = int64(15 * 60)
+)
 
 type InfluxAlert struct {
 	Id              string    `json:"_check_id" required:"true"`
@@ -582,8 +586,10 @@ func parseStaleTime(duration string) (string, error) {
 	return staleTime, nil
 }
 
-var once sync.Once
-var testingInfluxOpts InfluxOpts
+var (
+	once              sync.Once
+	testingInfluxOpts InfluxOpts
+)
 
 type TestingInflux struct {
 	influx             AlertSource

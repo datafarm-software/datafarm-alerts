@@ -17,11 +17,11 @@ import (
 
 	"github.com/danielgtaylor/huma/v2/adapters/humamux"
 	"github.com/danielgtaylor/huma/v2/humatest"
-	"github.com/geraud22/datafarm-alerts/alertsource"
-	"github.com/geraud22/datafarm-alerts/alertstore"
-	"github.com/geraud22/datafarm-alerts/app"
-	"github.com/geraud22/datafarm-alerts/notifier"
-	"github.com/geraud22/datafarm-alerts/templates"
+	"github.com/datafarm-software/datafarm-alerts/alerts/source"
+	"github.com/datafarm-software/datafarm-alerts/alerts/store"
+	"github.com/datafarm-software/datafarm-alerts/app"
+	"github.com/datafarm-software/datafarm-alerts/alerts/notifier"
+	"github.com/datafarm-software/datafarm-alerts/alerts/templates"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 )

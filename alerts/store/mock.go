@@ -1,4 +1,4 @@
-package alertstore
+package store
 
 import (
 	"fmt"
@@ -104,7 +104,7 @@ func (m *MockAlertStore) GetAlertRecipients(alertId string) ([]string, error) {
 }
 
 func (m *MockAlertStore) Store(dbRecord Schema) error {
-	//TODO: deal with uniqueness constraints
+	// TODO: deal with uniqueness constraints
 	m.Db.DeviceAlerts = append(m.Db.DeviceAlerts, dbRecord.DeviceAlerts...)
 	m.Db.AlertRecipients = append(m.Db.AlertRecipients, dbRecord.AlertRecipients...)
 	m.Db.AlertRules = append(m.Db.AlertRules, dbRecord.AlertRules...)
@@ -158,7 +158,7 @@ func (m *MockAlertStore) UpdateAlertRule(alertId string, dbRecord Schema) error 
 }
 
 func (m *MockAlertStore) CheckAlertRuleExists(ar AlertRule) (string, error) {
-	//TODO: should this function just return a bool
+	// TODO: should this function just return a bool
 	var exists bool
 	for _, deviceAlert := range m.Db.DeviceAlerts {
 		if deviceAlert.DeviceId == ar.DeviceId &&

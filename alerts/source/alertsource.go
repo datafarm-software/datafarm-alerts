@@ -1,7 +1,7 @@
-package alertsource
+package source
 
 import (
-	"github.com/geraud22/datafarm-alerts/alertstore"
+	"github.com/datafarm-software/datafarm-alerts/alerts/store"
 )
 
 type AlertFromSource interface {
@@ -18,8 +18,8 @@ type AlertSource interface {
 	TestingAlertSource
 	Close() error
 	CreateAlertRule(alertstore.AlertRule) (string, error)
-	//NOTE: Could return alertstore.NoAlert
+	// NOTE: Could return alertstore.NoAlert
 	UpdateAlertRule(alertstore.AlertRule) error
-	//NOTE: Could return alertstore.NoAlert
+	// NOTE: Could return alertstore.NoAlert
 	DeleteAlertRule(alertId string) error
 }
