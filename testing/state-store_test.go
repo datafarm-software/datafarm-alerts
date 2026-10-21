@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/datafarm-software/datafarm-api/api"
+	"github.com/datafarm-software/telemetry"
 	"github.com/datafarm-software/telemetry/logging"
 	"github.com/datafarm-software/telemetry/metering"
 	"github.com/datafarm-software/telemetry/tracing"
@@ -1277,7 +1277,7 @@ func setupApp(t *testing.T,
 ) (*app.App, humatest.TestAPI, func() error) {
 	var err error
 	a := &app.App{
-		TelemetryApi: api.Api{
+		Telemetry: &telemetry.Telemetry{
 			Meter:  metering.MockMeter(),
 			Tracer: tracing.MockTracer(),
 			Logger: logging.MockLogger(),
@@ -4915,7 +4915,7 @@ func TestAddUsersToAlertRule(t *testing.T) {
 		mockAlertStore, wantAlertStore *alertstore.Schema
 		wantUserInboxes                notifier.Schema
 		wantStatus                     int
-		emailsToAdd                    []string
+		emailsToAdd                    alertstore.Emails
 		alertId                        string
 		wantAlertSourceCount           int
 	}{
@@ -4996,7 +4996,7 @@ func TestAddUsersToAlertRule(t *testing.T) {
 					},
 				},
 			},
-			emailsToAdd:          []string{AnotherUserEmail},
+			emailsToAdd:          alertstore.Emails{Addresses: []string{AnotherUserEmail}},
 			alertId:              AlertId,
 			wantAlertSourceCount: 1,
 		},
@@ -5098,7 +5098,7 @@ func TestAddUsersToAlertRule(t *testing.T) {
 				},
 			},
 			wantStatus:           http.StatusOK,
-			emailsToAdd:          []string{UserEmail, "user3@alert.com"},
+			emailsToAdd:          alertstore.Emails{Addresses: []string{UserEmail, "user3@alert.com"}},
 			alertId:              AlertId,
 			wantAlertSourceCount: 1,
 		},
@@ -5131,7 +5131,7 @@ func TestAddUsersToAlertRule(t *testing.T) {
 				},
 			},
 			wantStatus:           http.StatusNotFound,
-			emailsToAdd:          []string{AnotherUserEmail},
+			emailsToAdd:          alertstore.Emails{Addresses: []string{AnotherUserEmail}},
 			alertId:              UnregisteredAlertId,
 			wantAlertSourceCount: 1,
 		},
@@ -5157,7 +5157,7 @@ func TestAddUsersToAlertRule(t *testing.T) {
 				body := resp.Body.Bytes()
 				err := json.Unmarshal(body, &mu)
 				require.Nil(t, err)
-				if diff := cmp.Diff(tc.emailsToAdd, mu.EmailAddresses); diff != "" {
+				if diff := cmp.Diff(tc.emailsToAdd.Addresses, mu.EmailAddresses); diff != "" {
 					t.Fatalf("emails mismatch (-want +got):%s\n", diff)
 				}
 				alertsCount := a.AlertSource.GetSnapshot()

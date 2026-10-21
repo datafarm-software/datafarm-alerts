@@ -76,7 +76,8 @@ type Email struct {
 
 func (g *Gomail) generateEmails(
 	message Message, templater templates.Templater, users ...auth.UserInfo) (
-	emails map[string]Email, err error) {
+	emails map[string]Email, err error,
+) {
 	emails = make(map[string]Email, len(users))
 	var tmplName templates.TemplateName
 	var tmplContent any
@@ -173,7 +174,8 @@ func (m *mockSender) Send(from string, to []string, msg io.WriterTo) error {
 func (m *mockSender) Close() error { return nil }
 
 func (g *Gomail) Notify(message Message, templater templates.Templater,
-	users ...auth.UserInfo) (err error) {
+	users ...auth.UserInfo,
+) (err error) {
 	if templater == nil {
 		return fmt.Errorf("received nil templater")
 	}
@@ -229,7 +231,7 @@ func (g *Gomail) toFile(html string) error {
 	if html == "" {
 		return nil
 	}
-	return os.WriteFile("example-email.html", []byte(html), 0644)
+	return os.WriteFile("example-email.html", []byte(html), 0o644)
 }
 
 func (g *Gomail) GetUserInboxes() Schema {

@@ -1,0 +1,36 @@
+name: API Contract Check
+
+on:
+  pull_request:
+    branches: [main]
+    types:
+      - opened
+      - synchronize
+      - reopened
+      - labeled
+
+jobs:
+  check-api:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-tags: true
+      - run: git fetch origin ${{ github.base_ref }}
+
+      - name: Setup Go
+        uses: actions/setup-go@v6
+        with:
+          go-version: 1.25
+
+      - name: Generate new OpenAPI Spec document
+        if: ${{ !contains(join(github.event.pull_request.labels.*.name, ','), 'allow-breaking-change') }}
+        run: go run ./cmd/generate-openapi-spec/main.go --filename "api/openapi.generated.yaml"
+
+      - uses: oasdiff/oasdiff-action/breaking@v0.0.31
+        if: ${{ !contains(join(github.event.pull_request.labels.*.name, ','), 'allow-breaking-change') }}
+        with:
+          base: "origin/${{ github.base_ref }}:api/openapi.yaml"
+          revision: "api/openapi.generated.yaml"
+          fail-on: "WARN"

@@ -14,14 +14,11 @@ import (
 	"time"
 
 	"github.com/danielgtaylor/huma/v2"
-	dfApi "github.com/datafarm-software/datafarm-api/api"
+	"github.com/datafarm-software/telemetry"
 	"github.com/datafarm-software/telemetry/logging"
 	"github.com/datafarm-software/telemetry/metering"
-	"github.com/datafarm-software/telemetry/tracing"
+	"github.com/datafarm-software/telemetry/middlewares"
 	"github.com/gorilla/mux"
-
-	"go.opentelemetry.io/otel/attribute"
-	"go.opentelemetry.io/otel/sdk/resource"
 
 	"github.com/google/go-cmp/cmp"
 
@@ -43,17 +40,15 @@ type Opts struct {
 	Http          HttpOpts               `mapstructure:"http" validate:"required"`
 	Influx        alertsource.InfluxOpts `mapstructure:"influx" validate:"required"`
 	Gomail        notifier.GomailOpts    `mapstructure:"gomail" validate:"required"`
-	TelemetryOpts struct {
-		CollectorEndpoint string `mapstructure:"collectorendpoint" validate:"required"`
-	} `mapstructure:"telemetry" validate:"required"`
+	TelemetryOpts telemetry.Opts         `mapstructure:"telemetry"`
 }
 
 type App struct {
-	TelemetryApi dfApi.Api
-	AlertSource  alertsource.AlertSource
-	AlertStore   alertstore.AlertStore
-	Notifier     notifier.Notifier
-	Templater    templates.Templater
+	AlertSource alertsource.AlertSource
+	AlertStore  alertstore.AlertStore
+	Notifier    notifier.Notifier
+	Templater   templates.Templater
+	Telemetry   *telemetry.Telemetry
 }
 
 func Start(opts Opts) error {
@@ -79,37 +74,15 @@ func Start(opts Opts) error {
 	if err != nil {
 		return fmt.Errorf("init templater: %v", err)
 	}
-	app.TelemetryApi = dfApi.Api{}
-	res, err := resource.New(context.Background(), resource.WithContainer(),
-		resource.WithAttributes(
-			attribute.String("service.name", "datafarm-alerts"),
-		),
-	)
-	if err != nil {
-		return fmt.Errorf("init resource: %v", err)
-	}
-	app.TelemetryApi.Logger, err = logging.NewOtlpLogger(
-		res, opts.TelemetryOpts.CollectorEndpoint)
-	if err != nil {
-		return fmt.Errorf("init logger: %v", err)
-	}
-	app.TelemetryApi.Tracer, err = tracing.NewOtlpTracer(
-		res, "datafarm-software/datafarm-alerts",
-		opts.TelemetryOpts.CollectorEndpoint, 0.25)
-	if err != nil {
-		return fmt.Errorf("init tracer: %v", err)
-	}
-	app.TelemetryApi.Meter, err = metering.NewOtlpMeter(metering.OtlpOpts{
-		Name:     "datafarm-software/datafarm-alerts",
-		Endpoint: opts.TelemetryOpts.CollectorEndpoint, Res: res,
-	},
+	opts.TelemetryOpts.MeterOpts = append(opts.TelemetryOpts.MeterOpts,
 		metering.WithLatency(), metering.WithMemoryUsage(),
-		metering.WithOtelRuntime(), metering.WithUptime(), metering.WithRequestCount())
+		metering.WithOtelRuntime(), metering.WithUptime())
+	app.Telemetry, err = telemetry.NewTelemetry(opts.TelemetryOpts)
 	if err != nil {
-		return fmt.Errorf("init meter: %v", err)
+		return fmt.Errorf("init telemetry: %v", err)
 	}
 
-	cli := humacli.New(func(hooks humacli.Hooks, options *Opts) {
+	cli := humacli.New(func(hooks humacli.Hooks, _ *struct{}) {
 		router := mux.NewRouter()
 		api := humamux.New(router, Config())
 		app.RegisterHumaOperations(api)
@@ -178,6 +151,9 @@ func (a *App) Close() error {
 	if err := a.AlertStore.Close(); err != nil {
 		log.Printf("closing alertstore: %v", err)
 	}
+	if err := a.Telemetry.Close(context.Background()); err != nil {
+		log.Printf("closing telemetry: %v", err)
+	}
 	log.Printf("Successfully closed app interfaces.")
 	return nil
 }
@@ -195,11 +171,11 @@ type ErrorResponse struct {
 }
 
 func (a *App) RegisterHumaOperations(api huma.API) {
-	mw := []func(ctx huma.Context, next func(huma.Context)){
-		a.TelemetryApi.CountApiRequest, a.TelemetryApi.TraceRequest,
-		a.TelemetryApi.LogRequest, a.TelemetryApi.RecordLatency,
+	mwProvider, _ := middlewares.NewHumaProvider(a.Telemetry)
+	mws := middlewares.Middlewares[huma.Context]{
+		mwProvider.TraceRequest, mwProvider.LogRequest, mwProvider.RecordLatency,
 	}
-	allMw := huma.Middlewares(mw)
+	allMw := huma.Middlewares(mws)
 
 	registry := huma.NewMapRegistry("#/errors", huma.DefaultSchemaNamer)
 	operation := huma.Operation{
