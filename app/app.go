@@ -543,6 +543,20 @@ func (a *App) RegisterHumaOperations(api huma.API) {
 					},
 				},
 			},
+			"400": {
+				Description: "Bad Request",
+				Content: map[string]*huma.MediaType{
+					"application/json": {
+						Schema: huma.SchemaFromType(registry, reflect.TypeFor[HumaError]()),
+						Example: HumaError{
+							Schema: "http://localhost:3030/schemas/ErrorModel.json",
+							Title:  "Bad Request",
+							Status: http.StatusBadRequest,
+							Detail: "Contains Invalid Email Address.",
+						},
+					},
+				},
+			},
 			"404": {
 				Description: "Not Found",
 				Content: map[string]*huma.MediaType{
@@ -717,13 +731,7 @@ func (a *App) CreateAlertRule(
 	alertCreatedMessageValues := in.Body.RangeValues
 	if in.Body.LinearCalibration != nil {
 		if !in.Body.LinearCalibration.IsEmpty() {
-			newRange := make([]float32, 0, len(in.Body.RangeValues))
-			var v alertstore.ValueRounder
-			for _, val := range in.Body.RangeValues {
-				v = in.Body.LinearCalibration.ToRaw(float64(val))
-				newRange = append(newRange, v.F32())
-			}
-			in.Body.RangeValues = newRange
+			in.Body.RangeValues = Calculate(in.Body.LinearCalibration.ToRaw, in.Body.RangeValues)
 		}
 	}
 	existingAlertId, err := a.AlertStore.CheckAlertRuleExists(in.Body)
@@ -863,6 +871,17 @@ func (a *App) CreateAlertRule(
 	}, nil
 }
 
+func Calculate(F func(float64) alertstore.ValueRounder, rangeValues []float32) (newRange []float32) {
+	newRange = make([]float32, 0, len(rangeValues))
+	var v alertstore.ValueRounder
+	for _, val := range rangeValues {
+		v64 := float64(val)
+		v = F(v64)
+		newRange = append(newRange, v.F32())
+	}
+	return
+}
+
 func (a *App) UpdateAlertRule(
 	ctx context.Context,
 	in *struct {
@@ -887,13 +906,8 @@ func (a *App) UpdateAlertRule(
 	log.Struct(in.Body)
 	if in.Body.LinearCalibration != nil {
 		if !in.Body.LinearCalibration.IsEmpty() {
-			newRange := make([]float32, 0, len(in.Body.RangeValues))
-			var v alertstore.ValueRounder
-			for _, val := range in.Body.RangeValues {
-				v = in.Body.LinearCalibration.ToRaw(float64(val))
-				newRange = append(newRange, v.F32())
-			}
-			in.Body.RangeValues = newRange
+			in.Body.RangeValues = Calculate(
+				in.Body.LinearCalibration.ToRaw, in.Body.RangeValues)
 		}
 	}
 	existingAlert, err := a.AlertStore.GetAlertRule(in.AlertId)
@@ -1143,7 +1157,11 @@ func (a *App) DeleteAlertRule(ctx context.Context,
 		AlertValues: alertRule.RangeValues,
 	}
 	if alertRule.LinearCalibration != nil {
-		message.LinearCalibration = alertRule.LinearCalibration
+		if !alertRule.LinearCalibration.IsEmpty() {
+			message.AlertValues = Calculate(
+				alertRule.LinearCalibration.ToCalibrated, alertRule.RangeValues)
+			message.LinearCalibration = alertRule.LinearCalibration
+		}
 	}
 	users := make([]auth.UserInfo, 0, len(alertRule.EmailAddresses))
 	for _, e := range alertRule.EmailAddresses {
