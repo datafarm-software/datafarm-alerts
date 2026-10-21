@@ -4605,7 +4605,7 @@ func TestRemoveUsersFromAlertRule(t *testing.T) {
 		mockAlertStore, wantAlertStore *alertstore.Schema
 		wantStatus                     int
 		wantUserInboxes                notifier.Schema
-		emailsToRemove                 []string
+		emailsToRemove                 alertstore.Emails
 		alertId                        string
 		wantAlertSourceCount           int
 	}{
@@ -4686,7 +4686,7 @@ func TestRemoveUsersFromAlertRule(t *testing.T) {
 			},
 			wantStatus:           http.StatusOK,
 			wantAlertSourceCount: 1,
-			emailsToRemove:       []string{AnotherUserEmail},
+			emailsToRemove:       alertstore.Emails{Addresses: []string{AnotherUserEmail}},
 			alertId:              AlertId,
 		},
 
@@ -4741,7 +4741,7 @@ func TestRemoveUsersFromAlertRule(t *testing.T) {
 			wantUserInboxes:      EmptyInboxes,
 			wantStatus:           http.StatusOK,
 			wantAlertSourceCount: 1,
-			emailsToRemove:       []string{AnotherUserEmail},
+			emailsToRemove:       alertstore.Emails{Addresses: []string{AnotherUserEmail}},
 			alertId:              AlertId,
 		},
 
@@ -4787,7 +4787,7 @@ func TestRemoveUsersFromAlertRule(t *testing.T) {
 				},
 			},
 			wantStatus:     http.StatusNoContent,
-			emailsToRemove: []string{UserEmail},
+			emailsToRemove: alertstore.Emails{Addresses: []string{UserEmail}},
 			alertId:        AlertId,
 		},
 
@@ -4833,7 +4833,7 @@ func TestRemoveUsersFromAlertRule(t *testing.T) {
 				},
 			},
 			wantStatus:     http.StatusNoContent,
-			emailsToRemove: []string{UserEmail, AnotherUserEmail},
+			emailsToRemove: alertstore.Emails{Addresses: []string{UserEmail, AnotherUserEmail}},
 			alertId:        AlertId,
 		},
 
@@ -4865,7 +4865,7 @@ func TestRemoveUsersFromAlertRule(t *testing.T) {
 				},
 			},
 			wantStatus:           http.StatusNotFound,
-			emailsToRemove:       []string{AnotherUserEmail},
+			emailsToRemove:       alertstore.Emails{Addresses: []string{AnotherUserEmail}},
 			alertId:              UnregisteredAlertId,
 			wantAlertSourceCount: 1,
 		},
@@ -4892,7 +4892,7 @@ func TestRemoveUsersFromAlertRule(t *testing.T) {
 					body := resp.Body.Bytes()
 					err := json.Unmarshal(body, &mu)
 					require.Nil(t, err)
-					if diff := cmp.Diff(tc.emailsToRemove, mu.EmailAddresses); diff != "" {
+					if diff := cmp.Diff(tc.emailsToRemove.Addresses, mu.EmailAddresses); diff != "" {
 						t.Fatalf("emails mismatch (-want +got):%s\n", diff)
 					}
 				}
