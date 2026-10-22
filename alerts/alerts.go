@@ -689,6 +689,10 @@ func (a *App) RespondToAlert(
 		})
 		return nil, huma.Error500InternalServerError("Internal error notifying users.")
 	}
+	log.Struct(alert)
+	log.AddMetadata(logging.Metadata{
+		"emails.notified": emails,
+	})
 	return nil, nil
 }
 
@@ -864,6 +868,9 @@ func (a *App) CreateAlertRule(
 		return nil, huma.Error500InternalServerError(
 			"Internal error notifying users of alert creation.")
 	}
+	log.AddMetadata(logging.Metadata{
+		"emails.notified": uniqueEmails,
+	})
 	return &struct{ Body store.CreatedRule }{
 		Body: store.CreatedRule{
 			AlertId: alertId,
@@ -1043,6 +1050,9 @@ func (a *App) UpdateAlertRule(
 		return nil, huma.Error500InternalServerError(
 			"Internal error while notifying users of updated alert rule.")
 	}
+	log.AddMetadata(logging.Metadata{
+		"emails.notified": uniqueEmails,
+	})
 	in.Body.RangeValues = alertCreatedMessageValues
 	return &struct{ Body store.AlertRule }{in.Body}, nil
 }
@@ -1175,6 +1185,9 @@ func (a *App) DeleteAlertRule(ctx context.Context,
 		return nil, huma.Error500InternalServerError(
 			"Internal error notifying users alert is deleted.")
 	}
+	log.AddMetadata(logging.Metadata{
+		"emails.notified": alertRule.EmailAddresses,
+	})
 	return &struct{ Body store.AlertRule }{alertRule}, nil
 }
 
@@ -1252,6 +1265,9 @@ func (a *App) AddUsersToAlertRule(ctx context.Context, in *struct {
 		return nil, huma.Error500InternalServerError(
 			"Internal error notifying users of alert registration.")
 	}
+	log.AddMetadata(logging.Metadata{
+		"emails.notified": uniqueEmails,
+	})
 	return &struct {
 		Body store.MutateAlertUsersResponse
 	}{
@@ -1340,6 +1356,9 @@ func (a *App) RemoveUsersFromAlertRule(ctx context.Context, in *struct {
 				"Internal error notifying users unregistered from alert.")
 		}
 	}
+	log.AddMetadata(logging.Metadata{
+		"emails.notified": emailsToDelete,
+	})
 	return &struct {
 		Status int
 		Body   store.MutateAlertUsersResponse
