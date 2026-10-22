@@ -543,7 +543,7 @@ func TestRespondToAlert(t *testing.T) {
 			},
 		},
 
-		"no notification because going from crit to ok": {
+		"no notification because going from crit to ok within the duration": {
 			wantStatus:      http.StatusNoContent,
 			wantUserInboxes: EmptyInboxes,
 			mockAlertStore: &store.Schema{
@@ -603,6 +603,94 @@ func TestRespondToAlert(t *testing.T) {
 					{
 						Id:       AlertId,
 						Time:     time.Unix(0, WithinDuration.UnixNano()),
+						Value:    NewValue,
+						Duration: SomeDuration,
+						Level:    store.Ok,
+					},
+				},
+			},
+		},
+
+		"send notification because going from crit to ok after duration": {
+			wantStatus: http.StatusNoContent,
+			wantUserInboxes: notifier.Schema{
+				CreatedAlerts: map[string][]notifier.AlertCreated{},
+				DeletedAlerts: map[string][]notifier.AlertDeleted{},
+				Notifications: map[string][]notifier.AlertNotification{
+					"user1@alert.com": {
+						{
+							DeviceId:    RegisteredDeviceId,
+							QueryField:  RegisteredQueryField,
+							Value:       20,
+							Duration:    "24h",
+							AlertValues: []float32{10},
+							Condition:   LessThanTen,
+							Timestamp:   AfterDuration,
+						},
+					},
+				},
+			},
+			mockAlertStore: &store.Schema{
+				AlertRecipients: []store.AlertRecipient{
+					{AlertId: AlertId, Email: UserEmail},
+				},
+				DeviceAlerts: []store.DeviceAlertRule{
+					{
+						DeviceId:   RegisteredDeviceId,
+						QueryField: RegisteredQueryField,
+						AlertId:    AlertId,
+					},
+				},
+				AlertRules: []store.StoredAlertRule{
+					{
+						AlertId:     AlertId,
+						Duration:    "24h",
+						AlertLevel:  store.Warn,
+						RangeValues: []float32{OldValue},
+					},
+				},
+				AlertStates: []store.AlertState{
+					{
+						Id:       AlertId,
+						Time:     AlertReceived,
+						Duration: SomeDuration,
+						Value:    OldValue,
+						Level:    store.Crit,
+					},
+				},
+			},
+			alert: source.InfluxAlert{
+				Id:              AlertId,
+				Level:           "ok",
+				Value:           NewValue,
+				SensorTimestamp: AfterDuration,
+				DeviceId:        RegisteredDeviceId,
+				QueryField:      RegisteredQueryField,
+			},
+			wantAlertStore: &store.Schema{
+				LinearCalibrations: []store.StoredLinearCalibration{},
+				AlertRecipients: []store.AlertRecipient{
+					{AlertId: AlertId, Email: UserEmail},
+				},
+				DeviceAlerts: []store.DeviceAlertRule{
+					{
+						DeviceId:   RegisteredDeviceId,
+						QueryField: RegisteredQueryField,
+						AlertId:    AlertId,
+					},
+				},
+				AlertRules: []store.StoredAlertRule{
+					{
+						AlertId:     AlertId,
+						Duration:    "24h",
+						AlertLevel:  store.Warn,
+						RangeValues: []float32{OldValue},
+					},
+				},
+				AlertStates: []store.AlertState{
+					{
+						Id:       AlertId,
+						Time:     time.Unix(0, AfterDuration.UnixNano()),
 						Value:    NewValue,
 						Duration: SomeDuration,
 						Level:    store.Ok,
