@@ -21,7 +21,7 @@ info:
         ### Contributing
 
         DataFarm welcomes external contribution to the API, through Open Source under the GPL-3.0 License. If you would like to contribute please visit the project's Github page to get started: www.github.com/datafarm-software/datafarm-api.
-    version: 1.5.4
+    version: 1.6.0
 paths:
     /alert:
         post:
