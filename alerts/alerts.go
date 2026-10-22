@@ -58,7 +58,7 @@ func Start(opts Opts) error {
 	if err != nil {
 		return fmt.Errorf("init notifier: %v", err)
 	}
-	app.AlertStore, err = store.NewGorm(store.Production, "alerts/store/alerts")
+	app.AlertStore, err = store.NewGorm(store.Production, "alerts/store/alerts.db")
 	if err != nil {
 		return fmt.Errorf("init store: %v", err)
 	}
