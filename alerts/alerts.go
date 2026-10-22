@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log"
+	stdlog "log"
 	"net/http"
 	"os"
 	"os/exec"
@@ -91,10 +91,10 @@ func Start(opts Opts) error {
 			Handler: router,
 		}
 		hooks.OnStart(func() {
-			log.Println("Server started on ", server.Addr)
+			stdlog.Println("Server started on ", server.Addr)
 			if err := server.ListenAndServe(); err != nil {
 				if !errors.Is(err, http.ErrServerClosed) {
-					log.Fatalf("HTTP server error: %v", err)
+					stdlog.Fatalf("HTTP server error: %v", err)
 				}
 			}
 		})
@@ -143,18 +143,18 @@ DataFarm welcomes external contribution to this API, through Open Source under t
 
 func (a *App) Close() error {
 	if err := a.Notifier.Close(); err != nil {
-		log.Printf("closing notifier: %v", err)
+		stdlog.Printf("closing notifier: %v", err)
 	}
 	if err := a.AlertSource.Close(); err != nil {
-		log.Printf("closing source: %v", err)
+		stdlog.Printf("closing source: %v", err)
 	}
 	if err := a.AlertStore.Close(); err != nil {
-		log.Printf("closing store: %v", err)
+		stdlog.Printf("closing store: %v", err)
 	}
 	if err := a.Telemetry.Close(context.Background()); err != nil {
-		log.Printf("closing telemetry: %v", err)
+		stdlog.Printf("closing telemetry: %v", err)
 	}
-	log.Printf("Successfully closed app interfaces.")
+	stdlog.Printf("Successfully closed app interfaces.")
 	return nil
 }
 

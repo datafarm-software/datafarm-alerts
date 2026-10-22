@@ -24,7 +24,7 @@ func newMessage(from, to string, email Email) *gomail.Message {
 	m.SetHeader("To", to)
 	m.SetHeader("Subject", email.subject)
 	m.SetBody("text/html", email.html)
-	m.Embed("alets/templates/assets/email-logo.png",
+	m.Embed("alerts/templates/assets/email-logo.png",
 		gomail.SetHeader(map[string][]string{
 			"Content-ID": {"<" + logoCID + ">"},
 		}),
@@ -211,7 +211,7 @@ func (g *Gomail) Notify(message Message, templater templates.Templater,
 			}
 		}
 		if err = sender.Send(g.senderAddr, []string{recipient}, m); err != nil {
-			err = fmt.Errorf("mockSender send: %v", err)
+			err = fmt.Errorf("send: %v", err)
 			break
 		}
 		if g.mode == store.Testing {
