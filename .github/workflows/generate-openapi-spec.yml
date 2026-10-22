@@ -20,7 +20,7 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@v6
         with:
-          go-version: 1.25
+          go-version: 1.26
 
       - name: Generate new OpenAPI Spec document
         run: go run cmd/generate-openapi-spec/main.go --filename api/openapi.yaml
