@@ -1,0 +1,989 @@
+openapi: 3.1.0
+info:
+    title: DataFarm SensorData API
+    description: |4
+        ## Welcome
+
+        The DataFarm SensorData API provides our clients with access to their SensorData,
+        Device Metadata, and Export Functionality.
+
+        ### Authentication
+
+        A Bearer token should first be obtained from the Login endpoint. All subsequent endpoints will require this for authentication.
+
+        ### Content Types
+
+        All endpoints support JSON by default. Selected endpoints also support CSV by
+        setting request header:
+
+        Accept: text/csv
+
+        ### Contributing
+
+        DataFarm welcomes external contribution to the API, through Open Source under the GPL-3.0 License. If you would like to contribute please visit the project's Github page to get started: www.github.com/datafarm-software/datafarm-api.
+    version: 1.5.4
+paths:
+    /alert:
+        post:
+            tags:
+                - Post
+            summary: Create an alert rule.
+            description: Clients can use this route to setup a new sensordata check, which will alert them according to the provided AlertRule request body.
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/AlertRule'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/CreatedRule'
+                "400":
+                    description: Bad Request
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                additionalProperties: false
+                                properties:
+                                    $schema:
+                                        type: string
+                                        description: Link to Object Model.
+                                    detail:
+                                        type: string
+                                        description: Human Readable explanation of what went wrong.
+                                    status:
+                                        type: integer
+                                        description: Http Status Code.
+                                        format: int64
+                                    title:
+                                        type: string
+                                        description: Name associated with error code.
+                                required:
+                                    - $schema
+                                    - title
+                                    - status
+                                    - detail
+                            example:
+                                schema: http://localhost:3030/schemas/ErrorModel.json
+                                title: Bad Request
+                                status: 400
+                                detail: Need 2 range values for range alert.
+                "409":
+                    description: Resource Conflict
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                additionalProperties: false
+                                properties:
+                                    alertId:
+                                        type: string
+                                        description: In the event of a conflict, the existing alertId will be returned.
+                                        readOnly: true
+                                    statusError:
+                                        description: A breakdown of the error that occurred.
+                                required:
+                                    - statusError
+                            example:
+                                statuserror:
+                                    type: ""
+                                    title: Conflict
+                                    status: 409
+                                    detail: Alert with identical parameters already exists.
+                                    instance: ""
+                                    errors: []
+                                alertid: alert1
+                "500":
+                    description: Internal Server Error
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                additionalProperties: false
+                                properties:
+                                    $schema:
+                                        type: string
+                                        description: Link to Object Model.
+                                    detail:
+                                        type: string
+                                        description: Human Readable explanation of what went wrong.
+                                    status:
+                                        type: integer
+                                        description: Http Status Code.
+                                        format: int64
+                                    title:
+                                        type: string
+                                        description: Name associated with error code.
+                                required:
+                                    - $schema
+                                    - title
+                                    - status
+                                    - detail
+                            example:
+                                schema: http://localhost:3030/schemas/ErrorModel.json
+                                title: Internal Server Error
+                                status: 500
+                                detail: Internal error while registering the alert.
+    /alert/{alertId}:
+        get:
+            tags:
+                - Retrieve
+            summary: Retrieve an Alert Rule.
+            description: Clients can use this route to get an existing sensordata check in the form of an AlertRule.
+            parameters:
+                - name: alertId
+                  in: path
+                  description: Alert Id to get.
+                  required: true
+                  schema:
+                    type: string
+                    pattern: ^[a-zA-Z0-9]+$
+            requestBody:
+                content: {}
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/AlertRule'
+                "400":
+                    description: Bad Request
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                additionalProperties: false
+                                properties:
+                                    $schema:
+                                        type: string
+                                        description: Link to Object Model.
+                                    detail:
+                                        type: string
+                                        description: Human Readable explanation of what went wrong.
+                                    status:
+                                        type: integer
+                                        description: Http Status Code.
+                                        format: int64
+                                    title:
+                                        type: string
+                                        description: Name associated with error code.
+                                required:
+                                    - $schema
+                                    - title
+                                    - status
+                                    - detail
+                            example:
+                                schema: http://localhost:3030/schemas/ErrorModel.json
+                                title: Bad Request
+                                status: 400
+                                detail: AlertId failed the regex.
+                "404":
+                    description: Not Found
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                additionalProperties: false
+                                properties:
+                                    $schema:
+                                        type: string
+                                        description: Link to Object Model.
+                                    detail:
+                                        type: string
+                                        description: Human Readable explanation of what went wrong.
+                                    status:
+                                        type: integer
+                                        description: Http Status Code.
+                                        format: int64
+                                    title:
+                                        type: string
+                                        description: Name associated with error code.
+                                required:
+                                    - $schema
+                                    - title
+                                    - status
+                                    - detail
+                            example:
+                                schema: http://localhost:3030/schemas/ErrorModel.json
+                                title: Not Found
+                                status: 404
+                                detail: AlertId Not Found.
+                "500":
+                    description: Internal Server Error
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                additionalProperties: false
+                                properties:
+                                    $schema:
+                                        type: string
+                                        description: Link to Object Model.
+                                    detail:
+                                        type: string
+                                        description: Human Readable explanation of what went wrong.
+                                    status:
+                                        type: integer
+                                        description: Http Status Code.
+                                        format: int64
+                                    title:
+                                        type: string
+                                        description: Name associated with error code.
+                                required:
+                                    - $schema
+                                    - title
+                                    - status
+                                    - detail
+                            example:
+                                schema: http://localhost:3030/schemas/ErrorModel.json
+                                title: Internal Server Error
+                                status: 500
+                                detail: Internal error while retrieving the alert.
+        put:
+            tags:
+                - Update
+            summary: Update an alert rule.
+            description: Clients can use this route to update an existing sensordata check, which will alert them according to the provided AlertRule request body.
+            parameters:
+                - name: alertId
+                  in: path
+                  description: Alert Id to be updated.
+                  required: true
+                  schema:
+                    type: string
+                    pattern: ^[a-zA-Z0-9]+$
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/AlertRule'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/AlertRule'
+                "400":
+                    description: Bad Request
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                additionalProperties: false
+                                properties:
+                                    $schema:
+                                        type: string
+                                        description: Link to Object Model.
+                                    detail:
+                                        type: string
+                                        description: Human Readable explanation of what went wrong.
+                                    status:
+                                        type: integer
+                                        description: Http Status Code.
+                                        format: int64
+                                    title:
+                                        type: string
+                                        description: Name associated with error code.
+                                required:
+                                    - $schema
+                                    - title
+                                    - status
+                                    - detail
+                            example:
+                                schema: http://localhost:3030/schemas/ErrorModel.json
+                                title: Bad Request
+                                status: 400
+                                detail: AlertId failed the regex.
+                "404":
+                    description: Not Found
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                additionalProperties: false
+                                properties:
+                                    $schema:
+                                        type: string
+                                        description: Link to Object Model.
+                                    detail:
+                                        type: string
+                                        description: Human Readable explanation of what went wrong.
+                                    status:
+                                        type: integer
+                                        description: Http Status Code.
+                                        format: int64
+                                    title:
+                                        type: string
+                                        description: Name associated with error code.
+                                required:
+                                    - $schema
+                                    - title
+                                    - status
+                                    - detail
+                            example:
+                                schema: http://localhost:3030/schemas/ErrorModel.json
+                                title: Not Found
+                                status: 404
+                                detail: AlertId Not Found.
+                "500":
+                    description: Internal Server Error
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                additionalProperties: false
+                                properties:
+                                    $schema:
+                                        type: string
+                                        description: Link to Object Model.
+                                    detail:
+                                        type: string
+                                        description: Human Readable explanation of what went wrong.
+                                    status:
+                                        type: integer
+                                        description: Http Status Code.
+                                        format: int64
+                                    title:
+                                        type: string
+                                        description: Name associated with error code.
+                                required:
+                                    - $schema
+                                    - title
+                                    - status
+                                    - detail
+                            example:
+                                schema: http://localhost:3030/schemas/ErrorModel.json
+                                title: Internal Server Error
+                                status: 500
+                                detail: Internal error while retrieving the alert.
+        delete:
+            tags:
+                - Delete
+            summary: Delete an alert rule.
+            description: Clients can use this route to delete a sensordata check. The deleted check will be returned in the response as an AlertRule.
+            parameters:
+                - name: alertId
+                  in: path
+                  description: Alert Id to be deleted.
+                  required: true
+                  schema:
+                    type: string
+                    pattern: ^[a-zA-Z0-9]+$
+            requestBody:
+                content: {}
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/AlertRule'
+                "400":
+                    description: Bad Request
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                additionalProperties: false
+                                properties:
+                                    $schema:
+                                        type: string
+                                        description: Link to Object Model.
+                                    detail:
+                                        type: string
+                                        description: Human Readable explanation of what went wrong.
+                                    status:
+                                        type: integer
+                                        description: Http Status Code.
+                                        format: int64
+                                    title:
+                                        type: string
+                                        description: Name associated with error code.
+                                required:
+                                    - $schema
+                                    - title
+                                    - status
+                                    - detail
+                            example:
+                                schema: http://localhost:3030/schemas/ErrorModel.json
+                                title: Bad Request
+                                status: 400
+                                detail: Provided AlertId is invalid.
+                "404":
+                    description: Not Found
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                additionalProperties: false
+                                properties:
+                                    $schema:
+                                        type: string
+                                        description: Link to Object Model.
+                                    detail:
+                                        type: string
+                                        description: Human Readable explanation of what went wrong.
+                                    status:
+                                        type: integer
+                                        description: Http Status Code.
+                                        format: int64
+                                    title:
+                                        type: string
+                                        description: Name associated with error code.
+                                required:
+                                    - $schema
+                                    - title
+                                    - status
+                                    - detail
+                            example:
+                                schema: http://localhost:3030/schemas/ErrorModel.json
+                                title: Not Found
+                                status: 404
+                                detail: AlertId Not Found.
+                "500":
+                    description: Internal Server Error
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                additionalProperties: false
+                                properties:
+                                    $schema:
+                                        type: string
+                                        description: Link to Object Model.
+                                    detail:
+                                        type: string
+                                        description: Human Readable explanation of what went wrong.
+                                    status:
+                                        type: integer
+                                        description: Http Status Code.
+                                        format: int64
+                                    title:
+                                        type: string
+                                        description: Name associated with error code.
+                                required:
+                                    - $schema
+                                    - title
+                                    - status
+                                    - detail
+                            example:
+                                schema: http://localhost:3030/schemas/ErrorModel.json
+                                title: Internal Server Error
+                                status: 500
+                                detail: Internal error while deleting the alert.
+    /alert/{alertId}/emailaddresses:
+        put:
+            tags:
+                - Update
+            summary: Update an Alert Rule's User List.
+            description: Clients can use this route to add more users to the AlertRule.
+            parameters:
+                - name: alertId
+                  in: path
+                  description: Alert Id to add email addresses to.
+                  required: true
+                  schema:
+                    type: string
+                    pattern: ^[a-zA-Z0-9]+$
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/Emails'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/MutateAlertUsersResponse'
+                "400":
+                    description: Bad Request
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                additionalProperties: false
+                                properties:
+                                    $schema:
+                                        type: string
+                                        description: Link to Object Model.
+                                    detail:
+                                        type: string
+                                        description: Human Readable explanation of what went wrong.
+                                    status:
+                                        type: integer
+                                        description: Http Status Code.
+                                        format: int64
+                                    title:
+                                        type: string
+                                        description: Name associated with error code.
+                                required:
+                                    - $schema
+                                    - title
+                                    - status
+                                    - detail
+                            example:
+                                schema: http://localhost:3030/schemas/ErrorModel.json
+                                title: Bad Request
+                                status: 400
+                                detail: Contains Invalid Email Address.
+                "404":
+                    description: Not Found
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                additionalProperties: false
+                                properties:
+                                    $schema:
+                                        type: string
+                                        description: Link to Object Model.
+                                    detail:
+                                        type: string
+                                        description: Human Readable explanation of what went wrong.
+                                    status:
+                                        type: integer
+                                        description: Http Status Code.
+                                        format: int64
+                                    title:
+                                        type: string
+                                        description: Name associated with error code.
+                                required:
+                                    - $schema
+                                    - title
+                                    - status
+                                    - detail
+                            example:
+                                schema: http://localhost:3030/schemas/ErrorModel.json
+                                title: Not Found
+                                status: 404
+                                detail: AlertId Not Found.
+                "500":
+                    description: Internal Server Error
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                additionalProperties: false
+                                properties:
+                                    $schema:
+                                        type: string
+                                        description: Link to Object Model.
+                                    detail:
+                                        type: string
+                                        description: Human Readable explanation of what went wrong.
+                                    status:
+                                        type: integer
+                                        description: Http Status Code.
+                                        format: int64
+                                    title:
+                                        type: string
+                                        description: Name associated with error code.
+                                required:
+                                    - $schema
+                                    - title
+                                    - status
+                                    - detail
+                            example:
+                                schema: http://localhost:3030/schemas/ErrorModel.json
+                                title: Internal Server Error
+                                status: 500
+                                detail: Internal error while updating the email addresses.
+        patch:
+            tags:
+                - Patch
+            summary: Remove Users from Alert Rule.
+            description: Clients can use this route to remove users from the AlertRule.
+            parameters:
+                - name: alertId
+                  in: path
+                  description: Alert Id from which to remove email addresses.
+                  required: true
+                  schema:
+                    type: string
+                    pattern: ^[a-zA-Z0-9]+$
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/Emails'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/MutateAlertUsersResponse'
+                "204":
+                    description: No Content will be returned in the event of the client removing all remaining users from the Alert Rule. In this case the sytem will also remove the Alert Rule.
+                "400":
+                    description: Bad Request
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                additionalProperties: false
+                                properties:
+                                    $schema:
+                                        type: string
+                                        description: Link to Object Model.
+                                    detail:
+                                        type: string
+                                        description: Human Readable explanation of what went wrong.
+                                    status:
+                                        type: integer
+                                        description: Http Status Code.
+                                        format: int64
+                                    title:
+                                        type: string
+                                        description: Name associated with error code.
+                                required:
+                                    - $schema
+                                    - title
+                                    - status
+                                    - detail
+                            example:
+                                schema: http://localhost:3030/schemas/ErrorModel.json
+                                title: Bad Request
+                                status: 400
+                                detail: Contains Invalid Email Address.
+                "404":
+                    description: Not Found
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                additionalProperties: false
+                                properties:
+                                    $schema:
+                                        type: string
+                                        description: Link to Object Model.
+                                    detail:
+                                        type: string
+                                        description: Human Readable explanation of what went wrong.
+                                    status:
+                                        type: integer
+                                        description: Http Status Code.
+                                        format: int64
+                                    title:
+                                        type: string
+                                        description: Name associated with error code.
+                                required:
+                                    - $schema
+                                    - title
+                                    - status
+                                    - detail
+                            example:
+                                schema: http://localhost:3030/schemas/ErrorModel.json
+                                title: Not Found
+                                status: 404
+                                detail: AlertId Not Found.
+                "500":
+                    description: Internal Server Error
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                additionalProperties: false
+                                properties:
+                                    $schema:
+                                        type: string
+                                        description: Link to Object Model.
+                                    detail:
+                                        type: string
+                                        description: Human Readable explanation of what went wrong.
+                                    status:
+                                        type: integer
+                                        description: Http Status Code.
+                                        format: int64
+                                    title:
+                                        type: string
+                                        description: Name associated with error code.
+                                required:
+                                    - $schema
+                                    - title
+                                    - status
+                                    - detail
+                            example:
+                                schema: http://localhost:3030/schemas/ErrorModel.json
+                                title: Internal Server Error
+                                status: 500
+                                detail: Internal error while removing the email addresses.
+    /alert/notify:
+        post:
+            tags:
+                - Post
+            summary: Post an alert.
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/InfluxAlert'
+                required: true
+            responses:
+                "204":
+                    description: No Content
+                default:
+                    description: Error
+                    content:
+                        application/problem+json:
+                            schema:
+                                $ref: '#/components/schemas/ErrorModel'
+components:
+    schemas:
+        AlertRule:
+            type: object
+            additionalProperties: false
+            properties:
+                $schema:
+                    type: string
+                    description: A URL to the JSON Schema for this object.
+                    format: uri
+                    examples:
+                        - https://example.com/schemas/AlertRule.json
+                    readOnly: true
+                alertId:
+                    type: string
+                    description: Alert Id.
+                alertLevel:
+                    type: integer
+                    description: Specify the alert level to notify. 1 = WARN, 2 = CRIT
+                    format: int64
+                    minimum: 1
+                    maximum: 2
+                alertType:
+                    type: integer
+                    description: Specify type of check to perform. 0 = Less Than, 1 = Greater Than, 2 = Range, 3 = Inactive Sensor Check.
+                    format: int64
+                    maximum: 3
+                deviceId:
+                    type: string
+                    description: The device for which data should be checked.
+                    pattern: ^[a-zA-Z0-9]+$
+                duration:
+                    type: string
+                    description: A duration literal, specifying how often a check should occur.
+                    pattern: ^[0-9]{1,2}[mhdw]$
+                emailAddresses:
+                    type: array
+                    description: List of email addresses to notify in the event of the alert. If updated, new list will replace old one as an overwrite.
+                    items:
+                        type: string
+                        format: email
+                    minItems: 1
+                linearCalibration:
+                    description: If provided, the alert will scale the specified device's data accordingly. It is assumed that the AlertRule RangeValues are  already on the calibrated level.
+                    $ref: '#/components/schemas/LinearCalibration'
+                name:
+                    type: string
+                    description: The name of the alert. For easier recognition.
+                    pattern: ^[a-zA-Z0-9:, ]+$
+                queryField:
+                    type: string
+                    description: The field on the device, for which data should be checked.
+                    pattern: ^[a-zA-Z0-9_]+$
+                rangeValues:
+                    type: array
+                    description: One or two values, depending on whether the alertRange is a range or < >
+                    items:
+                        type: number
+                        format: float
+                    maxItems: 2
+            required:
+                - alertId
+                - emailAddresses
+                - rangeValues
+                - name
+                - duration
+                - deviceId
+                - queryField
+                - alertType
+                - alertLevel
+        CreatedRule:
+            type: object
+            additionalProperties: false
+            properties:
+                $schema:
+                    type: string
+                    description: A URL to the JSON Schema for this object.
+                    format: uri
+                    examples:
+                        - https://example.com/schemas/CreatedRule.json
+                    readOnly: true
+                alertId:
+                    type: string
+                    description: Generated Alert Id.
+                    readOnly: true
+            required:
+                - alertId
+        Emails:
+            type: object
+            additionalProperties: false
+            properties:
+                $schema:
+                    type: string
+                    description: A URL to the JSON Schema for this object.
+                    format: uri
+                    examples:
+                        - https://example.com/schemas/Emails.json
+                    readOnly: true
+                emailAddresses:
+                    type: array
+                    description: List of user email addresses.
+                    items:
+                        type: string
+                        format: email
+            required:
+                - emailAddresses
+        ErrorDetail:
+            type: object
+            additionalProperties: false
+            properties:
+                location:
+                    type: string
+                    description: Where the error occurred, e.g. 'body.items[3].tags' or 'path.thing-id'
+                message:
+                    type: string
+                    description: Error message text
+                value:
+                    description: The value at the given location
+        ErrorModel:
+            type: object
+            additionalProperties: false
+            properties:
+                $schema:
+                    type: string
+                    description: A URL to the JSON Schema for this object.
+                    format: uri
+                    examples:
+                        - https://example.com/schemas/ErrorModel.json
+                    readOnly: true
+                detail:
+                    type: string
+                    description: A human-readable explanation specific to this occurrence of the problem.
+                    examples:
+                        - Property foo is required but is missing.
+                errors:
+                    type: array
+                    description: Optional list of individual error details
+                    items:
+                        $ref: '#/components/schemas/ErrorDetail'
+                instance:
+                    type: string
+                    description: A URI reference that identifies the specific occurrence of the problem.
+                    format: uri
+                    examples:
+                        - https://example.com/error-log/abc123
+                status:
+                    type: integer
+                    description: HTTP status code
+                    format: int64
+                    examples:
+                        - 400
+                title:
+                    type: string
+                    description: A short, human-readable summary of the problem type. This value should not change between occurrences of the error.
+                    examples:
+                        - Bad Request
+                type:
+                    type: string
+                    description: A URI reference to human-readable documentation for the error.
+                    format: uri
+                    default: about:blank
+                    examples:
+                        - https://example.com/errors/example
+        InfluxAlert:
+            type: object
+            additionalProperties: true
+            properties:
+                $schema:
+                    type: string
+                    description: A URL to the JSON Schema for this object.
+                    format: uri
+                    examples:
+                        - https://example.com/schemas/InfluxAlert.json
+                    readOnly: true
+                _check_id:
+                    type: string
+                _level:
+                    type: string
+                _sensor_timestamp:
+                    type: string
+                    format: date-time
+                _time:
+                    type: string
+                    format: date-time
+                _value:
+                    type: number
+                    format: double
+                deviceID:
+                    type: string
+                query_field:
+                    type: string
+            required:
+                - _check_id
+                - _level
+                - _sensor_timestamp
+                - _time
+                - deviceID
+                - query_field
+        LinearCalibration:
+            type: object
+            additionalProperties: false
+            properties:
+                cal-max:
+                    type: number
+                    format: double
+                cal-min:
+                    type: number
+                    format: double
+                raw-max:
+                    type: number
+                    format: double
+                raw-min:
+                    type: number
+                    format: double
+        MutateAlertUsersResponse:
+            type: object
+            additionalProperties: false
+            properties:
+                $schema:
+                    type: string
+                    description: A URL to the JSON Schema for this object.
+                    format: uri
+                    examples:
+                        - https://example.com/schemas/MutateAlertUsersResponse.json
+                    readOnly: true
+                alertId:
+                    type: string
+                emailAddresses:
+                    type: array
+                    items:
+                        type: string
+            required:
+                - alertId
+                - emailAddresses
+    securitySchemes:
+        basic:
+            type: http
+            name: Authorization
+            in: header
+            scheme: basic
+            bearerFormat: Basic
+        bearer:
+            type: http
+            name: Authorization
+            in: header
+            scheme: bearer
+            bearerFormat: JWT

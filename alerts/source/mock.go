@@ -1,9 +1,9 @@
-package alertsource
+package source
 
 import (
 	"fmt"
 
-	"github.com/geraud22/datafarm-alerts/alertstore"
+	"github.com/datafarm-software/datafarm-alerts/alerts/store"
 )
 
 type MockAlertSource struct {
@@ -18,7 +18,7 @@ func (m *MockAlertSource) Close() error {
 	return nil
 }
 
-func (m *MockAlertSource) PrepareDb(alerts ...alertstore.AlertRule) error {
+func (m *MockAlertSource) PrepareDb(alerts ...store.AlertRule) error {
 	m.alertsCount = len(alerts)
 	return nil
 }
@@ -27,11 +27,11 @@ func (m *MockAlertSource) GetSnapshot() int {
 	return m.alertsCount
 }
 
-func (m *MockAlertSource) UpdateAlertRule(ar alertstore.AlertRule) error {
+func (m *MockAlertSource) UpdateAlertRule(ar store.AlertRule) error {
 	return nil
 }
 
-func (m *MockAlertSource) CreateAlertRule(ar alertstore.AlertRule) (string, error) {
+func (m *MockAlertSource) CreateAlertRule(ar store.AlertRule) (string, error) {
 	alertCount := m.alertsCount + 1
 	ar.AlertId = fmt.Sprintf("alert%d", alertCount)
 	m.alertsCount++

@@ -1,4 +1,4 @@
-package alertstore
+package store
 
 import (
 	"context"
@@ -21,19 +21,19 @@ const (
 )
 
 type Gorm struct {
-	db         *gorm.DB
+	*gorm.DB
 	mode       Mode
 	dbFilename string
 }
 
 func NewGorm(mode Mode, dbName string) (AlertStore, error) {
-	dbFilename := fmt.Sprintf("%s.db", dbName)
+	dbFilename := fmt.Sprintf("%s", dbName)
 	db, err := gorm.Open(sqlite.Open(dbFilename), &gorm.Config{})
 	if err != nil {
 		return nil, fmt.Errorf("opening db: %v", err)
 	}
 	return &Gorm{
-		db:         db,
+		DB:         db,
 		mode:       mode,
 		dbFilename: dbFilename,
 	}, nil
@@ -49,19 +49,19 @@ func (g *Gorm) Close() error {
 
 func (g *Gorm) PrepareDb(dbRecord Schema) error {
 	var err error
-	if err = g.db.AutoMigrate(&DeviceAlertRule{}); err != nil {
+	if err = g.AutoMigrate(&DeviceAlertRule{}); err != nil {
 		return err
 	}
-	if err = g.db.AutoMigrate(&AlertRecipient{}); err != nil {
+	if err = g.AutoMigrate(&AlertRecipient{}); err != nil {
 		return err
 	}
-	if err = g.db.AutoMigrate(&AlertState{}); err != nil {
+	if err = g.AutoMigrate(&AlertState{}); err != nil {
 		return err
 	}
-	if err = g.db.AutoMigrate(&StoredAlertRule{}); err != nil {
+	if err = g.AutoMigrate(&StoredAlertRule{}); err != nil {
 		return err
 	}
-	if err = g.db.AutoMigrate(&StoredLinearCalibration{}); err != nil {
+	if err = g.AutoMigrate(&StoredLinearCalibration{}); err != nil {
 		return err
 	}
 	stmts := []string{
@@ -100,7 +100,7 @@ func (g *Gorm) PrepareDb(dbRecord Schema) error {
 		`,
 	}
 	for _, stmt := range stmts {
-		if err = g.db.Exec(stmt).Error; err != nil {
+		if err = g.Exec(stmt).Error; err != nil {
 			return err
 		}
 	}
@@ -108,23 +108,23 @@ func (g *Gorm) PrepareDb(dbRecord Schema) error {
 }
 
 func (g *Gorm) GetSnapshot() Schema {
-	device_alert_rules, err := gorm.G[DeviceAlertRule](g.db).Find(ctx)
+	device_alert_rules, err := gorm.G[DeviceAlertRule](g.DB).Find(ctx)
 	if err != nil {
 		return Schema{}
 	}
-	alertRecipients, err := gorm.G[AlertRecipient](g.db).Find(ctx)
+	alertRecipients, err := gorm.G[AlertRecipient](g.DB).Find(ctx)
 	if err != nil {
 		return Schema{}
 	}
-	stored_alert_rules, err := gorm.G[StoredAlertRule](g.db).Find(ctx)
+	stored_alert_rules, err := gorm.G[StoredAlertRule](g.DB).Find(ctx)
 	if err != nil {
 		return Schema{}
 	}
-	alertStates, err := gorm.G[AlertState](g.db).Find(ctx)
+	alertStates, err := gorm.G[AlertState](g.DB).Find(ctx)
 	if err != nil {
 		return Schema{}
 	}
-	lc, err := gorm.G[StoredLinearCalibration](g.db).Find(ctx)
+	lc, err := gorm.G[StoredLinearCalibration](g.DB).Find(ctx)
 	if err != nil {
 		return Schema{}
 	}
@@ -137,11 +137,11 @@ func (g *Gorm) GetSnapshot() Schema {
 	}
 }
 
-// NOTE: could return alertstore.NoAlert
+// NOTE: could return store.NoAlert
 func (g *Gorm) GetAlertState(alertId string) (AlertState, error) {
 	var as AlertState
 	var err error
-	db := g.db.Table("alert_states").Where("id = ?", alertId).First(&as)
+	db := g.Table("alert_states").Where("id = ?", alertId).First(&as)
 	err = db.Error
 	if db.RowsAffected < 1 {
 		err = NoAlert
@@ -152,7 +152,7 @@ func (g *Gorm) GetAlertState(alertId string) (AlertState, error) {
 func (g *Gorm) GetAlertRule(alertId string) (AlertRule, error) {
 	var ar AlertRule
 	ar.AlertId = alertId
-	db := g.db.
+	db := g.
 		Model(&AlertRule{}).
 		Table("alert_rule_view").
 		Where("alert_id = ?", alertId).
@@ -169,7 +169,7 @@ func (g *Gorm) GetAlertRule(alertId string) (AlertRule, error) {
 func (g *Gorm) GetAlertRecipients(alertId string) ([]string, error) {
 	var emails []string
 	var err error
-	db := g.db.Model(&AlertRecipient{}).
+	db := g.Model(&AlertRecipient{}).
 		Where("alert_id = ?", alertId).
 		Pluck("email", &emails)
 	err = db.Error
@@ -180,7 +180,7 @@ func (g *Gorm) GetAlertRecipients(alertId string) ([]string, error) {
 }
 
 func (g *Gorm) UpdateAlertState(alert AlertState) error {
-	return g.db.Clauses(clause.OnConflict{
+	return g.Clauses(clause.OnConflict{
 		Columns:   []clause.Column{{Name: "id"}},
 		UpdateAll: true,
 	}).Create(&alert).
@@ -189,33 +189,33 @@ func (g *Gorm) UpdateAlertState(alert AlertState) error {
 
 func (g *Gorm) Store(dbRecord Schema) error {
 	var err error
-	return g.db.Transaction(func(tx *gorm.DB) error {
+	return g.Transaction(func(tx *gorm.DB) error {
 		if len(dbRecord.DeviceAlerts) > 0 {
-			if err = gorm.G[DeviceAlertRule](g.db).CreateInBatches(ctx,
+			if err = gorm.G[DeviceAlertRule](g.DB).CreateInBatches(ctx,
 				&dbRecord.DeviceAlerts, len(dbRecord.DeviceAlerts)); err != nil {
 				return err
 			}
 		}
 		if len(dbRecord.AlertRecipients) > 0 {
-			if err = gorm.G[AlertRecipient](g.db).CreateInBatches(ctx,
+			if err = gorm.G[AlertRecipient](g.DB).CreateInBatches(ctx,
 				&dbRecord.AlertRecipients, len(dbRecord.AlertRecipients)); err != nil {
 				return err
 			}
 		}
 		if len(dbRecord.AlertRules) > 0 {
-			if err = gorm.G[StoredAlertRule](g.db).CreateInBatches(ctx,
+			if err = gorm.G[StoredAlertRule](g.DB).CreateInBatches(ctx,
 				&dbRecord.AlertRules, len(dbRecord.AlertRules)); err != nil {
 				return err
 			}
 		}
 		if len(dbRecord.LinearCalibrations) > 0 {
-			if err = gorm.G[StoredLinearCalibration](g.db).CreateInBatches(ctx,
+			if err = gorm.G[StoredLinearCalibration](g.DB).CreateInBatches(ctx,
 				&dbRecord.LinearCalibrations, len(dbRecord.LinearCalibrations)); err != nil {
 				return err
 			}
 		}
 		if len(dbRecord.AlertStates) > 0 {
-			err = gorm.G[AlertState](g.db, clause.OnConflict{
+			err = gorm.G[AlertState](g.DB, clause.OnConflict{
 				Columns:   []clause.Column{{Name: "id"}},
 				UpdateAll: true,
 			}).CreateInBatches(ctx, &dbRecord.AlertStates, len(dbRecord.AlertStates))
@@ -228,7 +228,7 @@ func (g *Gorm) Store(dbRecord Schema) error {
 }
 
 func (g *Gorm) UpdateAlertRule(alertId string, dbRecord Schema) error {
-	return g.db.Transaction(func(tx *gorm.DB) error {
+	return g.Transaction(func(tx *gorm.DB) error {
 		var err error
 		for _, da := range dbRecord.DeviceAlerts {
 			if err = tx.Table("device_alert_rules").
@@ -279,11 +279,11 @@ func (g *Gorm) UpdateAlertRule(alertId string, dbRecord Schema) error {
 	})
 }
 
-// NOTE: could return alertstore.AlertExists
+// NOTE: could return store.AlertExists
 func (g *Gorm) CheckAlertRuleExists(ar AlertRule) (string, error) {
 	var alertId string
 	var err error
-	db := g.db.Table("stored_alert_rules").
+	db := g.Table("stored_alert_rules").
 		Joins(
 			`JOIN device_alert_rules ON
 			stored_alert_rules.alert_id = device_alert_rules.alert_id`,
@@ -310,7 +310,7 @@ func (g *Gorm) CheckAlertRuleExists(ar AlertRule) (string, error) {
 }
 
 func (g *Gorm) DeleteAlertState(alertId string) error {
-	if err := g.db.Table("alert_states").
+	if err := g.Table("alert_states").
 		Where("id = ?", alertId).
 		Delete("*").Error; err != nil {
 		return err
@@ -318,13 +318,13 @@ func (g *Gorm) DeleteAlertState(alertId string) error {
 	return nil
 }
 
-// NOTE: could return alertstore.NoAlert
+// NOTE: could return store.NoAlert
 func (g *Gorm) DeleteAlertRule(alertId string) (AlertRule, error) {
 	ar, err := g.GetAlertRule(alertId)
 	if err != nil {
 		return ar, err
 	}
-	if err := g.db.Transaction(func(tx *gorm.DB) error {
+	if err := g.Transaction(func(tx *gorm.DB) error {
 		if err = tx.Table("device_alert_rules").
 			Where("alert_id = ?", alertId).
 			Delete("*").Error; err != nil {
@@ -353,7 +353,7 @@ func (g *Gorm) DeleteAlertRule(alertId string) (AlertRule, error) {
 }
 
 func (g *Gorm) RemoveUsersFromAlertRule(ars []AlertRecipient) error {
-	return g.db.Transaction(func(tx *gorm.DB) error {
+	return g.Transaction(func(tx *gorm.DB) error {
 		for _, ar := range ars {
 			if err := tx.Table("alert_recipients").
 				Where("alert_id = ?", ar.AlertId).
